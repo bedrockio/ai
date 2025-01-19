@@ -1,0 +1,35 @@
+{
+  "id": "chatcmpl-ArOOJjInWyqbTPbrHv0ZlN46ZryEm",
+  "object": "chat.completion",
+  "created": 1737288507,
+  "model": "gpt-4o-2024-08-06",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "```json\n[\n    {\n        \"name\": \"Apple Inc.\",\n        \"symbol\": \"AAPL\"\n    },\n    {\n        \"name\": \"Microsoft Corporation\",\n        \"symbol\": \"MSFT\"\n    },\n    {\n        \"name\": \"Amazon.com Inc.\",\n        \"symbol\": \"AMZN\"\n    },\n    {\n        \"name\": \"NVIDIA Corporation\",\n        \"symbol\": \"NVDA\"\n    },\n    {\n        \"name\": \"Alphabet Inc. (Class A)\",\n        \"symbol\": \"GOOGL\"\n    }\n]\n```",
+        "refusal": null
+      },
+      "logprobs": null,
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 40,
+    "completion_tokens": 114,
+    "total_tokens": 154,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 0,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "service_tier": "default",
+  "system_fingerprint": "fp_50cad350e4"
+}

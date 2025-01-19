@@ -1,0 +1,1 @@
+Please list the current top 5 stocks in the S&P 500 as a JSON array of objects with their `name` and `symbol`. Only output JSON.
