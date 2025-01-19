@@ -62,30 +62,22 @@ export class AnthropicClient extends BaseClient {
     });
   }
 
-  async *stream(options) {
-    const stream = await this.prompt({
-      ...options,
-      output: 'raw',
-      stream: true,
-    });
-
+  getStreamedChunk(chunk) {
     // @ts-ignore
-    for await (const event of stream) {
-      let type;
-      if (event.type === 'content_block_start') {
-        type = 'start';
-      } else if (event.type === 'content_block_delta') {
-        type = 'chunk';
-      } else if (event.type === 'message_stop') {
-        type = 'stop';
-      }
+    let type;
+    if (chunk.type === 'content_block_start') {
+      type = 'start';
+    } else if (chunk.type === 'content_block_delta') {
+      type = 'chunk';
+    } else if (chunk.type === 'message_stop') {
+      type = 'stop';
+    }
 
-      if (type) {
-        yield {
-          type,
-          text: event.delta?.text || '',
-        };
-      }
+    if (type) {
+      return {
+        type,
+        text: chunk.delta?.text || '',
+      };
     }
   }
 }

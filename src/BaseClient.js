@@ -3,6 +3,7 @@ import Mustache from 'mustache';
 import { loadTemplates } from './util.js';
 
 const MESSAGES_REG = /(?:^|\n)-{3,}\s*(\w+)\s*-{3,}(.*?)(?=\n-{3,}|$)/gs;
+
 export default class BaseClient {
   constructor(options) {
     this.options = options;
@@ -13,7 +14,7 @@ export default class BaseClient {
    * Interpolates vars into the provided template and
    * runs the chat completion. The "output" option may
    * be omitted and will default to `"text"`.
-   * {@link https://github.com/bedrockio/ai Documentation}
+   * {@link https://github.com/bedrockio/ai?tab=readme-ov-file#bedrockioai Documentation}
    *
    * @param {object} options
    * @param {string} options.model - The model to use.
@@ -32,6 +33,31 @@ export default class BaseClient {
       ...options,
       messages,
     });
+  }
+
+  /**
+   * Streams the prompt response.
+   * @returns {AsyncIterator}
+   */
+  async *stream(options) {
+    const stream = await this.prompt({
+      ...options,
+      output: 'raw',
+      stream: true,
+    });
+
+    let started = false;
+
+    // @ts-ignore
+    for await (const chunk of stream) {
+      const resolved = this.getStreamedChunk(chunk, started);
+      started = true;
+
+      // @ts-ignore
+      if (resolved) {
+        yield resolved;
+      }
+    }
   }
 
   async getMessages(options) {
@@ -57,11 +83,6 @@ export default class BaseClient {
     return messages;
   }
 
-  getCompletion(options) {
-    void options;
-    new Error('Method not implemented.');
-  }
-
   async loadTemplates() {
     const { templates } = this.options;
     this.templates ||= await loadTemplates(templates);
@@ -81,6 +102,17 @@ export default class BaseClient {
     }
 
     return template;
+  }
+
+  getCompletion(options) {
+    void options;
+    new Error('Method not implemented.');
+  }
+
+  getStreamedChunk(chunk, started) {
+    void chunk;
+    void started;
+    new Error('Method not implemented.');
   }
 }
 

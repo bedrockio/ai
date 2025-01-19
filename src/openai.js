@@ -45,35 +45,23 @@ export class OpenAiClient extends BaseClient {
     });
   }
 
-  async *stream(options) {
-    const stream = await this.prompt({
-      ...options,
-      output: 'raw',
-      stream: true,
-    });
+  getStreamedChunk(chunk, started) {
+    const [choice] = chunk.choices;
 
-    let started = false;
+    let type;
+    if (!started) {
+      type = 'start';
+    } else if (choice.finish_reason === 'stop') {
+      type = 'stop';
+    } else {
+      type = 'chunk';
+    }
 
-    // @ts-ignore
-    for await (const chunk of stream) {
-      const [choice] = chunk.choices;
-
-      let type;
-      if (!started) {
-        type = 'start';
-        started = true;
-      } else if (choice.finish_reason === 'stop') {
-        type = 'stop';
-      } else {
-        type = 'chunk';
-      }
-
-      if (type) {
-        yield {
-          type,
-          text: choice.delta.content || '',
-        };
-      }
+    if (type) {
+      return {
+        type,
+        text: choice.delta.content || '',
+      };
     }
   }
 }
