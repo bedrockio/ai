@@ -6,6 +6,10 @@ usage.
 
 - [Install](#install)
 - [Usage](#usage)
+- [Streaming](#stream)
+- [Templates](#templates)
+- [Platforms](#platforms)
+- [Models](#models)
 
 ## Install
 
@@ -42,26 +46,28 @@ const response = await client.prompt({
   text: 'a long yellow fruit',
   fruit: 'banana, apple, pear',
 });
+```
 
+## Streaming
+
+Responses may be streamed:
+
+```js
 // Stream the results
 const stream = await client.stream({
   file: 'classify-fruits',
-  // ...
 });
 
 // Will return an AsyncIterator
 for await (const chunk of stream) {
   console.info(chunk.text);
 }
-
-// List available models
-const models = await client.models();
 ```
 
 ## Templates
 
-Template files must have be markdown (`.md`) and live in your templates
-directory. They may be a simple text description or delineated roles:
+Template files must be markdown (`.md`) and live in your templates directory.
+They may be a simple text prompt or delineated roles:
 
 ````
 --- SYSTEM ---
@@ -82,3 +88,19 @@ Please provide your response as a JSON object containing:
 {{text}}
 ```
 ````
+
+## Platforms
+
+Currently supported platforms:
+
+- OpenAI (ChatGPT)
+- Anthropic (Claude)
+- Google (Gemini).
+
+## Models
+
+Available models can be listed with:
+
+```js
+const models = await client.models();
+```

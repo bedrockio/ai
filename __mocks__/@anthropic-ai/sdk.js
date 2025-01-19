@@ -1,6 +1,6 @@
 let mock;
 
-function Anthropic() {
+function MockAnthropicClient() {
   return {
     messages: {
       create(options) {
@@ -38,6 +38,6 @@ function wrapChunk(str, type) {
   };
 }
 
-Anthropic.setResponse = setResponse;
+MockAnthropicClient.setResponse = setResponse;
 
-module.exports = Anthropic;
+module.exports = MockAnthropicClient;

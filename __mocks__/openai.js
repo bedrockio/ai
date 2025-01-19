@@ -1,6 +1,6 @@
 let mock;
 
-function OpenAI() {
+function MockOpenAiClient() {
   return {
     chat: {
       completions: {
@@ -43,6 +43,6 @@ function setResponse(data) {
   mock = data;
 }
 
-OpenAI.setResponse = setResponse;
+MockOpenAiClient.setResponse = setResponse;
 
-module.exports = OpenAI;
+module.exports = MockOpenAiClient;

@@ -15,6 +15,7 @@ export class OpenAiClient extends BaseClient {
 
   /**
    * Lists available models.
+   * {@link https://platform.openai.com/docs/models Documentation}
    */
   async models() {
     const { data } = await this.client.models.list();

@@ -40,11 +40,7 @@ export default class BaseClient {
    * @returns {AsyncIterator}
    */
   async *stream(options) {
-    const stream = await this.prompt({
-      ...options,
-      output: 'raw',
-      stream: true,
-    });
+    const stream = await this.getStream(options);
 
     let started = false;
 
@@ -102,6 +98,14 @@ export default class BaseClient {
     }
 
     return template;
+  }
+
+  async getStream(options) {
+    return await this.prompt({
+      ...options,
+      output: 'raw',
+      stream: true,
+    });
   }
 
   getCompletion(options) {

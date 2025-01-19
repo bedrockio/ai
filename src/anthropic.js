@@ -16,6 +16,7 @@ export class AnthropicClient extends BaseClient {
 
   /**
    * Lists available models.
+   * {@link https://docs.anthropic.com/en/docs/about-claude/models Documentation}
    */
   async models() {
     const { data } = await this.client.models.list();

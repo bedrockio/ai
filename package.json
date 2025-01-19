@@ -1,6 +1,6 @@
 {
   "name": "@bedrockio/ai",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Bedrock wrapper for common AI chatbots.",
   "type": "module",
   "scripts": {
@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.33.1",
+    "@google/generative-ai": "^0.21.0",
     "glob": "^11.0.1",
     "mustache": "^4.2.0",
     "openai": "^4.79.1"
