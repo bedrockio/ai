@@ -1,3 +1,7 @@
+## Next
+
+- Better error handling for entry
+
 ## 0.2.0
 
 - Added Gemini
