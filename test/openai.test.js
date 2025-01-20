@@ -6,6 +6,7 @@ import { OpenAiClient } from '../src/openai';
 
 import long from './responses/openai/long.json';
 import text from './responses/openai/text.json';
+import code from './responses/openai/code.json';
 import formatted from './responses/openai/formatted.json';
 import unformatted from './responses/openai/unformatted.json';
 import arrayUnformatted from './responses/openai/array-unformatted.json';
@@ -168,6 +169,29 @@ describe('openai', () => {
         },
         system_fingerprint: 'fp_3e7d703517',
       });
+    });
+
+    it('should transform code', async () => {
+      setResponse(code);
+      const result = await client.prompt({
+        text: 'Please generate some javascript code',
+        output: 'code',
+      });
+      expect(result).toEqual(
+        `
+function isEven(number) {
+    if (number % 2 === 0) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+// Example usage:
+console.log(isEven(4)); // Output: true
+console.log(isEven(7)); // Output: false
+      `.trim(0),
+      );
     });
   });
 

@@ -57,26 +57,39 @@ export default class BaseClient {
   }
 
   async getMessages(options) {
+    const { text } = options;
     const template = await this.resolveTemplate(options);
-    const raw = Mustache.render(template, transformParams(options));
 
-    const messages = [];
-    for (let match of raw.matchAll(MESSAGES_REG)) {
-      const [, role, content] = match;
-      messages.push({
-        role: role.toLowerCase(),
-        content: content.trim(),
-      });
+    if (template) {
+      const raw = Mustache.render(template, transformParams(options));
+
+      const messages = [];
+      for (let match of raw.matchAll(MESSAGES_REG)) {
+        const [, role, content] = match;
+        messages.push({
+          role: role.toLowerCase(),
+          content: content.trim(),
+        });
+      }
+
+      if (!messages.length) {
+        messages.push({
+          role: 'user',
+          content: raw.trim(),
+        });
+      }
+
+      return messages;
+    } else if (text) {
+      return [
+        {
+          role: 'user',
+          content: text,
+        },
+      ];
+    } else {
+      throw new Error('No input provided.');
     }
-
-    if (!messages.length) {
-      messages.push({
-        role: 'user',
-        content: raw.trim(),
-      });
-    }
-
-    return messages;
   }
 
   async loadTemplates() {
@@ -86,18 +99,7 @@ export default class BaseClient {
 
   async resolveTemplate(options) {
     await this.loadTemplates();
-
-    let { file, template } = options;
-
-    if (!template && file) {
-      template = this.templates[file];
-    }
-
-    if (!template) {
-      throw new Error('No template provided.');
-    }
-
-    return template;
+    return this.templates[options.file];
   }
 
   async getStream(options) {

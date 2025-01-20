@@ -1,0 +1,35 @@
+{
+  "id": "chatcmpl-Arl24inbF0Xo05CZTxyGNdz6Tgo77",
+  "object": "chat.completion",
+  "created": 1737375540,
+  "model": "gpt-4o-2024-08-06",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "Sure! Here's a simple JavaScript function that checks if a number is even:\n\n```\nfunction isEven(number) {\n    if (number % 2 === 0) {\n        return true;\n    } else {\n        return false;\n    }\n}\n\n// Example usage:\nconsole.log(isEven(4)); // Output: true\nconsole.log(isEven(7)); // Output: false\n```\n\nThis function takes a number as an argument and returns `true` if it is even, and `false` if it is not.",
+        "refusal": null
+      },
+      "logprobs": null,
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 14,
+    "completion_tokens": 109,
+    "total_tokens": 123,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 0,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "service_tier": "default",
+  "system_fingerprint": "fp_50cad350e4"
+}

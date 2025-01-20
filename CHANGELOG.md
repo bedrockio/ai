@@ -1,6 +1,7 @@
 ## Next
 
-- Better error handling for entry
+- Better error handling for entry.
+- Allow parsing of unknown code.
 
 ## 0.2.0
 
