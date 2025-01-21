@@ -1,0 +1,29 @@
+{
+  "id": "b219a90b-5841-4b0e-abbd-71b162437834",
+  "object": "chat.completion",
+  "created": 1737440165,
+  "model": "grok-2-1212",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "Here's a short JavaScript function that calculates the factorial of a given number:\n\n```javascript\n/**\n * Calculates the factorial of a given number.\n * @param {number} n - The number to calculate the factorial for.\n * @returns {number} The factorial of the input number.\n */\nfunction factorial(n) {\n    if (n === 0 || n === 1) return 1;\n    return n * factorial(n - 1);\n}\n```\n\nThis function uses recursion to calculate the factorial. It returns 1 for inputs of 0 or 1, and otherwise multiplies the input by the factorial of the input minus one.",
+        "refusal": null
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 13,
+    "completion_tokens": 130,
+    "total_tokens": 143,
+    "prompt_tokens_details": {
+      "text_tokens": 13,
+      "audio_tokens": 0,
+      "image_tokens": 0,
+      "cached_tokens": 0
+    }
+  },
+  "system_fingerprint": "fp_a0b4c0d79d"
+}

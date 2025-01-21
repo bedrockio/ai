@@ -96,6 +96,7 @@ Currently supported platforms:
 - OpenAI (ChatGPT)
 - Anthropic (Claude)
 - Google (Gemini).
+- xAi (Grok).
 
 ## Models
 

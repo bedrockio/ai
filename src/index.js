@@ -1,6 +1,7 @@
 import { OpenAiClient } from './openai.js';
 import { GoogleClient } from './google.js';
 import { AnthropicClient } from './anthropic.js';
+import { XAiClient } from './xai.js';
 
 export class Client {
   constructor(options = {}) {
@@ -20,6 +21,8 @@ export class Client {
       return new GoogleClient(options);
     } else if (platform === 'anthropic' || platform === 'claude') {
       return new AnthropicClient(options);
+    } else if (platform === 'xai' || platform === 'grok') {
+      return new XAiClient(options);
     } else if (platform) {
       throw new Error(`Unknown platform "${platform}".`);
     }
