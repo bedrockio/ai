@@ -31,11 +31,11 @@
     "url": "https://github.com/bedrockio/router"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.33.1",
+    "@anthropic-ai/sdk": "^0.36.3",
     "@google/generative-ai": "^0.21.0",
     "glob": "^11.0.1",
     "mustache": "^4.2.0",
-    "openai": "^4.79.1"
+    "openai": "^4.83.0"
   },
   "devDependencies": {
     "@babel/cli": "^7.26.4",
