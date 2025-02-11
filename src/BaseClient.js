@@ -1,6 +1,6 @@
 import Mustache from 'mustache';
 
-import { loadTemplates } from './util.js';
+import { loadTemplates, loadTemplate } from './util.js';
 
 const MESSAGES_REG = /(?:^|\n)-{3,}\s*(\w+)\s*-{3,}(.*?)(?=\n-{3,}|$)/gs;
 
@@ -61,7 +61,7 @@ export default class BaseClient {
     const template = await this.resolveTemplate(options);
 
     if (template) {
-      const raw = Mustache.render(template, transformParams(options));
+      const raw = render(template, options);
 
       const messages = [];
       for (let match of raw.matchAll(MESSAGES_REG)) {
@@ -92,14 +92,26 @@ export default class BaseClient {
     }
   }
 
+  async buildTemplate(options) {
+    const template = await this.resolveTemplate(options);
+    return render(template, options);
+  }
+
   async loadTemplates() {
     const { templates } = this.options;
     this.templates ||= await loadTemplates(templates);
   }
 
   async resolveTemplate(options) {
-    await this.loadTemplates();
-    return this.templates[options.file];
+    const { template, file } = options;
+    if (template) {
+      return template;
+    } else if (file?.endsWith('.md')) {
+      return await loadTemplate(file);
+    } else if (file) {
+      await this.loadTemplates();
+      return this.templates[file];
+    }
   }
 
   async getStream(options) {
@@ -122,7 +134,16 @@ export default class BaseClient {
   }
 }
 
-function transformParams(params) {
+function render(template, params) {
+  params = wrapObjects(params);
+  params = wrapProxy(params);
+  return Mustache.render(template, params);
+}
+
+// Transform arrays and object to versions
+// that are more understandable in the context
+// of a template that may have meaningful whitespace.
+function wrapObjects(params) {
   const result = {};
   for (let [key, value] of Object.entries(params)) {
     if (Array.isArray(value)) {
@@ -137,4 +158,25 @@ function transformParams(params) {
     result[key] = value;
   }
   return result;
+}
+
+// Wrap params with a proxy object that reports
+// as having all properties. If one is accessed
+// that does not exist then return the original
+// token. This way templates can be partially
+// interpolated and re-interpolated later.
+function wrapProxy(params) {
+  return new Proxy(params, {
+    has() {
+      return true;
+    },
+
+    get(target, prop) {
+      if (prop in target) {
+        return target[prop];
+      } else {
+        return `{{{${prop.toString()}}}}`;
+      }
+    },
+  });
 }

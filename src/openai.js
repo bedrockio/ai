@@ -3,7 +3,7 @@ import OpenAI from 'openai';
 import BaseClient from './BaseClient.js';
 import { transformResponse } from './util.js';
 
-const DEFAULT_MODEL = 'gpt-4o';
+const DEFAULT_MODEL = 'gpt-4o-mini';
 
 export class OpenAiClient extends BaseClient {
   constructor(options) {

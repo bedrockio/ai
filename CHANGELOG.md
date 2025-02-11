@@ -1,4 +1,10 @@
-## Next
+## 0.3.0
+
+- Added MultiClient.
+- Allow partial template interpolation.
+- Changed default openai model to `gpt-4o-mini`.
+
+## 0.2.1
 
 - Better error handling for entry.
 - Allow parsing of unknown code.

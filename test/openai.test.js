@@ -95,12 +95,14 @@ describe('openai', () => {
       const result = await client.prompt({
         file: 'classify-fruits',
         text: 'I had a burger and some french fries for dinner. For dessert I had a banana.',
+        fruits: ['apple', 'banana'],
         output: 'messages',
       });
       expect(result).toEqual([
         {
           role: 'system',
-          content: 'You are a helpful assistant.\n\nHere is a list of fruits:',
+          content:
+            'You are a helpful assistant.\n\nHere is a list of fruits:\n\n- apple\n- banana',
         },
         {
           role: 'user',
@@ -214,6 +216,34 @@ console.log(isEven(7)); // Output: false
         'ana",\n  "color": "yellow',
         '",\n  "calories": 105\n}\n```',
       ]);
+    });
+  });
+
+  describe('other', () => {
+    it('should build the partially interpolated template', async () => {
+      setResponse(formatted);
+
+      const template = '{{foo}} {{bar}}';
+
+      const result = await client.buildTemplate({
+        template,
+        foo: 'foo',
+      });
+
+      expect(result).toBe('foo {{{bar}}}');
+    });
+
+    it('should inject an array', async () => {
+      setResponse(formatted);
+
+      const template = '{{arr}}';
+
+      const result = await client.buildTemplate({
+        template,
+        arr: ['one', 'two', 'three'],
+      });
+
+      expect(result).toBe('- one\n- two\n- three');
     });
   });
 });

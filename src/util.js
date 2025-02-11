@@ -17,10 +17,14 @@ export async function loadTemplates(dir) {
 
   for (let file of files) {
     const base = path.basename(file, '.md');
-    result[base] = await fs.readFile(file, 'utf-8');
+    result[base] = await loadTemplate(file);
   }
 
   return result;
+}
+
+export async function loadTemplate(file) {
+  return await fs.readFile(file, 'utf-8');
 }
 
 export function transformResponse(options) {
