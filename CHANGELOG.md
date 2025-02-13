@@ -3,6 +3,8 @@
 - Added MultiClient.
 - Allow partial template interpolation.
 - Changed default openai model to `gpt-4o-mini`.
+- Allow passing in specific `params` object.
+- Allow passing in complex arrays.
 
 ## 0.2.1
 

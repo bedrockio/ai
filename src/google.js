@@ -29,7 +29,9 @@ export class GoogleClient extends BaseClient {
     const { model = DEFAULT_MODEL, output = 'text', stream = false } = options;
     const { client } = this;
 
-    const generator = client.getGenerativeModel({ model });
+    const generator = client.getGenerativeModel({
+      model,
+    });
 
     const messages = await this.getMessages(options);
 
@@ -44,11 +46,6 @@ export class GoogleClient extends BaseClient {
     } else {
       response = await generator.generateContent(prompts);
     }
-    // const response = await client.chat.completions.create({
-    //   model,
-    //   messages,
-    //   stream,
-    // });
 
     if (output === 'raw') {
       return response;

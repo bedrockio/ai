@@ -31,6 +31,9 @@ export class OpenAiClient extends BaseClient {
       model,
       messages,
       stream,
+      response_format: {
+        type: output === 'json' ? 'json_object' : 'text',
+      },
     });
 
     if (output === 'raw') {

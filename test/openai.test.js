@@ -233,6 +233,21 @@ console.log(isEven(7)); // Output: false
       expect(result).toBe('foo {{{bar}}}');
     });
 
+    it('should allow passing params as own field', async () => {
+      setResponse(formatted);
+
+      const template = '{{foo}} {{bar}}';
+
+      const result = await client.buildTemplate({
+        template,
+        params: {
+          foo: 'foo',
+        },
+      });
+
+      expect(result).toBe('foo {{{bar}}}');
+    });
+
     it('should inject an array', async () => {
       setResponse(formatted);
 

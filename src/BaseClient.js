@@ -134,8 +134,13 @@ export default class BaseClient {
   }
 }
 
-function render(template, params) {
-  params = wrapObjects(params);
+function render(template, options) {
+  let params = {
+    ...options,
+    ...options.params,
+  };
+
+  params = mapObjects(params);
   params = wrapProxy(params);
   return Mustache.render(template, params);
 }
@@ -143,21 +148,29 @@ function render(template, params) {
 // Transform arrays and object to versions
 // that are more understandable in the context
 // of a template that may have meaningful whitespace.
-function wrapObjects(params) {
+function mapObjects(params) {
   const result = {};
   for (let [key, value] of Object.entries(params)) {
     if (Array.isArray(value)) {
-      value = value
-        .map((el) => {
-          return `- ${el}`;
-        })
-        .join('\n');
+      value = mapArray(value);
     } else if (typeof value === 'object') {
       value = JSON.stringify(value, null, 2);
     }
     result[key] = value;
   }
   return result;
+}
+
+function mapArray(arr) {
+  // Only map simple arrays of primitives.
+  if (typeof arr[0] === 'string') {
+    arr = arr
+      .map((el) => {
+        return `- ${el}`;
+      })
+      .join('\n');
+  }
+  return arr;
 }
 
 // Wrap params with a proxy object that reports
