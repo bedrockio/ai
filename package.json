@@ -1,6 +1,6 @@
 {
   "name": "@bedrockio/ai",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Bedrock wrapper for common AI chatbots.",
   "type": "module",
   "scripts": {
