@@ -1,6 +1,6 @@
 import path from 'path';
 
-import { setResponse } from 'openai';
+import { setResponse, getCalledOptions } from 'openai';
 
 import { OpenAiClient } from '../src/openai';
 
@@ -260,5 +260,18 @@ console.log(isEven(7)); // Output: false
 
       expect(result).toBe('- one\n- two\n- three');
     });
+  });
+
+  it('should allow a default model to be passed to constructor', async () => {
+    const client = new OpenAiClient({
+      model: 'o4-mini',
+      templates: path.join(__dirname, './templates'),
+    });
+    setResponse(formatted);
+
+    await client.prompt({
+      text: 'Hello',
+    });
+    expect(getCalledOptions().model).toBe('o4-mini');
   });
 });

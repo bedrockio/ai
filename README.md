@@ -29,6 +29,9 @@ const client = new Client({
   platform: 'openai',
   // Your API key
   apiKey: 'my-api-key',
+
+  // The model to use. Will use a default model if not passed.
+  model: 'o4-mini',
 });
 
 // Get a one time response.
@@ -40,6 +43,9 @@ const response = await client.prompt({
   output: 'json',
   // A custom template may be passed if "file" is not.
   template: 'custom',
+
+  // Override the default model.
+  model: 'o4-mini',
 
   // All other variables will be
   // interpolated into the template.

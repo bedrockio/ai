@@ -1,10 +1,12 @@
 let mock;
+let calledOptions;
 
 function MockOpenAiClient() {
   return {
     chat: {
       completions: {
         create(options) {
+          calledOptions = options;
           if (options.stream) {
             return streamMock();
           } else {
@@ -43,6 +45,11 @@ function setResponse(data) {
   mock = data;
 }
 
+function getCalledOptions() {
+  return calledOptions;
+}
+
 MockOpenAiClient.setResponse = setResponse;
+MockOpenAiClient.getCalledOptions = getCalledOptions;
 
 module.exports = MockOpenAiClient;
