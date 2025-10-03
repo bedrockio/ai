@@ -1,6 +1,7 @@
 let mock;
+let models;
 
-function MockAnthropicClient() {
+export default function MockAnthropicClient() {
   return {
     messages: {
       create(options) {
@@ -11,33 +12,26 @@ function MockAnthropicClient() {
         }
       },
     },
-  };
-}
-
-function setResponse(data) {
-  mock = data;
-}
-
-async function* streamMock() {
-  const content = mock.content[0].text;
-  const size = Math.floor(content.length / 3);
-  const one = content.slice(0, size);
-  const two = content.slice(size, 2 * size);
-  const three = content.slice(2 * size);
-  yield wrapChunk(one, 'content_block_start');
-  yield wrapChunk(two, 'content_block_delta');
-  yield wrapChunk(three, 'message_stop');
-}
-
-function wrapChunk(str, type) {
-  return {
-    type,
-    delta: {
-      text: str,
+    models: {
+      list() {
+        return {
+          data: models,
+        };
+      },
     },
   };
 }
 
-MockAnthropicClient.setResponse = setResponse;
+export function setResponse(data) {
+  mock = data;
+}
 
-module.exports = MockAnthropicClient;
+export function setModels(data) {
+  models = data;
+}
+
+async function* streamMock() {
+  for await (let event of mock) {
+    yield event;
+  }
+}

@@ -1,16 +1,13 @@
 import OpenAI from 'openai';
 
 import BaseClient from './BaseClient.js';
-import { transformResponse } from './util.js';
 
-const DEFAULT_MODEL = 'gpt-4o-mini';
+const DEFAULT_MODEL = 'gpt-5-nano';
 
 export class OpenAiClient extends BaseClient {
   constructor(options) {
     super(options);
-    this.client = new OpenAI({
-      ...options,
-    });
+    this.client = new OpenAI(options);
   }
 
   /**
@@ -22,49 +19,105 @@ export class OpenAiClient extends BaseClient {
     return data.map((o) => o.id);
   }
 
-  async getCompletion(options) {
-    const { model = DEFAULT_MODEL, output = 'text', stream = false } = options;
-    const { client } = this;
+  async runPrompt(options) {
+    let {
+      input,
+      model = DEFAULT_MODEL,
+      output = 'text',
+      stream = false,
+    } = options;
 
-    const messages = await this.getMessages(options);
-    const response = await client.chat.completions.create({
-      model,
-      messages,
-      stream,
-      response_format: {
-        type: output === 'json' ? 'json_object' : 'text',
-      },
-    });
-
-    if (output === 'raw') {
-      return response;
+    if (output === 'json') {
+      input += 'Output must be valid JSON.';
     }
 
-    const { message } = response.choices[0];
+    const instructions = await this.resolveInstructions(options);
 
-    return transformResponse({
-      ...options,
-      messages,
-      message,
+    return await this.client.responses.create({
+      model,
+      input,
+      stream,
+      instructions,
+      text: {
+        format: this.getOutputFormat(options),
+      },
     });
   }
 
-  getStreamedChunk(chunk, started) {
-    const [choice] = chunk.choices;
+  async runStream(options) {
+    return await this.prompt({
+      ...options,
+      output: 'raw',
+      stream: true,
+    });
+  }
 
-    let type;
-    if (!started) {
-      type = 'start';
-    } else if (choice.finish_reason === 'stop') {
-      type = 'stop';
-    } else {
-      type = 'chunk';
-    }
+  getTextResponse(response) {
+    return response.output_text;
+  }
 
-    if (type) {
+  getStructuredResponse(response) {
+    return JSON.parse(response.output_text);
+  }
+
+  // Private
+
+  /**
+   * @returns {import('openai/resources/responses/responses').ResponseFormatTextConfig | undefined}
+   */
+  getOutputFormat(options) {
+    const { output } = options;
+    if (output === 'json') {
       return {
-        type,
-        text: choice.delta.content || '',
+        type: 'json_object',
+      };
+    } else if (output?.meta?.type) {
+      // Assume yada schema. Schema will use its own
+      // toJSON method to export to JSON schema here.
+
+      let schema = output;
+
+      if (schema.meta.type === 'array') {
+        schema = {
+          type: 'object',
+          properties: {
+            items: schema,
+          },
+          required: ['items'],
+          additionalProperties: false,
+        };
+      }
+
+      return {
+        type: 'json_schema',
+        // Name is required but arbitrary.
+        name: 'schema',
+        strict: true,
+        schema: {
+          type: 'object',
+        },
+      };
+    } else {
+      return {
+        type: 'text',
+      };
+    }
+  }
+
+  normalizeStreamEvent(event) {
+    let { type } = event;
+    if (type === 'response.created') {
+      return {
+        type: 'start',
+      };
+    } else if (type === 'response.completed') {
+      return {
+        type: 'stop',
+      };
+    } else if (type === 'response.output_text.delta') {
+      return {
+        type: 'delta',
+        text: event.delta,
       };
     }
   }

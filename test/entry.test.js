@@ -1,12 +1,15 @@
 import path from 'path';
 
-import { setResponse as setGptResponse } from 'openai';
-import { setResponse as setClaudeResponse } from '@anthropic-ai/sdk';
+import { setResponse as setAnthropicResponse } from '@anthropic-ai/sdk';
+import { setResponse as setOpenAiResponse } from 'openai';
+import { describe, expect, it, vi } from 'vitest';
 
 import { Client, MultiClient } from '../src/index';
+import anthropic from './fixtures/anthropic/stocks/object.json';
+import openai from './fixtures/openai/stocks/object.json';
 
-import gpt from './responses/openai/text.json';
-import claude from './responses/anthropic/text.json';
+vi.mock('openai');
+vi.mock('@anthropic-ai/sdk');
 
 describe('Client', () => {
   it('should error on bad setup', async () => {
@@ -37,29 +40,52 @@ describe('Client', () => {
   });
 
   it('should succeed for openai', async () => {
-    setGptResponse(gpt);
+    setOpenAiResponse(openai);
 
     const client = new Client({
       platform: 'gpt',
       templates: path.join(__dirname, './templates'),
       apiKey: 'test-key',
     });
+
     const result = await client.prompt({
       file: 'stocks',
       output: 'json',
     });
 
-    expect(result).toEqual([
-      { name: 'Apple Inc.', symbol: 'AAPL' },
-      { name: 'Microsoft Corporation', symbol: 'MSFT' },
-      { name: 'Amazon.com Inc.', symbol: 'AMZN' },
-      { name: 'NVIDIA Corporation', symbol: 'NVDA' },
-      { name: 'Alphabet Inc. (Class A)', symbol: 'GOOGL' },
-    ]);
+    expect(result).toEqual({
+      top5_by_market_cap_in_sp500: [
+        {
+          name: 'Apple Inc.',
+          rank: 1,
+          symbol: 'AAPL',
+        },
+        {
+          name: 'Microsoft Corporation',
+          rank: 2,
+          symbol: 'MSFT',
+        },
+        {
+          name: 'NVIDIA Corporation',
+          rank: 3,
+          symbol: 'NVDA',
+        },
+        {
+          name: 'Amazon.com, Inc.',
+          rank: 4,
+          symbol: 'AMZN',
+        },
+        {
+          name: 'Alphabet Inc.',
+          rank: 5,
+          symbol: 'GOOGL',
+        },
+      ],
+    });
   });
 
   it('should succeed for anthropic', async () => {
-    setClaudeResponse(claude);
+    setAnthropicResponse(anthropic);
 
     const client = new Client({
       platform: 'claude',
@@ -72,20 +98,42 @@ describe('Client', () => {
       output: 'json',
     });
 
-    expect(result).toEqual([
-      { name: 'Microsoft', symbol: 'MSFT' },
-      { name: 'Apple', symbol: 'AAPL' },
-      { name: 'NVIDIA', symbol: 'NVDA' },
-      { name: 'Alphabet (Google)', symbol: 'GOOGL' },
-      { name: 'Amazon', symbol: 'AMZN' },
-    ]);
+    expect(result).toEqual({
+      top_5_stocks: [
+        {
+          name: 'Apple Inc.',
+          rank: 1,
+          symbol: 'AAPL',
+        },
+        {
+          name: 'Microsoft Corporation',
+          rank: 2,
+          symbol: 'MSFT',
+        },
+        {
+          name: 'NVIDIA Corporation',
+          rank: 3,
+          symbol: 'NVDA',
+        },
+        {
+          name: 'Amazon.com Inc.',
+          rank: 4,
+          symbol: 'AMZN',
+        },
+        {
+          name: 'Alphabet Inc. Class A',
+          rank: 5,
+          symbol: 'GOOGL',
+        },
+      ],
+    });
   });
 });
 
 describe('MultiClient', () => {
   it('should set multiple keys at once', async () => {
-    setGptResponse(gpt);
-    setClaudeResponse(claude);
+    setOpenAiResponse(openai);
+    setAnthropicResponse(anthropic);
 
     const client = new MultiClient({
       templates: path.join(__dirname, './templates'),
@@ -108,13 +156,35 @@ describe('MultiClient', () => {
       output: 'json',
     });
 
-    expect(result).toEqual([
-      { name: 'Microsoft', symbol: 'MSFT' },
-      { name: 'Apple', symbol: 'AAPL' },
-      { name: 'NVIDIA', symbol: 'NVDA' },
-      { name: 'Alphabet (Google)', symbol: 'GOOGL' },
-      { name: 'Amazon', symbol: 'AMZN' },
-    ]);
+    expect(result).toEqual({
+      top_5_stocks: [
+        {
+          name: 'Apple Inc.',
+          rank: 1,
+          symbol: 'AAPL',
+        },
+        {
+          name: 'Microsoft Corporation',
+          rank: 2,
+          symbol: 'MSFT',
+        },
+        {
+          name: 'NVIDIA Corporation',
+          rank: 3,
+          symbol: 'NVDA',
+        },
+        {
+          name: 'Amazon.com Inc.',
+          rank: 4,
+          symbol: 'AMZN',
+        },
+        {
+          name: 'Alphabet Inc. Class A',
+          rank: 5,
+          symbol: 'GOOGL',
+        },
+      ],
+    });
 
     result = await client.prompt({
       file: 'stocks',
@@ -122,12 +192,34 @@ describe('MultiClient', () => {
       platform: 'openai',
     });
 
-    expect(result).toEqual([
-      { name: 'Apple Inc.', symbol: 'AAPL' },
-      { name: 'Microsoft Corporation', symbol: 'MSFT' },
-      { name: 'Amazon.com Inc.', symbol: 'AMZN' },
-      { name: 'NVIDIA Corporation', symbol: 'NVDA' },
-      { name: 'Alphabet Inc. (Class A)', symbol: 'GOOGL' },
-    ]);
+    expect(result).toEqual({
+      top5_by_market_cap_in_sp500: [
+        {
+          name: 'Apple Inc.',
+          rank: 1,
+          symbol: 'AAPL',
+        },
+        {
+          name: 'Microsoft Corporation',
+          rank: 2,
+          symbol: 'MSFT',
+        },
+        {
+          name: 'NVIDIA Corporation',
+          rank: 3,
+          symbol: 'NVDA',
+        },
+        {
+          name: 'Amazon.com, Inc.',
+          rank: 4,
+          symbol: 'AMZN',
+        },
+        {
+          name: 'Alphabet Inc.',
+          rank: 5,
+          symbol: 'GOOGL',
+        },
+      ],
+    });
   });
 });

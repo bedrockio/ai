@@ -1,0 +1,25 @@
+{
+  "id": "msg_01U6F6m3wk2E3JrT6NKhQRcn",
+  "type": "message",
+  "role": "assistant",
+  "model": "claude-sonnet-4-5-20250929",
+  "content": [
+    {
+      "type": "text",
+      "text": "# Sample Markdown\n\nHere's some **bold text** and *italic text*.\n\n## A List\n- Item one\n- Item two\n- Item three\n\n[A link to example.com](https://example.com)\n\n```python\n# A code block\nprint(\"Hello, World!\")\n```"
+    }
+  ],
+  "stop_reason": "end_turn",
+  "stop_sequence": null,
+  "usage": {
+    "input_tokens": 20,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 0
+    },
+    "output_tokens": 68,
+    "service_tier": "standard"
+  }
+}

@@ -1,0 +1,101 @@
+{
+  "id": "resp_054f5ca2e529978c0068ca67039a308191b1b693acb30e39f8",
+  "object": "response",
+  "created_at": 1758095107,
+  "status": "completed",
+  "background": false,
+  "error": null,
+  "incomplete_details": null,
+  "instructions": "You are a helpful assistant.\nYour job is to classify foods that a user has eaten and guess\nadditional information about it including an estimate of the calories.",
+  "max_output_tokens": null,
+  "max_tool_calls": null,
+  "model": "gpt-5-nano-2025-08-07",
+  "output": [
+    {
+      "id": "rs_054f5ca2e529978c0068ca670437348191bf78ff49ffc277d8",
+      "type": "reasoning",
+      "summary": []
+    },
+    {
+      "id": "msg_054f5ca2e529978c0068ca670716a881919b68341e9666d1ab",
+      "type": "message",
+      "status": "completed",
+      "content": [
+        {
+          "type": "output_text",
+          "annotations": [],
+          "logprobs": [],
+          "text": "{\"items\":[{\"name\":\"burger\",\"calories\":500},{\"name\":\"french fries\",\"calories\":365},{\"name\":\"banana\",\"calories\":105}]}"
+        }
+      ],
+      "role": "assistant"
+    }
+  ],
+  "parallel_tool_calls": true,
+  "previous_response_id": null,
+  "prompt_cache_key": null,
+  "reasoning": {
+    "effort": "medium",
+    "summary": null
+  },
+  "safety_identifier": null,
+  "service_tier": "default",
+  "store": true,
+  "temperature": 1,
+  "text": {
+    "format": {
+      "type": "json_schema",
+      "description": null,
+      "name": "schema",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "calories": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "name",
+                "calories"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false
+      },
+      "strict": true
+    },
+    "verbosity": "medium"
+  },
+  "tool_choice": "auto",
+  "tools": [],
+  "top_logprobs": 0,
+  "top_p": 1,
+  "truncation": "disabled",
+  "usage": {
+    "input_tokens": 103,
+    "input_tokens_details": {
+      "cached_tokens": 0
+    },
+    "output_tokens": 619,
+    "output_tokens_details": {
+      "reasoning_tokens": 576
+    },
+    "total_tokens": 722
+  },
+  "user": null,
+  "metadata": {},
+  "output_text": "{\"items\":[{\"name\":\"burger\",\"calories\":500},{\"name\":\"french fries\",\"calories\":365},{\"name\":\"banana\",\"calories\":105}]}"
+}

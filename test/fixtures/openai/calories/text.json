@@ -1,0 +1,70 @@
+{
+  "id": "resp_0594e6c81a245f130068ca4d5691648192a0b15b41dfc1b0b7",
+  "object": "response",
+  "created_at": 1758088534,
+  "status": "completed",
+  "background": false,
+  "error": null,
+  "incomplete_details": null,
+  "instructions": "You are a helpful assistant.\nYour job is to classify foods that a user has eaten and guess\nadditional information about it including an estimate of the calories.",
+  "max_output_tokens": null,
+  "max_tool_calls": null,
+  "model": "gpt-5-nano-2025-08-07",
+  "output": [
+    {
+      "id": "rs_0594e6c81a245f130068ca4d5712f08192a299e4574202bd4a",
+      "type": "reasoning",
+      "summary": []
+    },
+    {
+      "id": "msg_0594e6c81a245f130068ca4d5ce8a08192be4539846895a352",
+      "type": "message",
+      "status": "completed",
+      "content": [
+        {
+          "type": "output_text",
+          "annotations": [],
+          "logprobs": [],
+          "text": "Here’s a quick classification and calorie rough estimate based on typical portions:\n\n- Burger\n  - What it is: beef patty between a bun (likely with toppings).\n  - Calorie range (typical portions): about 250–700 kcal.\n  - A common single-patty, unmodified burger is usually ~350–500 kcal; adding cheese, large bun, or extra toppings pushes it higher.\n\n- French fries\n  - What they are: deep-fried potato sticks.\n  - Calorie range: about 150–550 kcal.\n  - A small to regular fast-food portion is usually ~300–450 kcal.\n\n- Banana (dessert)\n  - Calorie range: roughly 90–140 kcal depending on size.\n\nTotal dinner calorie ballpark: about 490–1,370 kcal.\n- A typical fast-food-style meal (single patty burger + regular fries + medium banana) is often around 800–1,000 kcal.\n\nIf you share portion sizes (small/regular/large) or the type of burger (plain, cheese, extra toppings) and fry amount, I can give a tighter estimate."
+        }
+      ],
+      "role": "assistant"
+    }
+  ],
+  "parallel_tool_calls": true,
+  "previous_response_id": null,
+  "prompt_cache_key": null,
+  "reasoning": {
+    "effort": "medium",
+    "summary": null
+  },
+  "safety_identifier": null,
+  "service_tier": "default",
+  "store": true,
+  "temperature": 1,
+  "text": {
+    "format": {
+      "type": "text"
+    },
+    "verbosity": "medium"
+  },
+  "tool_choice": "auto",
+  "tools": [],
+  "top_logprobs": 0,
+  "top_p": 1,
+  "truncation": "disabled",
+  "usage": {
+    "input_tokens": 59,
+    "input_tokens_details": {
+      "cached_tokens": 0
+    },
+    "output_tokens": 1455,
+    "output_tokens_details": {
+      "reasoning_tokens": 1216
+    },
+    "total_tokens": 1514
+  },
+  "user": null,
+  "metadata": {},
+  "output_text": "Here’s a quick classification and calorie rough estimate based on typical portions:\n\n- Burger\n  - What it is: beef patty between a bun (likely with toppings).\n  - Calorie range (typical portions): about 250–700 kcal.\n  - A common single-patty, unmodified burger is usually ~350–500 kcal; adding cheese, large bun, or extra toppings pushes it higher.\n\n- French fries\n  - What they are: deep-fried potato sticks.\n  - Calorie range: about 150–550 kcal.\n  - A small to regular fast-food portion is usually ~300–450 kcal.\n\n- Banana (dessert)\n  - Calorie range: roughly 90–140 kcal depending on size.\n\nTotal dinner calorie ballpark: about 490–1,370 kcal.\n- A typical fast-food-style meal (single patty burger + regular fries + medium banana) is often around 800–1,000 kcal.\n\nIf you share portion sizes (small/regular/large) or the type of burger (plain, cheese, extra toppings) and fry amount, I can give a tighter estimate."
+}

@@ -10,8 +10,15 @@ export class XAiClient extends OpenAiClient {
     });
   }
 
-  async getCompletion(options) {
-    return super.getCompletion({
+  async runPrompt(options) {
+    return super.runPrompt({
+      model: DEFAULT_MODEL,
+      ...options,
+    });
+  }
+
+  async runStream(options) {
+    return super.runStream({
       model: DEFAULT_MODEL,
       ...options,
     });

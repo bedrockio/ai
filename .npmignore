@@ -2,7 +2,6 @@
 .eslintrc
 .eslintignore
 tsconfig.json
-babel.config.*
 jest.config.*
 scripts
 test

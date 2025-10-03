@@ -1,3 +1,9 @@
+## Next
+
+- Rewrote OpenAI to use new responses format.
+- Allow JSON schemas for OpenAI.
+- Using `template` option only now.
+
 ## 0.3.0
 
 - Added MultiClient.

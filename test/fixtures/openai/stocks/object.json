@@ -1,0 +1,73 @@
+{
+  "id": "resp_0450b961fb9b3e090068dffa6dd60c81929bab02749da25225",
+  "object": "response",
+  "created_at": 1759509101,
+  "status": "completed",
+  "background": false,
+  "billing": {
+    "payer": "developer"
+  },
+  "error": null,
+  "incomplete_details": null,
+  "instructions": "You are a helpful assistant.\nWhen you are asked to list stocks please:\n\n- Default to using the S&P 500.\n- Be sure to include both the name and the symbol.\n- Don't mention not being able to pull in live data.",
+  "max_output_tokens": null,
+  "max_tool_calls": null,
+  "model": "gpt-5-nano-2025-08-07",
+  "output": [
+    {
+      "id": "rs_0450b961fb9b3e090068dffa6e2f2081928c4ff2c4dd394769",
+      "type": "reasoning",
+      "summary": []
+    },
+    {
+      "id": "msg_0450b961fb9b3e090068dffa78ad5081928006d60925fab389",
+      "type": "message",
+      "status": "completed",
+      "content": [
+        {
+          "type": "output_text",
+          "annotations": [],
+          "logprobs": [],
+          "text": "{\n  \"top5_by_market_cap_in_sp500\": [\n    {\"rank\": 1, \"name\": \"Apple Inc.\", \"symbol\": \"AAPL\"},\n    {\"rank\": 2, \"name\": \"Microsoft Corporation\", \"symbol\": \"MSFT\"},\n    {\"rank\": 3, \"name\": \"NVIDIA Corporation\", \"symbol\": \"NVDA\"},\n    {\"rank\": 4, \"name\": \"Amazon.com, Inc.\", \"symbol\": \"AMZN\"},\n    {\"rank\": 5, \"name\": \"Alphabet Inc.\", \"symbol\": \"GOOGL\"}\n  ]\n}"
+        }
+      ],
+      "role": "assistant"
+    }
+  ],
+  "parallel_tool_calls": true,
+  "previous_response_id": null,
+  "prompt_cache_key": null,
+  "reasoning": {
+    "effort": "medium",
+    "summary": null
+  },
+  "safety_identifier": null,
+  "service_tier": "default",
+  "store": true,
+  "temperature": 1,
+  "text": {
+    "format": {
+      "type": "json_object"
+    },
+    "verbosity": "medium"
+  },
+  "tool_choice": "auto",
+  "tools": [],
+  "top_logprobs": 0,
+  "top_p": 1,
+  "truncation": "disabled",
+  "usage": {
+    "input_tokens": 72,
+    "input_tokens_details": {
+      "cached_tokens": 0
+    },
+    "output_tokens": 1795,
+    "output_tokens_details": {
+      "reasoning_tokens": 1664
+    },
+    "total_tokens": 1867
+  },
+  "user": null,
+  "metadata": {},
+  "output_text": "{\n  \"top5_by_market_cap_in_sp500\": [\n    {\"rank\": 1, \"name\": \"Apple Inc.\", \"symbol\": \"AAPL\"},\n    {\"rank\": 2, \"name\": \"Microsoft Corporation\", \"symbol\": \"MSFT\"},\n    {\"rank\": 3, \"name\": \"NVIDIA Corporation\", \"symbol\": \"NVDA\"},\n    {\"rank\": 4, \"name\": \"Amazon.com, Inc.\", \"symbol\": \"AMZN\"},\n    {\"rank\": 5, \"name\": \"Alphabet Inc.\", \"symbol\": \"GOOGL\"}\n  ]\n}"
+}

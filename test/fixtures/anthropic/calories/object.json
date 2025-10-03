@@ -1,0 +1,25 @@
+{
+  "id": "msg_01Tafnn56FfKmdCYDNtvokKs",
+  "type": "message",
+  "role": "assistant",
+  "model": "claude-sonnet-4-5-20250929",
+  "content": [
+    {
+      "type": "text",
+      "text": "```json\n{\n  \"meal\": \"dinner\",\n  \"foods\": [\n    {\n      \"item\": \"burger\",\n      \"category\": \"main_course\",\n      \"food_group\": \"protein/grain\",\n      \"estimated_calories\": 550,\n      \"notes\": \"Assuming a standard beef burger with bun, lettuce, tomato, and condiments\"\n    },\n    {\n      \"item\": \"french fries\",\n      \"category\": \"side_dish\",\n      \"food_group\": \"starch/vegetable\",\n      \"estimated_calories\": 365,\n      \"notes\": \"Assuming a medium-sized serving (approximately 117g)\"\n    },\n    {\n      \"item\": \"banana\",\n      \"category\": \"dessert\",\n      \"food_group\": \"fruit\",\n      \"estimated_calories\": 105,\n      \"notes\": \"Assuming a medium-sized banana (approximately 118g)\"\n    }\n  ],\n  \"total_estimated_calories\": 1020,\n  \"nutritional_balance\": {\n    \"protein\": \"moderate\",\n    \"carbohydrates\": \"high\",\n    \"fats\": \"moderate_to_high\",\n    \"fiber\": \"moderate\",\n    \"vitamins_minerals\": \"moderate\"\n  }\n}\n```"
+    }
+  ],
+  "stop_reason": "end_turn",
+  "stop_sequence": null,
+  "usage": {
+    "input_tokens": 64,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 0
+    },
+    "output_tokens": 307,
+    "service_tier": "standard"
+  }
+}

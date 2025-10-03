@@ -1,0 +1,25 @@
+{
+  "id": "msg_01GiU4NhpXvkktHuYbFGgeuj",
+  "type": "message",
+  "role": "assistant",
+  "model": "claude-sonnet-4-5-20250929",
+  "content": [
+    {
+      "type": "text",
+      "text": "Here are the current top 5 stocks by market capitalization from the S&P 500:\n\n1. **Apple Inc.** (AAPL)\n2. **Microsoft Corporation** (MSFT)\n3. **NVIDIA Corporation** (NVDA)\n4. **Amazon.com Inc.** (AMZN)\n5. **Alphabet Inc. Class A** (GOOGL)\n\nThese technology companies consistently hold the largest market capitalizations in the index, representing significant portions of the overall S&P 500 value."
+    }
+  ],
+  "stop_reason": "end_turn",
+  "stop_sequence": null,
+  "usage": {
+    "input_tokens": 71,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 0
+    },
+    "output_tokens": 124,
+    "service_tier": "standard"
+  }
+}

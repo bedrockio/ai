@@ -1,6 +1,7 @@
 let mock;
+let models;
 
-function MockOpenAiClient() {
+export default function MockOpenAiClient() {
   return {
     chat: {
       completions: {
@@ -13,36 +14,38 @@ function MockOpenAiClient() {
         },
       },
     },
-  };
-}
-
-async function* streamMock() {
-  const content = mock.choices[0].message.content;
-  const size = Math.floor(content.length / 3);
-  const one = content.slice(0, size);
-  const two = content.slice(size, 2 * size);
-  const three = content.slice(2 * size);
-  yield wrapChunk(one);
-  yield wrapChunk(two);
-  yield wrapChunk(three);
-}
-
-function wrapChunk(str) {
-  return {
-    choices: [
-      {
-        delta: {
-          content: str,
-        },
+    responses: {
+      create(options) {
+        if (!options.input) {
+          throw new Error('Missing parameter "input".');
+        }
+        if (options.stream) {
+          return streamMock();
+        } else {
+          return mock;
+        }
       },
-    ],
+    },
+    models: {
+      list() {
+        return {
+          data: models,
+        };
+      },
+    },
   };
 }
 
-function setResponse(data) {
+export function setResponse(data) {
   mock = data;
 }
 
-MockOpenAiClient.setResponse = setResponse;
+export function setModels(data) {
+  models = data;
+}
 
-module.exports = MockOpenAiClient;
+async function* streamMock() {
+  for await (let event of mock) {
+    yield event;
+  }
+}

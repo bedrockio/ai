@@ -1,7 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 import BaseClient from './BaseClient.js';
-import { transformResponse } from './util.js';
 
 const DEFAULT_MODEL = 'models/gemini-2.0-flash-exp';
 
@@ -33,6 +32,7 @@ export class GoogleClient extends BaseClient {
       model,
     });
 
+    // @ts-ignore
     const messages = await this.getMessages(options);
 
     const prompts = messages.map((message) => {
@@ -57,13 +57,10 @@ export class GoogleClient extends BaseClient {
     });
     const [message] = parts;
 
-    return transformResponse({
-      ...options,
-      messages,
-      message,
-    });
+    return message;
   }
   async getStream(options) {
+    // @ts-ignore
     const response = await super.getStream(options);
     // @ts-ignore
     return response.stream;

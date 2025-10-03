@@ -4,11 +4,15 @@
   "description": "Bedrock wrapper for common AI chatbots.",
   "type": "module",
   "scripts": {
-    "test": "node --no-warnings node_modules/.bin/jest",
+    "test": "vitest run",
     "types": "tsc",
     "lint": "eslint",
     "build": "scripts/build",
     "eject": "scripts/eject",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "build:esm": "tsc -p tsconfig.esm.json && tsc-alias -f -p tsconfig.esm.json",
+    "build:types": "tsc -p tsconfig.types.json",
+    "build:docs": "typedoc",
     "prepublish": "yarn build && yarn types"
   },
   "types": "types/index.d.ts",
@@ -31,24 +35,22 @@
     "url": "https://github.com/bedrockio/router"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.36.3",
+    "@anthropic-ai/claude-agent-sdk": "^0.1.5",
+    "@anthropic-ai/sdk": "^0.65.0",
     "@google/generative-ai": "^0.21.0",
     "glob": "^11.0.1",
     "mustache": "^4.2.0",
-    "openai": "^4.83.0"
+    "openai": "^6.1.0"
   },
   "devDependencies": {
-    "@babel/cli": "^7.26.4",
-    "@babel/core": "^7.26.0",
-    "@babel/eslint-parser": "^7.26.5",
-    "@babel/preset-env": "^7.26.0",
+    "@bedrockio/eslint-plugin": "^1.2.2",
     "@bedrockio/prettier-config": "^1.0.2",
-    "eslint": "^8.33.0",
-    "eslint-plugin-bedrock": "^1.0.27",
-    "eslint-plugin-import": "^2.31.0",
-    "jest": "^29.7.0",
-    "prettier-eslint": "^16.3.0",
-    "typescript": "^5.7.3"
+    "@bedrockio/yada": "^1.7.0",
+    "eslint": "^9.36.0",
+    "jest": "^30.2.0",
+    "tsc-alias": "^1.8.16",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
   },
   "volta": {
     "node": "22.12.0",

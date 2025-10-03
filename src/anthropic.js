@@ -1,17 +1,14 @@
 import Anthropic from '@anthropic-ai/sdk';
 
 import BaseClient from './BaseClient.js';
-import { transformResponse } from './util.js';
 
-const MODELS_URL = 'https://docs.anthropic.com/en/docs/about-claude/models';
-const DEFAULT_MODEL = 'claude-3-5-sonnet-latest';
+const DEFAULT_MODEL = 'claude-sonnet-4-5';
+const DEFAULT_TOKENS = 4096;
 
 export class AnthropicClient extends BaseClient {
   constructor(options) {
     super(options);
-    this.client = new Anthropic({
-      ...options,
-    });
+    this.client = new Anthropic(options);
   }
 
   /**
@@ -23,75 +20,102 @@ export class AnthropicClient extends BaseClient {
     return data.map((o) => o.id);
   }
 
-  async getCompletion(options) {
+  async runPrompt(options) {
     const {
+      input,
+      instructions,
+      tokens = DEFAULT_TOKENS,
       model = DEFAULT_MODEL,
-      max_tokens = 2048,
-      output = 'text',
       stream = false,
-      messages,
     } = options;
-    const { client } = this;
-
-    const { system, user } = splitMessages(messages);
-
-    if (!model) {
-      throw new Error(
-        `No model specified. Available models are here: ${MODELS_URL}.`,
-      );
-    }
-
-    const response = await client.messages.create({
-      max_tokens,
-      messages: user,
-      system,
-      model,
-      stream,
-    });
-
-    if (output === 'raw') {
-      return response;
-    }
 
     // @ts-ignore
-    const message = response.content[0];
-
-    return transformResponse({
-      ...options,
-      messages,
-      message,
+    return await this.client.messages.create({
+      model,
+      stream,
+      max_tokens: tokens,
+      system: instructions,
+      ...this.getSchemaOptions(options),
+      messages: [
+        {
+          role: 'user',
+          content: input,
+        },
+      ],
     });
   }
 
-  getStreamedChunk(chunk) {
-    // @ts-ignore
-    let type;
-    if (chunk.type === 'content_block_start') {
-      type = 'start';
-    } else if (chunk.type === 'content_block_delta') {
-      type = 'chunk';
-    } else if (chunk.type === 'message_stop') {
-      type = 'stop';
-    }
+  async runStream(options) {
+    return await this.runPrompt({
+      ...options,
+      output: 'raw',
+      stream: true,
+    });
+  }
 
-    if (type) {
+  getTextResponse(response) {
+    const textBlock = response.content.find((block) => {
+      return block.type === 'text';
+    });
+    return textBlock?.text || null;
+  }
+
+  getStructuredResponse(response) {
+    const toolBlock = response.content.find((block) => {
+      return block.type === 'tool_use';
+    });
+    return toolBlock?.input || null;
+  }
+
+  normalizeStreamEvent(event) {
+    let { type } = event;
+    if (type === 'content_block_start') {
       return {
-        type,
-        text: chunk.delta?.text || '',
+        type: 'start',
+      };
+    } else if (type === 'content_block_stop') {
+      return {
+        type: 'stop',
+      };
+    } else if (type === 'content_block_delta') {
+      return {
+        type: 'delta',
+        text: event.delta.text,
       };
     }
   }
-}
 
-function splitMessages(messages) {
-  const system = [];
-  const user = [];
-  for (let message of messages) {
-    if (message.role === 'system') {
-      system.push(message);
-    } else {
-      user.push(message);
+  // Private
+
+  getSchemaOptions(options) {
+    const { output } = options;
+    if (output?.meta?.type) {
+      let schema = output;
+
+      if (schema.meta.type === 'array') {
+        schema = {
+          type: 'object',
+          properties: {
+            items: schema,
+          },
+          required: ['items'],
+          additionalProperties: false,
+        };
+      }
+
+      return {
+        tools: [
+          {
+            name: 'schema',
+            description: 'Follow the schema for JSON output.',
+            input_schema: schema,
+          },
+        ],
+        tool_choice: {
+          type: 'tool',
+          name: 'schema',
+        },
+      };
     }
   }
-  return { system: system.join('\n'), user };
 }

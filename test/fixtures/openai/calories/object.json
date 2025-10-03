@@ -1,0 +1,70 @@
+{
+  "id": "resp_078a2b15d931a72f0068ca57b560808197bb58d6b2ddefa905",
+  "object": "response",
+  "created_at": 1758091189,
+  "status": "completed",
+  "background": false,
+  "error": null,
+  "incomplete_details": null,
+  "instructions": "You are a helpful assistant.\nYour job is to classify foods that a user has eaten and guess\nadditional information about it including an estimate of the calories.\n\nOutput a JSON array of foods with a \"name\" and \"calories\" field on each.",
+  "max_output_tokens": null,
+  "max_tool_calls": null,
+  "model": "gpt-5-nano-2025-08-07",
+  "output": [
+    {
+      "id": "rs_078a2b15d931a72f0068ca57b5f5ec8197a0bc03ae315687fb",
+      "type": "reasoning",
+      "summary": []
+    },
+    {
+      "id": "msg_078a2b15d931a72f0068ca57bb62c08197a0f6249ff9590052",
+      "type": "message",
+      "status": "completed",
+      "content": [
+        {
+          "type": "output_text",
+          "annotations": [],
+          "logprobs": [],
+          "text": "{\n  \"foods\": [\n    {\"name\": \"Burger\", \"calories\": 360},\n    {\"name\": \"French fries\", \"calories\": 340},\n    {\"name\": \"Banana\", \"calories\": 105}\n  ]\n}"
+        }
+      ],
+      "role": "assistant"
+    }
+  ],
+  "parallel_tool_calls": true,
+  "previous_response_id": null,
+  "prompt_cache_key": null,
+  "reasoning": {
+    "effort": "medium",
+    "summary": null
+  },
+  "safety_identifier": null,
+  "service_tier": "default",
+  "store": true,
+  "temperature": 1,
+  "text": {
+    "format": {
+      "type": "json_object"
+    },
+    "verbosity": "medium"
+  },
+  "tool_choice": "auto",
+  "tools": [],
+  "top_logprobs": 0,
+  "top_p": 1,
+  "truncation": "disabled",
+  "usage": {
+    "input_tokens": 84,
+    "input_tokens_details": {
+      "cached_tokens": 0
+    },
+    "output_tokens": 955,
+    "output_tokens_details": {
+      "reasoning_tokens": 896
+    },
+    "total_tokens": 1039
+  },
+  "user": null,
+  "metadata": {},
+  "output_text": "{\n  \"foods\": [\n    {\"name\": \"Burger\", \"calories\": 360},\n    {\"name\": \"French fries\", \"calories\": 340},\n    {\"name\": \"Banana\", \"calories\": 105}\n  ]\n}"
+}

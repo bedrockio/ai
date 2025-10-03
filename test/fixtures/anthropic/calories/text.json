@@ -1,0 +1,25 @@
+{
+  "id": "msg_01Wc7kf31bhkFAZY5zXCHiri",
+  "type": "message",
+  "role": "assistant",
+  "model": "claude-sonnet-4-5-20250929",
+  "content": [
+    {
+      "type": "text",
+      "text": "I'll classify your meal and provide nutritional estimates:\n\n## **Dinner:**\n\n### 🍔 Burger\n- **Classification:** Main course, protein + carbohydrate\n- **Type:** Likely beef burger with bun\n- **Estimated calories:** 500-800 calories\n  - Beef patty (4 oz): ~300 cal\n  - Bun: ~150 cal\n  - Toppings (cheese, lettuce, tomato, condiments): ~50-350 cal\n\n### 🍟 French Fries\n- **Classification:** Side dish, carbohydrate + fat\n- **Portion assumed:** Medium serving (~4 oz/115g)\n- **Estimated calories:** 300-400 calories\n\n## **Dessert:**\n\n### 🍌 Banana\n- **Classification:** Fruit, carbohydrate (natural sugars + fiber)\n- **Size assumed:** Medium (7-8 inches)\n- **Estimated calories:** 105 calories\n\n---\n\n## **Total Meal Estimate: 905-1,305 calories**\n\n**Notes:**\n- The wide range depends on burger size, toppings, and whether fries were regular or large\n- The burger could be 400 cal (small fast-food) to 1,000+ cal (restaurant with bacon/cheese)\n- Fries vary significantly based on preparation (fried vs baked) and portion size\n- The banana is the healthiest item with fiber, potassium, and vitamins\n\nWould you like more specific estimates if you can provide details about the burger type or restaurant?"
+    }
+  ],
+  "stop_reason": "end_turn",
+  "stop_sequence": null,
+  "usage": {
+    "input_tokens": 59,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 0
+    },
+    "output_tokens": 369,
+    "service_tier": "standard"
+  }
+}

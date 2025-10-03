@@ -54,6 +54,6 @@ function wrapChunk(str, finish) {
 }
 
 module.exports = {
-  setResponse,
   GoogleGenerativeAI: MockGoogleClient,
+  setResponse,
 };
