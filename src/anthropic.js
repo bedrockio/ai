@@ -89,10 +89,10 @@ export class AnthropicClient extends BaseClient {
 
   getSchemaOptions(options) {
     const { output } = options;
-    if (output?.meta?.type) {
+    if (output?.type) {
       let schema = output;
 
-      if (schema.meta.type === 'array') {
+      if (schema.type === 'array') {
         schema = {
           type: 'object',
           properties: {

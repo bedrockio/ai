@@ -1,7 +1,6 @@
-live
 dist
 types
 .vscode
 .claude
 yarn-error.log
-keys.js
+.env.live

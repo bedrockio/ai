@@ -18,6 +18,7 @@ import stocksText from './fixtures/openai/stocks/text.json';
 vi.mock('openai');
 
 const client = new OpenAiClient({
+  apiKey: 'test-key',
   templates: path.join(__dirname, './templates'),
 });
 
@@ -62,7 +63,7 @@ describe('openai', () => {
         });
       });
 
-      it('should succeed for a structured json response', async () => {
+      it('should allow a yada schema for output', async () => {
         setResponse(caloriesStructured);
         const result = await client.prompt({
           template: 'calories',
@@ -78,6 +79,50 @@ describe('openai', () => {
               )
               .required(),
           }),
+        });
+        expect(result).toEqual({
+          foods: [
+            {
+              name: 'burger',
+              calories: 450,
+            },
+            {
+              name: 'french fries',
+              calories: 350,
+            },
+            {
+              name: 'banana',
+              calories: 105,
+            },
+          ],
+        });
+      });
+
+      it('should allow a JSON schema for output', async () => {
+        setResponse(caloriesStructured);
+        const result = await client.prompt({
+          template: 'calories',
+          input:
+            'I had a burger and some french fries for dinner. For dessert I had a banana.',
+          output: {
+            type: 'object',
+            properties: {
+              foods: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    name: { type: 'string' },
+                    calories: { type: 'number' },
+                  },
+                  required: ['name', 'calories'],
+                  additionalProperties: false,
+                },
+              },
+            },
+            required: ['foods'],
+            additionalProperties: false,
+          },
         });
         expect(result).toEqual({
           foods: [

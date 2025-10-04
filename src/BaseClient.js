@@ -15,27 +15,19 @@ export default class BaseClient {
    * @param {PromptOptions} options
    */
   async prompt(options) {
-    let { input, output = 'text' } = options;
+    options = await this.normalizeOptions(options);
 
-    if (output === 'json') {
-      input += '\nOutput only valid JSON.';
-    }
+    const { output = 'text' } = options;
 
-    const instructions = await this.resolveInstructions(options);
-
-    const response = await this.runPrompt({
-      input,
-      output,
-      instructions,
-    });
+    const response = await this.runPrompt(options);
 
     if (output === 'raw') {
       return response;
     } else if (output === 'json') {
       return JSON.parse(parseCode(this.getTextResponse(response)));
-    } else if (output?.meta?.type) {
+    } else if (output?.type) {
       let result = this.getStructuredResponse(response);
-      if (output.meta?.type === 'array') {
+      if (output.type === 'array') {
         // @ts-ignore
         result = result.items;
       }
@@ -52,12 +44,9 @@ export default class BaseClient {
    * @returns {AsyncIterator}
    */
   async *stream(options) {
-    const instructions = await this.resolveInstructions(options);
+    options = await this.normalizeOptions(options);
 
-    const stream = await this.runStream({
-      ...options,
-      instructions,
-    });
+    const stream = await this.runStream(options);
 
     const events = [];
 
@@ -106,6 +95,24 @@ export default class BaseClient {
   }
 
   // Private
+
+  async normalizeOptions(options) {
+    let { input, output, ...rest } = options;
+
+    if (output === 'json') {
+      input += '\nOutput only valid JSON.';
+    } else if (output?.meta?.type) {
+      // Convert yada schemas to JSON schema.
+      output = output.toJSON();
+    }
+
+    return {
+      ...rest,
+      input,
+      output,
+      instructions: await this.resolveInstructions(options),
+    };
+  }
 
   async resolveInstructions(options) {
     if (options.template) {

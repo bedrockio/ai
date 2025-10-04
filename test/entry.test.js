@@ -20,12 +20,6 @@ describe('Client', () => {
     expect(() => {
       new Client({
         platform: 'openai',
-      });
-    }).toThrow('No templates directory specified.');
-
-    expect(() => {
-      new Client({
-        platform: 'openai',
         templates: 'test',
       });
     }).toThrow('No API key specified.');

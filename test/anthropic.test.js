@@ -281,7 +281,7 @@ describe('anthropic', () => {
   });
 
   describe('models', () => {
-    it.only('should list out available models', async () => {
+    it('should list out available models', async () => {
       setModels(modelsList);
       const models = await client.models();
       expect(models).toEqual([

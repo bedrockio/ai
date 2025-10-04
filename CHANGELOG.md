@@ -1,7 +1,8 @@
 ## Next
 
 - Rewrote OpenAI to use new responses format.
-- Allow JSON schemas for OpenAI.
+- Allow structured responses.
+- Allow yada or JSON schema.
 - Using `template` option only now.
 
 ## 0.3.0

@@ -71,13 +71,12 @@ export class OpenAiClient extends BaseClient {
       return {
         type: 'json_object',
       };
-    } else if (output?.meta?.type) {
-      // Assume yada schema. Schema will use its own
-      // toJSON method to export to JSON schema here.
+    } else if (output?.type) {
+      // JSON schema
 
       let schema = output;
 
-      if (schema.meta.type === 'array') {
+      if (schema.type === 'array') {
         schema = {
           type: 'object',
           properties: {
