@@ -5,15 +5,13 @@
   "type": "module",
   "scripts": {
     "test": "vitest run",
-    "types": "tsc",
     "lint": "eslint",
     "build": "scripts/build",
     "eject": "scripts/eject",
     "build:cjs": "tsc -p tsconfig.cjs.json",
     "build:esm": "tsc -p tsconfig.esm.json && tsc-alias -f -p tsconfig.esm.json",
     "build:types": "tsc -p tsconfig.types.json",
-    "build:docs": "typedoc",
-    "prepublish": "yarn build && yarn types"
+    "prepublish": "yarn build"
   },
   "types": "types/index.d.ts",
   "main": "./dist/cjs/index.js",
@@ -35,7 +33,6 @@
     "url": "https://github.com/bedrockio/router"
   },
   "dependencies": {
-    "@anthropic-ai/claude-agent-sdk": "^0.1.5",
     "@anthropic-ai/sdk": "^0.65.0",
     "@google/generative-ai": "^0.21.0",
     "glob": "^11.0.1",
@@ -47,7 +44,6 @@
     "@bedrockio/prettier-config": "^1.0.2",
     "@bedrockio/yada": "^1.7.0",
     "eslint": "^9.36.0",
-    "jest": "^30.2.0",
     "tsc-alias": "^1.8.16",
     "typescript": "^5.9.3",
     "vitest": "^3.2.4"
