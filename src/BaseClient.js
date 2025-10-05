@@ -25,7 +25,7 @@ export default class BaseClient {
 
     const response = await this.runPrompt(options);
 
-    this.debug('Reponse:', response);
+    this.debug('Response:', response);
 
     if (output === 'raw') {
       return response;

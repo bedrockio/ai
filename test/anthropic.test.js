@@ -81,7 +81,7 @@ describe('anthropic', () => {
         });
       });
 
-      it('should succeed for a structured json response', async () => {
+      it('should allow yada schema for output', async () => {
         setResponse(caloriesStructured);
         const result = await client.prompt({
           template: 'calories',
@@ -97,6 +97,50 @@ describe('anthropic', () => {
               )
               .required(),
           }),
+        });
+        expect(result).toEqual({
+          foods: [
+            {
+              name: 'burger',
+              calories: 550,
+            },
+            {
+              name: 'french fries',
+              calories: 365,
+            },
+            {
+              name: 'banana',
+              calories: 105,
+            },
+          ],
+        });
+      });
+
+      it('should allow a JSON schema for output', async () => {
+        setResponse(caloriesStructured);
+        const result = await client.prompt({
+          template: 'calories',
+          input:
+            'I had a burger and some french fries for dinner. For dessert I had a banana.',
+          output: {
+            type: 'object',
+            properties: {
+              foods: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    name: { type: 'string' },
+                    calories: { type: 'number' },
+                  },
+                  required: ['name', 'calories'],
+                  additionalProperties: false,
+                },
+              },
+            },
+            required: ['foods'],
+            additionalProperties: false,
+          },
         });
         expect(result).toEqual({
           foods: [
