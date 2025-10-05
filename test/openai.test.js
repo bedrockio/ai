@@ -411,5 +411,17 @@ This is a simple markdown snippet with a [link](https://example.com).
       });
       expect(result).toBe('- one\n- two\n- three');
     });
+
+    it('should store the previous response id', async () => {
+      setResponse(caloriesText);
+
+      await client.prompt({
+        input: 'Hello',
+      });
+
+      expect(client.previousResponseId).toBe(
+        'resp_0594e6c81a245f130068ca4d5691648192a0b15b41dfc1b0b7'
+      );
+    });
   });
 });

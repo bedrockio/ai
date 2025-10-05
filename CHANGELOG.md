@@ -5,6 +5,7 @@
 - Allow yada or JSON schema.
 - Using `template` option only now.
 - Allow specifying model in client options.
+- Store the previous response id for OpenAI.
 - Added debug feature.
 
 ## 0.3.0
