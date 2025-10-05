@@ -1,32 +1,34 @@
 import path from 'path';
 
-import { describe, expect, it } from 'vitest';
+import { setResponse } from 'openai';
+import { describe, expect, it, vi } from 'vitest';
 
 import { XAiClient } from '../src/xai';
+import code from './fixtures/xai/code.json';
 
 const client = new XAiClient({
   templates: path.join(__dirname, './templates'),
 });
 
-describe.skip('xAi', () => {
+vi.mock('openai');
+
+describe('xAi', () => {
   describe('prompt', () => {
     it('should transform code', async () => {
+      setResponse(code);
       const result = await client.prompt({
-        text: 'Please generate some javascript code',
-        output: 'code',
+        input:
+          'Please generate some a basic Javascript function that sums two numbers.',
       });
       expect(result).toEqual(
         `
-/**
- * Calculates the factorial of a given number.
- * @param {number} n - The number to calculate the factorial for.
- * @returns {number} The factorial of the input number.
- */
-function factorial(n) {
-    if (n === 0 || n === 1) return 1;
-    return n * factorial(n - 1);
+function sumTwoNumbers(a, b) {
+    return a + b;
 }
-      `.trim(0)
+
+// Example usage:
+// console.log(sumTwoNumbers(5, 3)); // Output: 8
+    `.trim()
       );
     });
   });

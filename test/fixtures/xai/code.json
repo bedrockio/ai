@@ -1,29 +1,62 @@
 {
-  "id": "b219a90b-5841-4b0e-abbd-71b162437834",
-  "object": "chat.completion",
-  "created": 1737440165,
-  "model": "grok-2-1212",
-  "choices": [
+  "created_at": 1759623212,
+  "id": "67873eb8-0b79-5f9c-c785-6e5fe1ddde65_us-east-1",
+  "max_output_tokens": null,
+  "model": "grok-4-fast-reasoning",
+  "object": "response",
+  "output": [
     {
-      "index": 0,
-      "message": {
-        "role": "assistant",
-        "content": "Here's a short JavaScript function that calculates the factorial of a given number:\n\n```javascript\n/**\n * Calculates the factorial of a given number.\n * @param {number} n - The number to calculate the factorial for.\n * @returns {number} The factorial of the input number.\n */\nfunction factorial(n) {\n    if (n === 0 || n === 1) return 1;\n    return n * factorial(n - 1);\n}\n```\n\nThis function uses recursion to calculate the factorial. It returns 1 for inputs of 0 or 1, and otherwise multiplies the input by the factorial of the input minus one.",
-        "refusal": null
-      },
-      "finish_reason": "stop"
+      "id": "rs_67873eb8-0b79-5f9c-c785-6e5fe1ddde65_us-east-1",
+      "summary": [],
+      "type": "reasoning",
+      "status": "completed",
+      "encrypted_content": "6aYA4DCRg8BPHfKaCPBWk4WIB+X+nD6uSL69xqHQSRrESVxLV6LhGDV1EXTBTWf9Sl+TQFg6XbV8oaa2msLnuvEYeSPTdlFNNwbq96fXKA/rRI9tVzuNcmZPENlpYgFwvTD+KI+WQZFCme/thR6iXyoRBMjRjvhN2LKsQ8zGUPHhm2JhLI+H8fcUG1PG68u8/HLkdLzCdeL7KBTDr/0A5XBY5YU4xqTGUbX7JYn6vpVYqReHVQtLN5HBiY/B7wHO9E3Z0qGRWrkwM3k1Y0y52SocOJ90Tty9QSR7VByy3wy4YKiXs94qtyMaURX4+BuTm+SuCAnC0MKnhPid3WeA1yMehF5o2eS8xFxSUlsQJWes/4yDb6N0ATMc1G2znXp7NM8SVUFwEuTMbAvKNibBxOl4o8dWcLql6/gt9ETHjnNif5nedd3Auk9tPNqSGAHLITnbeAgZgYHABBGWvFRaDjkUsTbmZNw0FMT3kTykBs2nEFSTD/uvvxhVgC/4Bz+fuWQYTYHUvEMEOU+IMGk/7ByvCCrRldNXoPUuhbrbHAU/mgp/Lk0aIbQfatwWNHLXYYIcdzUULnEtG0+52k3s8TFQhb4o9BUcbpv2hp1tVN0n2zUtbxPksevBVKpqgDQWNzYOxS8PPFKPEpgPBRB67Atss0+PVnCcaYdhtqnRvL3ZAokD9ctI6R+Ht43qp7xyElkLVxLggw0o9WQ9iSkz5RmHEWHf4YMtyWqV/Z7MonQ/DDmBcV6S4zVxuN2M5AzyThl7OmJZ9R0mnjWN7Prfjn2gosApog0SxV8Z8tfUdjW0JlhShWzzLrlXh7fHCQEiOmwKT6wE7Ulvo8AFQJCtjqERfbJKPqgNARSjAZXL4axCuntuL4Iwbc17Q9HJwJ6Mkli375CUN44b5w"
+    },
+    {
+      "content": [
+        {
+          "type": "output_text",
+          "text": "```javascript\nfunction sumTwoNumbers(a, b) {\n    return a + b;\n}\n\n// Example usage:\n// console.log(sumTwoNumbers(5, 3)); // Output: 8\n```",
+          "logprobs": null,
+          "annotations": []
+        }
+      ],
+      "id": "msg_67873eb8-0b79-5f9c-c785-6e5fe1ddde65_us-east-1",
+      "role": "assistant",
+      "type": "message",
+      "status": "completed"
     }
   ],
-  "usage": {
-    "prompt_tokens": 13,
-    "completion_tokens": 130,
-    "total_tokens": 143,
-    "prompt_tokens_details": {
-      "text_tokens": 13,
-      "audio_tokens": 0,
-      "image_tokens": 0,
-      "cached_tokens": 0
+  "parallel_tool_calls": true,
+  "previous_response_id": null,
+  "reasoning": {
+    "effort": "medium",
+    "summary": "detailed"
+  },
+  "temperature": null,
+  "text": {
+    "format": {
+      "type": "text"
     }
   },
-  "system_fingerprint": "fp_a0b4c0d79d"
+  "tool_choice": "auto",
+  "tools": [],
+  "top_p": null,
+  "usage": {
+    "input_tokens": 129,
+    "input_tokens_details": {
+      "cached_tokens": 112
+    },
+    "output_tokens": 176,
+    "output_tokens_details": {
+      "reasoning_tokens": 136
+    },
+    "total_tokens": 305
+  },
+  "user": null,
+  "incomplete_details": null,
+  "status": "completed",
+  "store": true,
+  "metadata": {},
+  "output_text": "```javascript\nfunction sumTwoNumbers(a, b) {\n    return a + b;\n}\n\n// Example usage:\n// console.log(sumTwoNumbers(5, 3)); // Output: 8\n```"
 }

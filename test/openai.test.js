@@ -18,7 +18,6 @@ import stocksText from './fixtures/openai/stocks/text.json';
 vi.mock('openai');
 
 const client = new OpenAiClient({
-  apiKey: 'test-key',
   templates: path.join(__dirname, './templates'),
 });
 

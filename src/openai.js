@@ -2,9 +2,9 @@ import OpenAI from 'openai';
 
 import BaseClient from './BaseClient.js';
 
-const DEFAULT_MODEL = 'gpt-5-nano';
-
 export class OpenAiClient extends BaseClient {
+  static DEFAULT_MODEL = 'gpt-5-nano';
+
   constructor(options) {
     super(options);
     this.client = new OpenAI(options);
@@ -20,12 +20,7 @@ export class OpenAiClient extends BaseClient {
   }
 
   async runPrompt(options) {
-    let {
-      input,
-      model = DEFAULT_MODEL,
-      output = 'text',
-      stream = false,
-    } = options;
+    let { input, model, output = 'text', stream = false } = options;
 
     if (output === 'json') {
       input += 'Output must be valid JSON.';
@@ -33,7 +28,7 @@ export class OpenAiClient extends BaseClient {
 
     const instructions = await this.resolveInstructions(options);
 
-    return await this.client.responses.create({
+    const params = {
       model,
       input,
       stream,
@@ -41,7 +36,11 @@ export class OpenAiClient extends BaseClient {
       text: {
         format: this.getOutputFormat(options),
       },
-    });
+    };
+
+    this.debug('Params:', params);
+
+    return await this.client.responses.create(params);
   }
 
   async runStream(options) {
@@ -73,7 +72,6 @@ export class OpenAiClient extends BaseClient {
       };
     } else if (output?.type) {
       // JSON schema
-
       let schema = output;
 
       if (schema.type === 'array') {
@@ -92,9 +90,7 @@ export class OpenAiClient extends BaseClient {
         // Name is required but arbitrary.
         name: 'schema',
         strict: true,
-        schema: {
-          type: 'object',
-        },
+        schema,
       };
     } else {
       return {

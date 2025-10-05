@@ -2,7 +2,11 @@ import { loadTemplates, parseCode, renderTemplate } from './utils.js';
 
 export default class BaseClient {
   constructor(options) {
-    this.options = options;
+    this.options = {
+      // @ts-ignore
+      model: this.constructor.DEFAULT_MODEL,
+      ...options,
+    };
     this.templates = null;
   }
 
@@ -20,6 +24,8 @@ export default class BaseClient {
     const { output = 'text' } = options;
 
     const response = await this.runPrompt(options);
+
+    this.debug('Reponse:', response);
 
     if (output === 'raw') {
       return response;
@@ -97,7 +103,7 @@ export default class BaseClient {
   // Private
 
   async normalizeOptions(options) {
-    let { input, output, ...rest } = options;
+    let { input, output, model = this.options.model, ...rest } = options;
 
     if (output === 'json') {
       input += '\nOutput only valid JSON.';
@@ -108,10 +114,19 @@ export default class BaseClient {
 
     return {
       ...rest,
+      model,
       input,
       output,
       instructions: await this.resolveInstructions(options),
     };
+  }
+
+  debug(message, arg) {
+    if (this.options.debug) {
+      // TODO: replace with logger when opentelemetry is removed
+      // eslint-disable-next-line
+      console.debug(`${message}\n${JSON.stringify(arg, null, 2)}`);
+    }
   }
 
   async resolveInstructions(options) {

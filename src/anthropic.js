@@ -2,10 +2,11 @@ import Anthropic from '@anthropic-ai/sdk';
 
 import BaseClient from './BaseClient.js';
 
-const DEFAULT_MODEL = 'claude-sonnet-4-5';
 const DEFAULT_TOKENS = 4096;
 
 export class AnthropicClient extends BaseClient {
+  static DEFAULT_MODEL = 'claude-sonnet-4-5';
+
   constructor(options) {
     super(options);
     this.client = new Anthropic(options);
@@ -23,10 +24,10 @@ export class AnthropicClient extends BaseClient {
   async runPrompt(options) {
     const {
       input,
+      model,
       instructions,
-      tokens = DEFAULT_TOKENS,
-      model = DEFAULT_MODEL,
       stream = false,
+      tokens = DEFAULT_TOKENS,
     } = options;
 
     // @ts-ignore
