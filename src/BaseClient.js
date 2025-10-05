@@ -21,7 +21,7 @@ export default class BaseClient {
   async prompt(options) {
     options = await this.normalizeOptions(options);
 
-    const { output } = options;
+    const { input, output, schema } = options;
 
     const response = await this.runPrompt(options);
 
@@ -29,17 +29,29 @@ export default class BaseClient {
 
     if (output === 'raw') {
       return response;
-    } else if (output === 'json') {
-      return JSON.parse(parseCode(this.getTextResponse(response)));
-    } else if (output?.type) {
-      let result = this.getStructuredResponse(response);
-      if (output.type === 'array') {
+    }
+
+    let result;
+
+    if (schema) {
+      result = this.getStructuredResponse(response);
+      if (schema.type === 'array') {
         // @ts-ignore
         result = result.items;
       }
-      return result;
+    } else if (output === 'json') {
+      result = JSON.parse(parseCode(this.getTextResponse(response)));
     } else {
-      return parseCode(this.getTextResponse(response));
+      result = parseCode(this.getTextResponse(response));
+    }
+
+    if (output === 'messages') {
+      return {
+        result,
+        messages: [...input, ...this.getMessages(response)],
+      };
+    } else {
+      return result;
     }
   }
 
@@ -95,6 +107,14 @@ export default class BaseClient {
     throw new Error('Method not implemented.');
   }
 
+  /**
+   * @returns {Array}
+   */
+  getMessages(response) {
+    void response;
+    throw new Error('Method not implemented.');
+  }
+
   normalizeStreamEvent(event) {
     void event;
     throw new Error('Method not implemented.');
@@ -105,13 +125,13 @@ export default class BaseClient {
   async normalizeOptions(options) {
     options = {
       input: '',
+      output: 'text',
       ...this.options,
       ...options,
     };
 
     options.input = this.normalizeInput(options);
-    options.output = this.normalizeOutput(options);
-
+    options.schema = this.normalizeSchema(options);
     options.instructions ||= await this.resolveInstructions(options);
 
     return options;
@@ -119,19 +139,26 @@ export default class BaseClient {
 
   normalizeInput(options) {
     let { input = '', output } = options;
-    if (output === 'json') {
-      input += '\nOutput only valid JSON.';
+
+    if (typeof input === 'string') {
+      if (output === 'json') {
+        input += '\nOutput only valid JSON.';
+      }
+
+      input = [
+        {
+          role: 'user',
+          content: input,
+        },
+      ];
     }
+
     return input;
   }
 
-  normalizeOutput(options) {
-    let { output = 'text' } = options;
-    if (output?.meta?.type) {
-      // Convert yada schemas to JSON schema.
-      output = options.output.toJSON();
-    }
-    return output;
+  normalizeSchema(options) {
+    const { schema } = options;
+    return schema?.toJSON?.() || schema;
   }
 
   debug(message, arg) {
@@ -165,7 +192,8 @@ export default class BaseClient {
  * @typedef {Object} PromptOptions
  * @property {string} input - Input to use.
  * @property {string} [model] - The model to use.
- * @property {"raw" | "text" | "json" | Object} [output] - The output to use.
+ * @property {Object} [schema] - A JSON schema compatible object that defines the output shape.
+ * @property {"raw" | "text" | "json" | "messages"} [output] - The return value type.
  * @property {Object} [params] - Params to be interpolated into the template.
  *                               May also be passed as additional props to options.
  */

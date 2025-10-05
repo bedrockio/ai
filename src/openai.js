@@ -24,6 +24,7 @@ export class OpenAiClient extends BaseClient {
     const {
       input,
       model,
+      verbosity,
       temperature,
       instructions,
       prevResponseId,
@@ -39,6 +40,7 @@ export class OpenAiClient extends BaseClient {
       previous_response_id: prevResponseId,
       text: {
         format: this.getOutputFormat(options),
+        verbosity,
       },
     };
 
@@ -69,20 +71,28 @@ export class OpenAiClient extends BaseClient {
     return JSON.parse(response.output_text);
   }
 
+  getMessages(response) {
+    return [
+      {
+        role: 'assistant',
+        content: response.output_text,
+      },
+    ];
+  }
+
   // Private
 
   /**
    * @returns {import('openai/resources/responses/responses').ResponseFormatTextConfig | undefined}
    */
   getOutputFormat(options) {
-    const { output } = options;
+    let { output, schema } = options;
     if (output === 'json') {
       return {
         type: 'json_object',
       };
-    } else if (output?.type) {
+    } else if (schema) {
       // JSON schema
-      let schema = output;
 
       if (schema.type === 'array') {
         schema = {

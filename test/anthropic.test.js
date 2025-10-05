@@ -87,7 +87,7 @@ describe('anthropic', () => {
           template: 'calories',
           input:
             'I had a burger and some french fries for dinner. For dessert I had a banana.',
-          output: yd.object({
+          schema: yd.object({
             foods: yd
               .array(
                 yd.object({
@@ -122,7 +122,7 @@ describe('anthropic', () => {
           template: 'calories',
           input:
             'I had a burger and some french fries for dinner. For dessert I had a banana.',
-          output: {
+          schema: {
             type: 'object',
             properties: {
               foods: {
@@ -166,7 +166,7 @@ describe('anthropic', () => {
           template: 'calories',
           input:
             'I had a burger and some french fries for dinner. For dessert I had a banana.',
-          output: yd.array(
+          schema: yd.array(
             yd.object({
               name: yd.string().required(),
               calories: yd.number().required(),
@@ -369,6 +369,34 @@ describe('anthropic', () => {
         arr: ['one', 'two', 'three'],
       });
       expect(result).toBe('- one\n- two\n- three');
+    });
+  });
+
+  describe('messages', () => {
+    it('should output all messages on the client for replay', async () => {
+      setResponse(caloriesText);
+
+      const { result, messages } = await client.prompt({
+        input: 'Hello',
+        output: 'messages',
+      });
+
+      expect(result).toContain(
+        "I'll classify your meal and provide nutritional estimates:"
+      );
+
+      expect(messages).toEqual([
+        {
+          role: 'user',
+          content: 'Hello',
+        },
+        {
+          role: 'assistant',
+          content: expect.stringContaining(
+            "I'll classify your meal and provide nutritional estimates:"
+          ),
+        },
+      ]);
     });
   });
 });

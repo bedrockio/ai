@@ -69,7 +69,7 @@ describe('openai', () => {
           template: 'calories',
           input:
             'I had a burger and some french fries for dinner. For dessert I had a banana.',
-          output: yd.object({
+          schema: yd.object({
             foods: yd
               .array(
                 yd.object({
@@ -104,7 +104,7 @@ describe('openai', () => {
           template: 'calories',
           input:
             'I had a burger and some french fries for dinner. For dessert I had a banana.',
-          output: {
+          schema: {
             type: 'object',
             properties: {
               foods: {
@@ -148,7 +148,7 @@ describe('openai', () => {
           template: 'calories',
           input:
             'I had a burger and some french fries for dinner. For dessert I had a banana.',
-          output: yd.array(
+          schema: yd.array(
             yd.object({
               name: yd.string().required(),
               calories: yd.number().required(),
@@ -436,6 +436,29 @@ This is a simple markdown snippet with a [link](https://example.com).
 
       expect(result).toBe('I am a new response in the thread!');
       expect(client.prevResponseId).toBe('resp_next');
+    });
+  });
+
+  describe('messages', () => {
+    it('should output all messages on the client for replay', async () => {
+      setResponse(caloriesText);
+
+      const { result, messages } = await client.prompt({
+        input: 'Hello',
+        output: 'messages',
+      });
+
+      expect(result).toContain('Total dinner calorie ballpark:');
+      expect(messages).toEqual([
+        {
+          role: 'user',
+          content: 'Hello',
+        },
+        {
+          role: 'assistant',
+          content: expect.stringContaining('Total dinner calorie ballpark:'),
+        },
+      ]);
     });
   });
 });

@@ -39,12 +39,7 @@ export class AnthropicClient extends BaseClient {
       max_tokens: tokens,
       system: instructions,
       ...this.getSchemaOptions(options),
-      messages: [
-        {
-          role: 'user',
-          content: input,
-        },
-      ],
+      messages: input,
     });
   }
 
@@ -68,6 +63,19 @@ export class AnthropicClient extends BaseClient {
       return block.type === 'tool_use';
     });
     return toolBlock?.input || null;
+  }
+
+  getMessages(response) {
+    return response.content
+      .filter((item) => {
+        return item.type === 'text';
+      })
+      .map((item) => {
+        return {
+          role: 'assistant',
+          content: item.text,
+        };
+      });
   }
 
   normalizeStreamEvent(event) {
