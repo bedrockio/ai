@@ -8,7 +8,7 @@ export class OpenAiClient extends BaseClient {
   constructor(options) {
     super(options);
     this.client = new OpenAI(options);
-    this.previousResponseId = null;
+    this.prevResponseId = null;
   }
 
   /**
@@ -21,7 +21,13 @@ export class OpenAiClient extends BaseClient {
   }
 
   async runPrompt(options) {
-    let { input, model, output = 'text', stream = false } = options;
+    let {
+      input,
+      model,
+      output = 'text',
+      stream = false,
+      prevResponseId,
+    } = options;
 
     if (output === 'json') {
       input += 'Output must be valid JSON.';
@@ -34,6 +40,7 @@ export class OpenAiClient extends BaseClient {
       input,
       stream,
       instructions,
+      previous_response_id: prevResponseId,
       text: {
         format: this.getOutputFormat(options),
       },
@@ -45,7 +52,7 @@ export class OpenAiClient extends BaseClient {
 
     // Store the previous response id to allow continuing conversations.
     // Note that this ability currently only exists for OpenAI compatible providers.
-    this.previousResponseId = response.id;
+    this.prevResponseId = response.id;
 
     return response;
   }

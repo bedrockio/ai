@@ -1,5 +1,5 @@
-let mock;
 let models;
+let responses = {};
 
 export default function MockOpenAiClient() {
   return {
@@ -9,20 +9,22 @@ export default function MockOpenAiClient() {
           if (options.stream) {
             return streamMock();
           } else {
-            return mock;
+            return responses['default'];
           }
         },
       },
     },
     responses: {
       create(options) {
+        const { previous_response_id = 'default' } = options;
         if (!options.input) {
           throw new Error('Missing parameter "input".');
         }
+        const response = responses[previous_response_id];
         if (options.stream) {
-          return streamMock();
+          return streamMock(response);
         } else {
-          return mock;
+          return response;
         }
       },
     },
@@ -36,16 +38,16 @@ export default function MockOpenAiClient() {
   };
 }
 
-export function setResponse(data) {
-  mock = data;
+export function setResponse(data, name = 'default') {
+  responses[name] = data;
 }
 
 export function setModels(data) {
   models = data;
 }
 
-async function* streamMock() {
-  for await (let event of mock) {
+async function* streamMock(response) {
+  for await (let event of response) {
     yield event;
   }
 }

@@ -5,6 +5,7 @@ import { setModels, setResponse } from 'openai';
 import { describe, expect, it, vi } from 'vitest';
 
 import { OpenAiClient } from '../src/openai';
+import caloriesFollowUp from './fixtures/openai/calories/follow-up.json';
 import caloriesObject from './fixtures/openai/calories/object.json';
 import caloriesStructured from './fixtures/openai/calories/structured.json';
 import caloriesText from './fixtures/openai/calories/text.json';
@@ -419,9 +420,22 @@ This is a simple markdown snippet with a [link](https://example.com).
         input: 'Hello',
       });
 
-      expect(client.previousResponseId).toBe(
+      expect(client.prevResponseId).toBe(
         'resp_0594e6c81a245f130068ca4d5691648192a0b15b41dfc1b0b7'
       );
+    });
+
+    it('should pass through the previous response ID', async () => {
+      setResponse(caloriesText, 'default');
+      setResponse(caloriesFollowUp, 'prev-id');
+
+      const result = await client.prompt({
+        input: 'Hello',
+        prevResponseId: 'prev-id',
+      });
+
+      expect(result).toBe('I am a new response in the thread!');
+      expect(client.prevResponseId).toBe('resp_next');
     });
   });
 });
