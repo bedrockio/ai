@@ -21,7 +21,7 @@ export default class BaseClient {
   async prompt(options) {
     options = await this.normalizeOptions(options);
 
-    const { output = 'text' } = options;
+    const { output } = options;
 
     const response = await this.runPrompt(options);
 
@@ -103,22 +103,35 @@ export default class BaseClient {
   // Private
 
   async normalizeOptions(options) {
-    let { input, output, model = this.options.model, ...rest } = options;
+    options = {
+      input: '',
+      ...this.options,
+      ...options,
+    };
 
+    options.input = this.normalizeInput(options);
+    options.output = this.normalizeOutput(options);
+
+    options.instructions ||= await this.resolveInstructions(options);
+
+    return options;
+  }
+
+  normalizeInput(options) {
+    let { input = '', output } = options;
     if (output === 'json') {
       input += '\nOutput only valid JSON.';
-    } else if (output?.meta?.type) {
-      // Convert yada schemas to JSON schema.
-      output = output.toJSON();
     }
+    return input;
+  }
 
-    return {
-      ...rest,
-      model,
-      input,
-      output,
-      instructions: await this.resolveInstructions(options),
-    };
+  normalizeOutput(options) {
+    let { output = 'text' } = options;
+    if (output?.meta?.type) {
+      // Convert yada schemas to JSON schema.
+      output = options.output.toJSON();
+    }
+    return output;
   }
 
   debug(message, arg) {

@@ -25,6 +25,7 @@ export class AnthropicClient extends BaseClient {
     const {
       input,
       model,
+      temperature,
       instructions,
       stream = false,
       tokens = DEFAULT_TOKENS,
@@ -34,6 +35,7 @@ export class AnthropicClient extends BaseClient {
     return await this.client.messages.create({
       model,
       stream,
+      temperature,
       max_tokens: tokens,
       system: instructions,
       ...this.getSchemaOptions(options),

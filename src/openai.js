@@ -21,24 +21,20 @@ export class OpenAiClient extends BaseClient {
   }
 
   async runPrompt(options) {
-    let {
+    const {
       input,
       model,
-      output = 'text',
-      stream = false,
+      temperature,
+      instructions,
       prevResponseId,
+      stream = false,
     } = options;
-
-    if (output === 'json') {
-      input += 'Output must be valid JSON.';
-    }
-
-    const instructions = await this.resolveInstructions(options);
 
     const params = {
       model,
       input,
       stream,
+      temperature,
       instructions,
       previous_response_id: prevResponseId,
       text: {
