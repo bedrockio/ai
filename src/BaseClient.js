@@ -48,7 +48,7 @@ export default class BaseClient {
     if (output === 'messages') {
       return {
         result,
-        messages: [...input, ...this.getMessages(response)],
+        ...this.getMessagesResponse(input, response),
       };
     } else {
       return result;
@@ -108,9 +108,9 @@ export default class BaseClient {
   }
 
   /**
-   * @returns {Array}
+   * @returns {Object}
    */
-  getMessages(response) {
+  getMessagesResponse(input, response) {
     void response;
     throw new Error('Method not implemented.');
   }

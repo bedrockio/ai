@@ -8,7 +8,6 @@ export class OpenAiClient extends BaseClient {
   constructor(options) {
     super(options);
     this.client = new OpenAI(options);
-    this.prevResponseId = null;
   }
 
   /**
@@ -46,13 +45,7 @@ export class OpenAiClient extends BaseClient {
 
     this.debug('Params:', params);
 
-    const response = await this.client.responses.create(params);
-
-    // Store the previous response id to allow continuing conversations.
-    // Note that this ability currently only exists for OpenAI compatible providers.
-    this.prevResponseId = response.id;
-
-    return response;
+    return await this.client.responses.create(params);
   }
 
   async runStream(options) {
@@ -71,13 +64,19 @@ export class OpenAiClient extends BaseClient {
     return JSON.parse(response.output_text);
   }
 
-  getMessages(response) {
-    return [
-      {
-        role: 'assistant',
-        content: response.output_text,
-      },
-    ];
+  getMessagesResponse(input, response) {
+    return {
+      messages: [
+        ...input,
+        {
+          role: 'assistant',
+          content: response.output_text,
+        },
+      ],
+      // Note that this ability currently only
+      // exists for OpenAI compatible providers.
+      prevResponseId: response.id,
+    };
   }
 
   // Private

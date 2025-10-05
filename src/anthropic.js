@@ -65,17 +65,22 @@ export class AnthropicClient extends BaseClient {
     return toolBlock?.input || null;
   }
 
-  getMessages(response) {
-    return response.content
-      .filter((item) => {
-        return item.type === 'text';
-      })
-      .map((item) => {
-        return {
-          role: 'assistant',
-          content: item.text,
-        };
-      });
+  getMessagesResponse(input, response) {
+    return {
+      messages: [
+        ...input,
+        ...response.content
+          .filter((item) => {
+            return item.type === 'text';
+          })
+          .map((item) => {
+            return {
+              role: 'assistant',
+              content: item.text,
+            };
+          }),
+      ],
+    };
   }
 
   normalizeStreamEvent(event) {

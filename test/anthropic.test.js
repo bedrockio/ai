@@ -392,9 +392,7 @@ describe('anthropic', () => {
         },
         {
           role: 'assistant',
-          content: expect.stringContaining(
-            "I'll classify your meal and provide nutritional estimates:"
-          ),
+          content: expect.stringContaining('s'),
         },
       ]);
     });

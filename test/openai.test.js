@@ -413,29 +413,18 @@ This is a simple markdown snippet with a [link](https://example.com).
       expect(result).toBe('- one\n- two\n- three');
     });
 
-    it('should store the previous response id', async () => {
-      setResponse(caloriesText);
-
-      await client.prompt({
-        input: 'Hello',
-      });
-
-      expect(client.prevResponseId).toBe(
-        'resp_0594e6c81a245f130068ca4d5691648192a0b15b41dfc1b0b7'
-      );
-    });
-
     it('should pass through the previous response ID', async () => {
       setResponse(caloriesText, 'default');
       setResponse(caloriesFollowUp, 'prev-id');
 
-      const result = await client.prompt({
+      const { result, prevResponseId } = await client.prompt({
         input: 'Hello',
+        output: 'messages',
         prevResponseId: 'prev-id',
       });
 
       expect(result).toBe('I am a new response in the thread!');
-      expect(client.prevResponseId).toBe('resp_next');
+      expect(prevResponseId).toBe('resp_next');
     });
   });
 
@@ -459,6 +448,19 @@ This is a simple markdown snippet with a [link](https://example.com).
           content: expect.stringContaining('Total dinner calorie ballpark:'),
         },
       ]);
+    });
+
+    it('should store the previous response id', async () => {
+      setResponse(caloriesText);
+
+      const { prevResponseId } = await client.prompt({
+        input: 'Hello',
+        output: 'messages',
+      });
+
+      expect(prevResponseId).toBe(
+        'resp_0594e6c81a245f130068ca4d5691648192a0b15b41dfc1b0b7'
+      );
     });
   });
 });
