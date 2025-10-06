@@ -4,4 +4,8 @@
 tsconfig.json
 scripts
 test
-live
+.env.live
+*.env
+*.pem
+*.key
+*.crt

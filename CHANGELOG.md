@@ -1,3 +1,7 @@
+## 0.4.2
+
+- Exclude keys from tarball.
+
 ## 0.4.1
 
 - No error on missing API key.
