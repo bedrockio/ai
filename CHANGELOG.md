@@ -3,6 +3,7 @@
 - Rewrote OpenAI to use new responses format.
 - Allow structured responses.
 - Allow yada or JSON schema.
+- Allow extracting partial JSON when streaming.
 - Using `template` option only now.
 - Allow specifying model in client options.
 - Store the previous response id for OpenAI.

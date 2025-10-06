@@ -1,4 +1,6 @@
-import { loadTemplates, parseCode, renderTemplate } from './utils.js';
+import { parseCode } from './utils/code.js';
+import { createMessageExtractor } from './utils/json.js';
+import { loadTemplates, renderTemplate } from './utils/templates.js';
 
 export default class BaseClient {
   constructor(options) {
@@ -21,22 +23,24 @@ export default class BaseClient {
   async prompt(options) {
     options = await this.normalizeOptions(options);
 
-    const { input, output, schema } = options;
+    const { input, output, stream, schema } = options;
 
     const response = await this.runPrompt(options);
 
-    this.debug('Response:', response);
+    if (!stream) {
+      this.debug('Response:', response);
+    }
 
     if (output === 'raw') {
       return response;
     }
 
     let result;
-
     if (schema) {
       result = this.getStructuredResponse(response);
-      if (schema.type === 'array') {
-        // @ts-ignore
+
+      // @ts-ignore
+      if (options.hasWrappedSchema) {
         result = result.items;
       }
     } else if (output === 'json') {
@@ -58,25 +62,53 @@ export default class BaseClient {
   /**
    * Streams the prompt response.
    *
-   * @param {PromptOptions} options
+   * @param {PromptOptions & StreamOptions} options
    * @returns {AsyncIterator}
    */
   async *stream(options) {
     options = await this.normalizeOptions(options);
 
-    const stream = await this.runStream(options);
+    const extractor = this.getMessageExtractor(options);
 
-    const events = [];
-
-    // @ts-ignore
-    for await (const event of stream) {
-      events.push(event);
-      const normalized = this.normalizeStreamEvent(event);
+    try {
+      const stream = await this.runStream(options);
 
       // @ts-ignore
-      if (normalized) {
-        yield normalized;
+      for await (let event of stream) {
+        this.debug('Event:', event);
+
+        event = this.normalizeStreamEvent(event);
+
+        if (event) {
+          yield event;
+        }
+
+        const extractedMessages = extractor?.(event) || [];
+
+        for (let message of extractedMessages) {
+          const { key, delta, text, done } = message;
+          if (done) {
+            yield {
+              type: 'extract:done',
+              text,
+              key,
+            };
+          } else {
+            yield {
+              type: 'extract:delta',
+              delta,
+              key,
+            };
+          }
+        }
       }
+    } catch (error) {
+      const { message, code } = error;
+      yield {
+        type: 'error',
+        code,
+        message,
+      };
     }
   }
 
@@ -102,6 +134,9 @@ export default class BaseClient {
     throw new Error('Method not implemented.');
   }
 
+  /**
+   * @returns {Object}
+   */
   getStructuredResponse(response) {
     void response;
     throw new Error('Method not implemented.');
@@ -115,6 +150,9 @@ export default class BaseClient {
     throw new Error('Method not implemented.');
   }
 
+  /**
+   * @returns {Object}
+   */
   normalizeStreamEvent(event) {
     void event;
     throw new Error('Method not implemented.');
@@ -157,15 +195,48 @@ export default class BaseClient {
   }
 
   normalizeSchema(options) {
-    const { schema } = options;
-    return schema?.toJSON?.() || schema;
+    let { schema } = options;
+
+    if (!schema) {
+      return;
+    }
+
+    // Convert to JSON schema.
+    schema = schema.toJSON?.() || schema;
+
+    if (schema?.type === 'array') {
+      schema = {
+        type: 'object',
+        properties: {
+          items: schema,
+        },
+        required: ['items'],
+        additionalProperties: false,
+      };
+      options.hasWrappedSchema = true;
+    }
+
+    return schema;
+  }
+
+  getMessageExtractor(options) {
+    const { extractMessages } = options;
+    if (!extractMessages) {
+      return;
+    }
+    const messageExtractor = createMessageExtractor([extractMessages]);
+    return (event) => {
+      if (event?.type === 'delta') {
+        return messageExtractor(event.text);
+      }
+    };
   }
 
   debug(message, arg) {
     if (this.options.debug) {
       // TODO: replace with logger when opentelemetry is removed
       // eslint-disable-next-line
-      console.debug(`${message}\n${JSON.stringify(arg, null, 2)}`);
+      console.debug(`${message}\n${JSON.stringify(arg, null, 2)}\n`);
     }
   }
 
@@ -190,10 +261,22 @@ export default class BaseClient {
 
 /**
  * @typedef {Object} PromptOptions
- * @property {string} input - Input to use.
+ * @property {string|PromptMessage[]} input - Input to use.
  * @property {string} [model] - The model to use.
+ * @property {boolean} stream - Stream response.
  * @property {Object} [schema] - A JSON schema compatible object that defines the output shape.
  * @property {"raw" | "text" | "json" | "messages"} [output] - The return value type.
  * @property {Object} [params] - Params to be interpolated into the template.
  *                               May also be passed as additional props to options.
+ */
+
+/**
+ * @typedef {Object} StreamOptions
+ * @property {string} [extractMessageKey] - saldkjfalskfj
+ */
+
+/**
+ * @typedef {Object} PromptMessage
+ * @property {"system" | "user" | "assistant"} role
+ * @property {string} content
  */

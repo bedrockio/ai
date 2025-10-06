@@ -23,6 +23,7 @@ export class OpenAiClient extends BaseClient {
     const {
       input,
       model,
+      tools,
       verbosity,
       temperature,
       instructions,
@@ -33,10 +34,12 @@ export class OpenAiClient extends BaseClient {
     const params = {
       model,
       input,
+      tools,
       stream,
       temperature,
       instructions,
       previous_response_id: prevResponseId,
+
       text: {
         format: this.getOutputFormat(options),
         verbosity,
@@ -45,13 +48,13 @@ export class OpenAiClient extends BaseClient {
 
     this.debug('Params:', params);
 
+    // @ts-ignore
     return await this.client.responses.create(params);
   }
 
   async runStream(options) {
-    return await this.prompt({
+    return await this.runPrompt({
       ...options,
-      output: 'raw',
       stream: true,
     });
   }
@@ -81,9 +84,6 @@ export class OpenAiClient extends BaseClient {
 
   // Private
 
-  /**
-   * @returns {import('openai/resources/responses/responses').ResponseFormatTextConfig | undefined}
-   */
   getOutputFormat(options) {
     let { output, schema } = options;
     if (output === 'json') {
@@ -91,19 +91,6 @@ export class OpenAiClient extends BaseClient {
         type: 'json_object',
       };
     } else if (schema) {
-      // JSON schema
-
-      if (schema.type === 'array') {
-        schema = {
-          type: 'object',
-          properties: {
-            items: schema,
-          },
-          required: ['items'],
-          additionalProperties: false,
-        };
-      }
-
       return {
         type: 'json_schema',
         // Name is required but arbitrary.
@@ -119,19 +106,28 @@ export class OpenAiClient extends BaseClient {
   }
 
   normalizeStreamEvent(event) {
-    let { type } = event;
+    const { type } = event;
+
     if (type === 'response.created') {
       return {
         type: 'start',
+        id: event.response.id,
       };
     } else if (type === 'response.completed') {
       return {
         type: 'stop',
+        id: event.response.id,
+        usage: event.response.usage,
       };
     } else if (type === 'response.output_text.delta') {
       return {
         type: 'delta',
         text: event.delta,
+      };
+    } else if (type === 'response.output_text.done') {
+      return {
+        type: 'done',
+        text: event.text,
       };
     }
   }

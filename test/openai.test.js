@@ -15,6 +15,7 @@ import markdownStream from './fixtures/openai/markdown/stream.json';
 import modelsList from './fixtures/openai/models.json';
 import stocksObject from './fixtures/openai/stocks/object.json';
 import stocksText from './fixtures/openai/stocks/text.json';
+import userStream from './fixtures/openai/user/stream.json';
 
 vi.mock('openai');
 
@@ -253,7 +254,10 @@ This is a simple markdown snippet with a [link](https://example.com).
       }
 
       expect(events).toEqual([
-        { type: 'start' },
+        {
+          id: 'resp_0117717bc1b9c9890068e01576f9f8819db4cf03cdefda9185',
+          type: 'start',
+        },
         { type: 'delta', text: '#' },
         { type: 'delta', text: ' Quick' },
         { type: 'delta', text: ' Markdown' },
@@ -284,7 +288,80 @@ This is a simple markdown snippet with a [link](https://example.com).
         { type: 'delta', text: '-' },
         { type: 'delta', text: ' Item' },
         { type: 'delta', text: ' two' },
-        { type: 'stop' },
+        {
+          type: 'done',
+          text: `# Quick Markdown
+This is a tiny example with a link: [OpenAI](https://openai.com)
+- Item one
+- Item two`.trim(),
+        },
+        {
+          id: 'resp_0117717bc1b9c9890068e01576f9f8819db4cf03cdefda9185',
+          type: 'stop',
+          usage: {
+            input_tokens: 19,
+            input_tokens_details: {
+              cached_tokens: 0,
+            },
+            output_tokens: 1060,
+            output_tokens_details: {
+              reasoning_tokens: 1024,
+            },
+            total_tokens: 1079,
+          },
+        },
+      ]);
+    });
+
+    it('should extract message deltas for a JSON response', async () => {
+      setResponse(userStream);
+      const stream = await client.stream({
+        input: 'Hello!',
+        template: 'user',
+        extractMessages: 'text',
+        schema: yd
+          .object({
+            text: yd.string(),
+            next: yd.string().allow('input', 'boolean', 'done'),
+            user: yd.object({
+              firstName: yd.string(),
+              lastName: yd.string(),
+            }),
+          })
+          .requireAllWithin(),
+      });
+
+      const events = [];
+
+      for await (const event of stream) {
+        if (event.type === 'extract:delta') {
+          events.push(event);
+        }
+      }
+
+      expect(events).toEqual([
+        { type: 'extract:delta', delta: 'Hello', key: 'text' },
+        { type: 'extract:delta', delta: '!', key: 'text' },
+        { type: 'extract:delta', delta: ' Nice', key: 'text' },
+        { type: 'extract:delta', delta: ' to', key: 'text' },
+        { type: 'extract:delta', delta: ' meet', key: 'text' },
+        { type: 'extract:delta', delta: ' you', key: 'text' },
+        { type: 'extract:delta', delta: '.', key: 'text' },
+        { type: 'extract:delta', delta: ' What', key: 'text' },
+        { type: 'extract:delta', delta: ' is', key: 'text' },
+        { type: 'extract:delta', delta: ' your', key: 'text' },
+        { type: 'extract:delta', delta: ' full', key: 'text' },
+        { type: 'extract:delta', delta: ' name', key: 'text' },
+        { type: 'extract:delta', delta: '?', key: 'text' },
+        { type: 'extract:delta', delta: ' Please', key: 'text' },
+        { type: 'extract:delta', delta: ' share', key: 'text' },
+        { type: 'extract:delta', delta: ' your', key: 'text' },
+        { type: 'extract:delta', delta: ' first', key: 'text' },
+        { type: 'extract:delta', delta: ' name', key: 'text' },
+        { type: 'extract:delta', delta: ' and', key: 'text' },
+        { type: 'extract:delta', delta: ' last', key: 'text' },
+        { type: 'extract:delta', delta: ' name', key: 'text' },
+        { type: 'extract:delta', delta: '.', key: 'text' },
       ]);
     });
   });

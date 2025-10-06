@@ -4,8 +4,6 @@ import path from 'path';
 import { glob } from 'glob';
 import Mustache from 'mustache';
 
-const CODE_REG = /^```\w*(.+)```/s;
-
 export async function loadTemplates(dir) {
   const result = {};
   const files = await glob(path.join(dir, '*.md'));
@@ -22,14 +20,6 @@ export async function loadTemplates(dir) {
   return result;
 }
 
-export function parseCode(content) {
-  const match = content.trim().match(CODE_REG);
-  if (match) {
-    content = match[1].trim();
-  }
-  return content;
-}
-
 export function renderTemplate(template, options) {
   let params = {
     ...options,
@@ -40,6 +30,8 @@ export function renderTemplate(template, options) {
   params = wrapProxy(params);
   return Mustache.render(template, params);
 }
+
+// Utils
 
 async function loadTemplate(file) {
   return await fs.readFile(file, 'utf-8');
