@@ -122,7 +122,7 @@ export class OpenAiClient extends BaseClient {
     } else if (type === 'response.output_text.delta') {
       return {
         type: 'delta',
-        text: event.delta,
+        delta: event.delta,
       };
     } else if (type === 'response.output_text.done') {
       return {

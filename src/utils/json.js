@@ -31,10 +31,11 @@ function createExtractor(key) {
       return;
     }
 
-    if (text === lastText) {
+    // Don't finish while the buffer has whitespace as it
+    // may be in the middle of trying to extract.
+    if (text === lastText && !buffer.endsWith(' ')) {
       done = true;
     }
-
     const delta = text.slice(lastText.length);
 
     lastText = text;

@@ -87,19 +87,25 @@ export default class BaseClient {
 
         for (let message of extractedMessages) {
           const { key, delta, text, done } = message;
+
+          let extractEvent;
           if (done) {
-            yield {
+            extractEvent = {
               type: 'extract:done',
               text,
               key,
             };
           } else {
-            yield {
+            extractEvent = {
               type: 'extract:delta',
               delta,
               key,
             };
           }
+
+          this.debug('Extract:', extractEvent);
+
+          yield extractEvent;
         }
       }
     } catch (error) {
@@ -227,7 +233,7 @@ export default class BaseClient {
     const messageExtractor = createMessageExtractor([extractMessages]);
     return (event) => {
       if (event?.type === 'delta') {
-        return messageExtractor(event.text);
+        return messageExtractor(event.delta);
       }
     };
   }
@@ -272,7 +278,7 @@ export default class BaseClient {
 
 /**
  * @typedef {Object} StreamOptions
- * @property {string} [extractMessageKey] - saldkjfalskfj
+ * @property {string} [extractMessages] - Key in JSON response to extract a message stream from.
  */
 
 /**
