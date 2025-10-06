@@ -1,3 +1,7 @@
+## 0.4.3
+
+- Moved to files whitelist.
+
 ## 0.4.2
 
 - Exclude keys from tarball.

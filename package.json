@@ -19,7 +19,7 @@
   "exports": {
     ".": {
       "types": "./types/index.d.ts",
-      "import": "./src/index.js",
+      "import": "./dist/esm/index.js",
       "require": "./dist/cjs/index.js"
     }
   },
@@ -51,6 +51,12 @@
     "typescript": "^5.9.3",
     "vitest": "^3.2.4"
   },
+  "files": [
+    "dist/**",
+    "types/**",
+    "README.md",
+    "CHANGELOG.md"
+  ],
   "volta": {
     "node": "22.20.0",
     "yarn": "1.22.22"
