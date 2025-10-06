@@ -45,7 +45,7 @@
   "devDependencies": {
     "@bedrockio/eslint-plugin": "^1.2.2",
     "@bedrockio/prettier-config": "^1.0.2",
-    "@bedrockio/yada": "^1.7.0",
+    "@bedrockio/yada": "^1.8.0",
     "eslint": "^9.36.0",
     "tsc-alias": "^1.8.16",
     "typescript": "^5.9.3",

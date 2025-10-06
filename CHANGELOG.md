@@ -1,4 +1,4 @@
-## Next
+## 0.4.0
 
 - Rewrote OpenAI to use new responses format.
 - Allow structured responses.
@@ -8,6 +8,7 @@
 - Allow specifying model in client options.
 - Store the previous response id for OpenAI.
 - Removed MultiClient for now.
+- Client -> createClient.
 - Added debug feature.
 
 ## 0.3.0
