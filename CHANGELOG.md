@@ -7,6 +7,7 @@
 - Using `template` option only now.
 - Allow specifying model in client options.
 - Store the previous response id for OpenAI.
+- Removed MultiClient for now.
 - Added debug feature.
 
 ## 0.3.0

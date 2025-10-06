@@ -18,6 +18,7 @@
   "main": "./dist/cjs/index.js",
   "exports": {
     ".": {
+      "types": "./types/index.d.ts",
       "import": "./src/index.js",
       "require": "./dist/cjs/index.js"
     }
