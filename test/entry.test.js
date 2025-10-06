@@ -19,18 +19,19 @@ describe('createClient', () => {
 
     expect(() => {
       createClient({
-        platform: 'openai',
-        templates: 'test',
-      });
-    }).toThrow('No API key specified.');
-
-    expect(() => {
-      createClient({
         platform: 'foobar',
         templates: 'test',
         apiKey: 'test-key',
       });
     }).toThrow('Unknown platform "foobar".');
+  });
+
+  it('should not error on no API key', async () => {
+    expect(() => {
+      createClient({
+        platform: 'openai',
+      });
+    }).not.toThrow();
   });
 
   it('should succeed for openai', async () => {

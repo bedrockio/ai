@@ -4,12 +4,10 @@ import { OpenAiClient } from './openai.js';
 import { XAiClient } from './xai.js';
 
 export function createClient(options = {}) {
-  const { platform, apiKey } = options;
+  const { platform } = options;
 
   if (!platform) {
     throw new Error('No platform specified.');
-  } else if (!apiKey) {
-    throw new Error('No API key specified.');
   }
 
   if (platform === 'openai' || platform === 'gpt') {

@@ -1,3 +1,7 @@
+## 0.4.1
+
+- No error on missing API key.
+
 ## 0.4.0
 
 - Rewrote OpenAI to use new responses format.
