@@ -1,3 +1,7 @@
+## 0.5.0
+
+- Added `McpServer` and basic handling of using it in tools.
+
 ## 0.4.3
 
 - Moved to files whitelist.
