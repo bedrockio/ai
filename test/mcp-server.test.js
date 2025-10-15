@@ -530,4 +530,171 @@ describe('McpServer', () => {
       });
     });
   });
+
+  describe('authorization', () => {
+    it('should require api key', async () => {
+      const server = new McpServer({
+        name: 'MyServer',
+        version: '1.0.0',
+        apiKeyRequired: true,
+        isValidApiKey(key) {
+          return key === 'my-api-key';
+        },
+      });
+
+      const ctx = new MockContext({
+        body: {
+          jsonrpc: '2.0',
+          id: 'list-1',
+          method: 'tools/list',
+        },
+      });
+
+      let error;
+      try {
+        await server.handleRequest(ctx);
+      } catch (err) {
+        error = err;
+      }
+
+      expect(error.status).toBe(401);
+      expect(JSON.parse(JSON.stringify(error))).toEqual({
+        jsonrpc: '2.0',
+        error: {
+          code: -32001,
+          message: 'Unauthorized',
+        },
+      });
+    });
+
+    it('should error on invalid api-key', async () => {
+      const server = new McpServer({
+        name: 'MyServer',
+        version: '1.0.0',
+        apiKeyRequired: true,
+        isValidApiKey(key) {
+          return key === 'my-api-key';
+        },
+      });
+
+      const ctx = new MockContext({
+        body: {
+          jsonrpc: '2.0',
+          id: 'list-1',
+          method: 'tools/list',
+        },
+        headers: {
+          authorization: 'Bearer invalid-key',
+        },
+      });
+
+      let error;
+      try {
+        await server.handleRequest(ctx);
+      } catch (err) {
+        error = err;
+      }
+
+      expect(error.status).toBe(401);
+      expect(JSON.parse(JSON.stringify(error))).toEqual({
+        jsonrpc: '2.0',
+        error: {
+          code: -32001,
+          message: 'Unauthorized',
+        },
+      });
+    });
+
+    it('should allow valid api-key', async () => {
+      const server = new McpServer({
+        name: 'MyServer',
+        version: '1.0.0',
+        apiKeyRequired: true,
+        isValidApiKey(key) {
+          return key === 'my-api-key';
+        },
+      });
+
+      const ctx = new MockContext({
+        body: {
+          jsonrpc: '2.0',
+          id: 'list-1',
+          method: 'tools/list',
+        },
+        headers: {
+          authorization: 'Bearer my-api-key',
+        },
+      });
+
+      const result = await server.handleRequest(ctx);
+
+      expect(JSON.parse(JSON.stringify(result))).toEqual({
+        jsonrpc: '2.0',
+        id: 'list-1',
+        result: {
+          tools: [],
+        },
+      });
+    });
+
+    it('should allow optional api key', async () => {
+      const server = new McpServer({
+        name: 'MyServer',
+        version: '1.0.0',
+        isValidApiKey(key) {
+          return key === 'my-api-key';
+        },
+      });
+
+      const ctx = new MockContext({
+        body: {
+          jsonrpc: '2.0',
+          id: 'list-1',
+          method: 'tools/list',
+        },
+        headers: {},
+      });
+
+      const result = await server.handleRequest(ctx);
+
+      expect(JSON.parse(JSON.stringify(result))).toEqual({
+        jsonrpc: '2.0',
+        id: 'list-1',
+        result: {
+          tools: [],
+        },
+      });
+    });
+
+    it('should have asynchronous api key check', async () => {
+      const server = new McpServer({
+        name: 'MyServer',
+        version: '1.0.0',
+        async isValidApiKey(key) {
+          return key === 'my-api-key';
+        },
+      });
+
+      const ctx = new MockContext({
+        body: {
+          jsonrpc: '2.0',
+          id: 'list-1',
+          method: 'tools/list',
+        },
+        headers: {
+          authorization: 'Bearer my-api-key',
+        },
+      });
+
+      const result = await server.handleRequest(ctx);
+
+      expect(JSON.parse(JSON.stringify(result))).toEqual({
+        jsonrpc: '2.0',
+        id: 'list-1',
+        result: {
+          tools: [],
+        },
+      });
+    });
+  });
 });

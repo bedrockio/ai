@@ -1,6 +1,7 @@
 const SUPPORTED_VERSIONS = ['2025-03-26', '2025-06-18'];
 
 const ERROR_INVALID_SESSION = -32000;
+const ERROR_UNAUTHORIZED = -32001;
 const ERROR_METHOD_NOT_FOUND = -32601;
 const ERROR_INVALID_REQUEST = -32600;
 const ERROR_INVALID_PARAMS = -32602;
@@ -20,6 +21,7 @@ export default class McpServer {
     }
 
     this.assertValidTransport(body);
+    await this.assertAuthorization(ctx);
 
     let result;
 
@@ -62,6 +64,18 @@ export default class McpServer {
     const { id, method, jsonrpc } = body;
     if (id == null || !method || !jsonrpc) {
       throw new InvalidRequestError();
+    }
+  }
+
+  async assertAuthorization(ctx) {
+    const { apiKeyRequired, isValidApiKey } = this.options;
+    const bearer = this.getBearer(ctx);
+
+    if (apiKeyRequired || bearer) {
+      const isValid = await isValidApiKey(bearer, ctx);
+      if (!isValid) {
+        throw new UnauthorizedError();
+      }
     }
   }
 
@@ -205,6 +219,13 @@ export default class McpServer {
     }
   }
 
+  // Authorization helpers
+
+  getBearer(ctx) {
+    const authorization = ctx.get('authorization') || '';
+    return authorization.match(/Bearer (.+)/)?.[1];
+  }
+
   // Version helpers
 
   isSupportedVersion(version) {
@@ -221,6 +242,20 @@ class InvalidRequestError extends Error {
       error: {
         code: ERROR_INVALID_REQUEST,
         message: 'Invalid Request',
+      },
+    };
+  }
+}
+
+class UnauthorizedError extends Error {
+  status = 401;
+
+  toJSON() {
+    return {
+      jsonrpc: '2.0',
+      error: {
+        code: ERROR_UNAUTHORIZED,
+        message: 'Unauthorized',
       },
     };
   }
