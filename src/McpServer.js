@@ -7,6 +7,7 @@ const ERROR_INVALID_PARAMS = -32602;
 
 export default class McpServer {
   constructor(options = {}) {
+    this.validateOptions(options);
     this.options = options;
   }
 
@@ -48,6 +49,15 @@ export default class McpServer {
 
   // Validation
 
+  validateOptions(options) {
+    const { name, version } = options;
+    if (!name) {
+      throw new Error(`"name" required.`);
+    } else if (!version) {
+      throw new Error(`"version" required.`);
+    }
+  }
+
   assertValidTransport(body) {
     const { id, method, jsonrpc } = body;
     if (id == null || !method || !jsonrpc) {
@@ -69,7 +79,7 @@ export default class McpServer {
       return this.invalidVersion(body);
     }
 
-    const { name = 'mcp_server', version = 'latest' } = this.options;
+    const { name, version } = this.options;
     return {
       result: {
         protocolVersion,
