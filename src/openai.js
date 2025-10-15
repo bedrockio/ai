@@ -64,7 +64,25 @@ export class OpenAiClient extends BaseClient {
   }
 
   getStructuredResponse(response) {
-    return JSON.parse(response.output_text);
+    // Note here that certain cases (tool usage etc)
+    // can result in multiple outputs with identical
+    // content. These outputs are simply concatenated
+    // together in output_text which will result in a
+    // JSON parse error, so take the LAST output_text
+    // entry assuming that this is its "final answer".
+
+    const outputs = response.output
+      .filter((item) => {
+        return item.type === 'message';
+      })
+      .flatMap((item) => {
+        return item.content.filter((c) => {
+          return c.type === 'output_text';
+        });
+      });
+
+    const last = outputs[outputs.length - 1];
+    return JSON.parse(last.text);
   }
 
   getMessagesResponse(input, response) {

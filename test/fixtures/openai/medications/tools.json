@@ -1,0 +1,174 @@
+{
+  "id": "resp_02ac348eeb0a379e0068ef3ce25e9881959584d2bd94816e86",
+  "object": "response",
+  "created_at": 1760509154,
+  "status": "completed",
+  "background": false,
+  "billing": {
+    "payer": "developer"
+  },
+  "error": null,
+  "incomplete_details": null,
+  "instructions": "You are a medical assistant. When users describe symptoms or conditions, use your\nknowledge to identify appropriate medications, then use the `search_drugs` tool to\nlook up each medication by its name to get detailed information.",
+  "max_output_tokens": null,
+  "max_tool_calls": null,
+  "model": "gpt-4o-2024-08-06",
+  "output": [
+    {
+      "id": "mcpl_02ac348eeb0a379e0068ef3ce2856c8195bb4e2113b0d4005b",
+      "type": "mcp_list_tools",
+      "server_label": "test",
+      "tools": [
+        {
+          "annotations": {
+            "read_only": false
+          },
+          "description": "Search for drug information by name.",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "description": "Name of the drug to search for.",
+                "type": "string"
+              }
+            },
+            "required": [],
+            "additionalProperties": false
+          },
+          "name": "search_drugs"
+        }
+      ]
+    },
+    {
+      "id": "mcp_02ac348eeb0a379e0068ef3ce4ff4c8195becc2c490be767fe",
+      "type": "mcp_call",
+      "status": "completed",
+      "approval_request_id": null,
+      "arguments": "{\"name\":\"ibuprofen\"}",
+      "error": null,
+      "name": "search_drugs",
+      "output": "{\"data\": [{\"name\": \"IBUPROFEN\", \"type\": \"medication\", \"class\": \"Nonsteroidal Anti-inflammatory Drug [EPC]\", \"forms\": [\"TABLET\", \"SUSPENSION\", \"CAPSULE\", \"TABLET, CHEWABLE\", \"SUSPENSION/DROPS\"], \"routes\": [\"ORAL\"], \"dosages\": [\"200MG\", \"100MG\", \"100MG/5ML\", \"EQ 200MG FREE ACID AND POTASSIUM SALT\", \"400MG\", \"600MG\", \"300MG\", \"800MG\", \"50MG\", \"40MG/ML\", \"50MG/1.25ML\"], \"benefits\": [], \"sideEffects\": [], \"createdAt\": \"2025-10-13T23:24:35.153Z\", \"updatedAt\": \"2025-10-13T23:24:35.153Z\", \"id\": \"68ed8a32b3cb4e2ad7d04113\"}, {\"name\": \"IBUPROFEN AND PSEUDOEPHEDRINE HYDROCHLORIDE\", \"type\": \"medication\", \"class\": \"\", \"forms\": [\"SUSPENSION\", \"TABLET\", \"CAPSULE\"], \"routes\": [\"ORAL\"], \"dosages\": [\"15MG/5ML / 100MG/5ML\", \"30MG / 200MG\", \"30MG / EQ 200MG FREE ACID AND POTASSIUM SALT\"], \"benefits\": [], \"sideEffects\": [], \"createdAt\": \"2025-10-13T23:24:35.154Z\", \"updatedAt\": \"2025-10-13T23:24:35.154Z\", \"id\": \"68ed8a32b3cb4e2ad7d04116\"}, {\"name\": \"OXYCODONE HYDROCHLORIDE AND IBUPROFEN\", \"type\": \"medication\", \"class\": \"\", \"forms\": [\"TABLET\"], \"routes\": [\"ORAL\"], \"dosages\": [\"5MG / 400MG\"], \"benefits\": [], \"sideEffects\": [], \"createdAt\": \"2025-10-13T23:24:35.155Z\", \"updatedAt\": \"2025-10-13T23:24:35.155Z\", \"id\": \"68ed8a32b3cb4e2ad7d0419b\"}, {\"name\": \"IBUPROFEN AND DIPHENHYDRAMINE HYDROCHLORIDE\", \"type\": \"medication\", \"class\": \"Nonsteroidal Anti-inflammatory Drug [EPC]\", \"forms\": [\"CAPSULE\"], \"routes\": [\"ORAL\"], \"dosages\": [\"EQ 200MG FREE ACID AND POTASSIUM SALT / 25MG\"], \"benefits\": [], \"sideEffects\": [], \"createdAt\": \"2025-10-13T23:24:35.162Z\", \"updatedAt\": \"2025-10-13T23:24:35.162Z\", \"id\": \"68ed8a32b3cb4e2ad7d0433e\"}, {\"name\": \"ACETAMINOPHEN AND IBUPROFEN\", \"type\": \"medication\", \"class\": \"Nonsteroidal Anti-inflammatory Drug [EPC]\", \"forms\": [\"TABLET\"], \"routes\": [\"ORAL\"], \"dosages\": [\"125MG / 250MG\"], \"benefits\": [], \"sideEffects\": [], \"createdAt\": \"2025-10-13T23:24:35.168Z\", \"updatedAt\": \"2025-10-13T23:24:35.168Z\", \"id\": \"68ed8a32b3cb4e2ad7d04521\"}, {\"name\": \"IBUPROFEN AND FAMOTIDINE\", \"type\": \"medication\", \"class\": \"Histamine-2 Receptor Antagonist [EPC] / Nonsteroidal Anti-inflammatory Drug [EPC]\", \"forms\": [\"TABLET\"], \"routes\": [\"ORAL\"], \"dosages\": [\"800MG / 26.6MG\"], \"benefits\": [], \"sideEffects\": [], \"createdAt\": \"2025-10-13T23:24:35.169Z\", \"updatedAt\": \"2025-10-13T23:24:35.169Z\", \"id\": \"68ed8a32b3cb4e2ad7d0455f\"}, {\"name\": \"IBUPROFEN AND DIPHENHYDRAMINE CITRATE\", \"type\": \"medication\", \"class\": \"Nonsteroidal Anti-inflammatory Drug [EPC]\", \"forms\": [\"TABLET\"], \"routes\": [\"ORAL\"], \"dosages\": [\"200MG / 38MG\"], \"benefits\": [], \"sideEffects\": [], \"createdAt\": \"2025-10-13T23:24:35.184Z\", \"updatedAt\": \"2025-10-13T23:24:35.184Z\", \"id\": \"68ed8a32b3cb4e2ad7d04b93\"}, {\"name\": \"JUNIOR STRENGTH IBUPROFEN\", \"type\": \"medication\", \"class\": \"\", \"forms\": [\"TABLET\"], \"routes\": [\"ORAL\"], \"dosages\": [\"100MG\"], \"benefits\": [], \"sideEffects\": [], \"createdAt\": \"2025-10-13T23:24:35.195Z\", \"updatedAt\": \"2025-10-13T23:24:35.195Z\", \"id\": \"68ed8a32b3cb4e2ad7d05200\"}, {\"name\": \"IBUPROFEN LYSINE\", \"type\": \"medication\", \"class\": \"\", \"forms\": [\"INJECTABLE\"], \"routes\": [\"INTRAVENOUS\"], \"dosages\": [\"EQ 20MG BASE/2ML (EQ 10MG BASE/ML)\"], \"benefits\": [], \"sideEffects\": [], \"createdAt\": \"2025-10-13T23:24:35.196Z\", \"updatedAt\": \"2025-10-13T23:24:35.196Z\", \"id\": \"68ed8a32b3cb4e2ad7d052bc\"}, {\"name\": \"IBUPROFEN AND PHENYLEPHRINE HYDROCHLORIDE\", \"type\": \"medication\", \"class\": \"Nonsteroidal Anti-inflammatory Drug [EPC]\", \"forms\": [\"TABLET\"], \"routes\": [\"ORAL\"], \"dosages\": [\"10MG / 200MG\"], \"benefits\": [], \"sideEffects\": [], \"createdAt\": \"2025-10-13T23:24:35.196Z\", \"updatedAt\": \"2025-10-13T23:24:35.196Z\", \"id\": \"68ed8a32b3cb4e2ad7d052cf\"}, {\"name\": \"HYDROCODONE BITARTRATE AND IBUPROFEN\", \"type\": \"medication\", \"class\": \"\", \"forms\": [\"TABLET\"], \"routes\": [\"ORAL\"], \"dosages\": [\"200MG / 10MG\", \"200MG / 5MG\", \"200MG / 7.5MG\", \"200MG / 2.5MG\"], \"benefits\": [], \"sideEffects\": [], \"createdAt\": \"2025-10-13T23:24:35.201Z\", \"updatedAt\": \"2025-10-13T23:24:35.201Z\", \"id\": \"68ed8a33b3cb4e2ad7d0556b\"}, {\"name\": \"CHILDREN'S IBUPROFEN\", \"type\": \"medication\", \"class\": \"Nonsteroidal Anti-inflammatory Drug [EPC]\", \"forms\": [\"SUSPENSION\"], \"routes\": [\"ORAL\"], \"dosages\": [\"100MG/5ML\"], \"benefits\": [], \"sideEffects\": [], \"createdAt\": \"2025-10-13T23:24:35.205Z\", \"updatedAt\": \"2025-10-13T23:24:35.205Z\", \"id\": \"68ed8a33b3cb4e2ad7d0575d\"}, {\"name\": \"IBUPROFEN SODIUM\", \"type\": \"medication\", \"class\": \"\", \"forms\": [\"TABLET\"], \"routes\": [\"ORAL\"], \"dosages\": [\"EQ 200MG BASE\"], \"benefits\": [], \"sideEffects\": [], \"createdAt\": \"2025-10-13T23:24:35.210Z\", \"updatedAt\": \"2025-10-13T23:24:35.210Z\", \"id\": \"68ed8a33b3cb4e2ad7d05ab1\"}], \"meta\": {\"total\": 13, \"skip\": 0, \"limit\": 50}}",
+      "server_label": "test"
+    },
+    {
+      "id": "mcp_02ac348eeb0a379e0068ef3ce80d3881959a36f29b8c39c873",
+      "type": "mcp_call",
+      "status": "completed",
+      "approval_request_id": null,
+      "arguments": "{\"name\":\"diphenhydramine\"}",
+      "error": null,
+      "name": "search_drugs",
+      "output": "{\"data\": [{\"name\": \"DIPHENHYDRAMINE HYDROCHLORIDE\", \"type\": \"medication\", \"class\": \"\", \"forms\": [\"CAPSULE\", \"INJECTABLE\", \"ELIXIR\", \"SYRUP\"], \"routes\": [\"ORAL\", \"INJECTION\"], \"dosages\": [\"25MG\", \"10MG/ML\", \"12.5MG/5ML\", \"50MG/ML\", \"50MG\"], \"benefits\": [], \"sideEffects\": [], \"createdAt\": \"2025-10-13T23:24:35.156Z\", \"updatedAt\": \"2025-10-13T23:24:35.156Z\", \"id\": \"68ed8a32b3cb4e2ad7d041d4\"}, {\"name\": \"IBUPROFEN AND DIPHENHYDRAMINE HYDROCHLORIDE\", \"type\": \"medication\", \"class\": \"Nonsteroidal Anti-inflammatory Drug [EPC]\", \"forms\": [\"CAPSULE\"], \"routes\": [\"ORAL\"], \"dosages\": [\"EQ 200MG FREE ACID AND POTASSIUM SALT / 25MG\"], \"benefits\": [], \"sideEffects\": [], \"createdAt\": \"2025-10-13T23:24:35.162Z\", \"updatedAt\": \"2025-10-13T23:24:35.162Z\", \"id\": \"68ed8a32b3cb4e2ad7d0433e\"}, {\"name\": \"IBUPROFEN AND DIPHENHYDRAMINE CITRATE\", \"type\": \"medication\", \"class\": \"Nonsteroidal Anti-inflammatory Drug [EPC]\", \"forms\": [\"TABLET\"], \"routes\": [\"ORAL\"], \"dosages\": [\"200MG / 38MG\"], \"benefits\": [], \"sideEffects\": [], \"createdAt\": \"2025-10-13T23:24:35.184Z\", \"updatedAt\": \"2025-10-13T23:24:35.184Z\", \"id\": \"68ed8a32b3cb4e2ad7d04b93\"}, {\"name\": \"DIPHENHYDRAMINE HYDROCHLORIDE PRESERVATIVE FREE\", \"type\": \"medication\", \"class\": \"\", \"forms\": [\"INJECTABLE\"], \"routes\": [\"INJECTION\"], \"dosages\": [\"50MG/ML\"], \"benefits\": [], \"sideEffects\": [], \"createdAt\": \"2025-10-13T23:24:35.185Z\", \"updatedAt\": \"2025-10-13T23:24:35.185Z\", \"id\": \"68ed8a32b3cb4e2ad7d04c2c\"}, {\"name\": \"NAPROXEN SODIUM AND DIPHENHYDRAMINE HYDROCHLORIDE\", \"type\": \"medication\", \"class\": \"\", \"forms\": [\"TABLET\"], \"routes\": [\"ORAL\"], \"dosages\": [\"220MG / 25MG\"], \"benefits\": [], \"sideEffects\": [], \"createdAt\": \"2025-10-13T23:24:35.202Z\", \"updatedAt\": \"2025-10-13T23:24:35.202Z\", \"id\": \"68ed8a33b3cb4e2ad7d055df\"}, {\"name\": \"BROMODIPHENHYDRAMINE HYDROCHLORIDE AND CODEINE PHOSPHATE\", \"type\": \"medication\", \"class\": \"\", \"forms\": [\"SYRUP\"], \"routes\": [\"ORAL\"], \"dosages\": [\"10MG/5ML / 12.5MG/5ML\"], \"benefits\": [], \"sideEffects\": [], \"createdAt\": \"2025-10-13T23:24:35.205Z\", \"updatedAt\": \"2025-10-13T23:24:35.205Z\", \"id\": \"68ed8a33b3cb4e2ad7d057cf\"}], \"meta\": {\"total\": 6, \"skip\": 0, \"limit\": 50}}",
+      "server_label": "test"
+    },
+    {
+      "id": "msg_02ac348eeb0a379e0068ef3cea6afc819598f06509cca9a399",
+      "type": "message",
+      "status": "completed",
+      "content": [
+        {
+          "type": "output_text",
+          "annotations": [],
+          "logprobs": [],
+          "text": "{\"drugs\":[{\"id\":\"68ed8a32b3cb4e2ad7d04113\",\"name\":\"IBUPROFEN\",\"type\":\"medication\"},{\"id\":\"68ed8a32b3cb4e2ad7d041d4\",\"name\":\"DIPHENHYDRAMINE HYDROCHLORIDE\",\"type\":\"medication\"}]}"
+        }
+      ],
+      "role": "assistant"
+    },
+    {
+      "id": "msg_02ac348eeb0a379e0068ef3ceca8648195b046ec91e98421e3",
+      "type": "message",
+      "status": "completed",
+      "content": [
+        {
+          "type": "output_text",
+          "annotations": [],
+          "logprobs": [],
+          "text": "{\"drugs\":[{\"id\":\"68ed8a32b3cb4e2ad7d04113\",\"name\":\"IBUPROFEN\",\"type\":\"medication\"},{\"id\":\"68ed8a32b3cb4e2ad7d041d4\",\"name\":\"DIPHENHYDRAMINE HYDROCHLORIDE\",\"type\":\"medication\"}]}"
+        }
+      ],
+      "role": "assistant"
+    }
+  ],
+  "parallel_tool_calls": true,
+  "previous_response_id": null,
+  "prompt_cache_key": null,
+  "reasoning": {
+    "effort": null,
+    "summary": null
+  },
+  "safety_identifier": null,
+  "service_tier": "default",
+  "store": true,
+  "temperature": 1,
+  "text": {
+    "format": {
+      "type": "json_schema",
+      "description": null,
+      "name": "schema",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "drugs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "type"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "drugs"
+        ],
+        "additionalProperties": false
+      },
+      "strict": true
+    },
+    "verbosity": "medium"
+  },
+  "tool_choice": "auto",
+  "tools": [
+    {
+      "type": "mcp",
+      "allowed_tools": null,
+      "headers": null,
+      "require_approval": "never",
+      "server_description": null,
+      "server_label": "test",
+      "server_url": "https://local-api.andrewplummer.com/<redacted>"
+    }
+  ],
+  "top_logprobs": 0,
+  "top_p": 1,
+  "truncation": "disabled",
+  "usage": {
+    "input_tokens": 3112,
+    "input_tokens_details": {
+      "cached_tokens": 0
+    },
+    "output_tokens": 209,
+    "output_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "total_tokens": 3321
+  },
+  "user": null,
+  "metadata": {},
+  "output_text": "{\"drugs\":[{\"id\":\"68ed8a32b3cb4e2ad7d04113\",\"name\":\"IBUPROFEN\",\"type\":\"medication\"},{\"id\":\"68ed8a32b3cb4e2ad7d041d4\",\"name\":\"DIPHENHYDRAMINE HYDROCHLORIDE\",\"type\":\"medication\"}]}{\"drugs\":[{\"id\":\"68ed8a32b3cb4e2ad7d04113\",\"name\":\"IBUPROFEN\",\"type\":\"medication\"},{\"id\":\"68ed8a32b3cb4e2ad7d041d4\",\"name\":\"DIPHENHYDRAMINE HYDROCHLORIDE\",\"type\":\"medication\"}]}"
+}

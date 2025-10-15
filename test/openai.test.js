@@ -12,6 +12,7 @@ import caloriesText from './fixtures/openai/calories/text.json';
 import caloriesWrapped from './fixtures/openai/calories/wrapped.json';
 import markdownCode from './fixtures/openai/markdown/code.json';
 import markdownStream from './fixtures/openai/markdown/stream.json';
+import medicationsTools from './fixtures/openai/medications/tools.json';
 import modelsList from './fixtures/openai/models.json';
 import stocksObject from './fixtures/openai/stocks/object.json';
 import stocksText from './fixtures/openai/stocks/text.json';
@@ -459,6 +460,50 @@ This is a tiny example with a link: [OpenAI](https://openai.com)
         'whisper-1',
         'text-embedding-ada-002',
       ]);
+    });
+  });
+
+  describe('tools', () => {
+    it('should handle call to MCP server', async () => {
+      setResponse(medicationsTools);
+      const result = await client.prompt({
+        model: 'gpt-4o',
+        template: 'medications',
+        input: 'I have lower back pain and insomnia.',
+        schema: yd
+          .object({
+            drugs: yd.array(
+              yd.object({
+                id: yd.string(),
+                name: yd.string(),
+                type: yd.string(),
+              })
+            ),
+          })
+          .requireAllWithin(),
+        tools: [
+          {
+            type: 'mcp',
+            server_label: 'test',
+            server_url: 'https://api.drugs.com/mcp',
+            require_approval: 'never',
+          },
+        ],
+      });
+      expect(result).toEqual({
+        drugs: [
+          {
+            id: '68ed8a32b3cb4e2ad7d04113',
+            name: 'IBUPROFEN',
+            type: 'medication',
+          },
+          {
+            id: '68ed8a32b3cb4e2ad7d041d4',
+            name: 'DIPHENHYDRAMINE HYDROCHLORIDE',
+            type: 'medication',
+          },
+        ],
+      });
     });
   });
 
