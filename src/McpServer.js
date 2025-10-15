@@ -69,6 +69,7 @@ export default class McpServer {
     if (!this.hasValidSessionId(ctx)) {
       throw new InvalidSessionError();
     }
+    ctx.set('content-type', 'application/json; charset=utf-8');
   }
 
   // Calls
@@ -101,7 +102,7 @@ export default class McpServer {
   }
 
   listTools() {
-    const { tools } = this.options;
+    const { tools = [] } = this.options;
     return {
       result: {
         tools: tools.map((tool) => {
