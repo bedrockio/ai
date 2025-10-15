@@ -1,3 +1,7 @@
+## 0.5.1
+
+- Added basic api key authorization.
+
 ## 0.5.0
 
 - Added `McpServer` and basic handling of using it in tools.
