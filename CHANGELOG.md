@@ -1,3 +1,7 @@
+## 0.5.2
+
+- MCP use with Anthropic.
+
 ## 0.5.1
 
 - Added basic api key authorization.

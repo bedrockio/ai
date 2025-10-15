@@ -12,7 +12,7 @@ import caloriesText from './fixtures/openai/calories/text.json';
 import caloriesWrapped from './fixtures/openai/calories/wrapped.json';
 import markdownCode from './fixtures/openai/markdown/code.json';
 import markdownStream from './fixtures/openai/markdown/stream.json';
-import medicationsTools from './fixtures/openai/medications/tools.json';
+import medicationsMcp from './fixtures/openai/medications/mcp.json';
 import modelsList from './fixtures/openai/models.json';
 import stocksObject from './fixtures/openai/stocks/object.json';
 import stocksText from './fixtures/openai/stocks/text.json';
@@ -463,9 +463,9 @@ This is a tiny example with a link: [OpenAI](https://openai.com)
     });
   });
 
-  describe('tools', () => {
+  describe('MCP', () => {
     it('should handle call to MCP server', async () => {
-      setResponse(medicationsTools);
+      setResponse(medicationsMcp);
       const result = await client.prompt({
         model: 'gpt-4o',
         template: 'medications',

@@ -31,16 +31,23 @@ export class AnthropicClient extends BaseClient {
       tokens = DEFAULT_TOKENS,
     } = options;
 
-    // @ts-ignore
-    return await this.client.messages.create({
+    const params = {
       model,
       stream,
       temperature,
       max_tokens: tokens,
       system: instructions,
-      ...this.getSchemaOptions(options),
       messages: input,
-    });
+      ...this.getToolOptions(options),
+    };
+
+    const clientOptions = this.getClientOptions(params);
+
+    this.debug('Params:', params);
+    this.debug('Options:', options);
+
+    // @ts-ignore
+    return await this.client.messages.create(params, clientOptions);
   }
 
   async runStream(options) {
@@ -103,33 +110,62 @@ export class AnthropicClient extends BaseClient {
 
   // Private
 
-  getSchemaOptions(options) {
-    const { output } = options;
-    if (output?.type) {
-      let schema = output;
+  getToolOptions(options) {
+    let { tools = [], schema } = options;
+    let toolChoice;
 
-      if (schema.type === 'array') {
-        schema = {
-          type: 'object',
-          properties: {
-            items: schema,
-          },
-          required: ['items'],
-          additionalProperties: false,
-        };
-      }
+    if (schema) {
+      tools.push({
+        name: 'schema',
+        description: 'Follow the schema for JSON output.',
+        input_schema: schema,
+      });
+      toolChoice = {
+        type: 'tool',
+        name: 'schema',
+      };
+    } else {
+      // The default.
+      toolChoice = {
+        type: 'auto',
+      };
+    }
 
+    const mcpServers = tools
+      .filter((tool) => {
+        return tool.type === 'mcp';
+      })
+      .map((tool) => {
+        return this.mapMcpTool(tool);
+      });
+
+    tools = tools.filter((tool) => {
+      return tool.type !== 'mcp';
+    });
+
+    return {
+      tools,
+      mcp_servers: mcpServers,
+      tool_choice: toolChoice,
+    };
+  }
+
+  // Map OpenAI-like input of MCP servers as "tools" to
+  // Anthropic's mcp_servers.
+  mapMcpTool(tool) {
+    const { server_label, server_url } = tool;
+    return {
+      type: 'url',
+      name: server_label,
+      url: server_url,
+    };
+  }
+
+  getClientOptions(params) {
+    if (params.mcp_servers) {
       return {
-        tools: [
-          {
-            name: 'schema',
-            description: 'Follow the schema for JSON output.',
-            input_schema: schema,
-          },
-        ],
-        tool_choice: {
-          type: 'tool',
-          name: 'schema',
+        headers: {
+          'anthropic-beta': 'mcp-client-2025-04-04',
         },
       };
     }

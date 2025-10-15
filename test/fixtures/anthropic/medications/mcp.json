@@ -1,0 +1,60 @@
+{
+  "model": "claude-sonnet-4-5-20250929",
+  "id": "msg_01Jb8hDuNNwD5a22e1CJBTLk",
+  "type": "message",
+  "role": "assistant",
+  "content": [
+    {
+      "type": "tool_use",
+      "id": "toolu_01LNsFm8kSGXgesFkr8M2kov",
+      "name": "schema",
+      "input": {
+        "drugs": [
+          {
+            "id": "ibuprofen",
+            "name": "Ibuprofen",
+            "type": "NSAID"
+          },
+          {
+            "id": "naproxen",
+            "name": "Naproxen",
+            "type": "NSAID"
+          },
+          {
+            "id": "acetaminophen",
+            "name": "Acetaminophen",
+            "type": "Analgesic"
+          },
+          {
+            "id": "melatonin",
+            "name": "Melatonin",
+            "type": "Sleep aid"
+          },
+          {
+            "id": "diphenhydramine",
+            "name": "Diphenhydramine",
+            "type": "Antihistamine/Sleep aid"
+          },
+          {
+            "id": "cyclobenzaprine",
+            "name": "Cyclobenzaprine",
+            "type": "Muscle relaxant"
+          }
+        ]
+      }
+    }
+  ],
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "usage": {
+    "input_tokens": 848,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 0
+    },
+    "output_tokens": 278,
+    "service_tier": "standard"
+  }
+}

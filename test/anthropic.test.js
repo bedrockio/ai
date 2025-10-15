@@ -11,6 +11,7 @@ import caloriesText from './fixtures/anthropic/calories/text.json';
 import caloriesWrapped from './fixtures/anthropic/calories/wrapped.json';
 import markdownCode from './fixtures/anthropic/markdown/code.json';
 import markdownStream from './fixtures/anthropic/markdown/stream.json';
+import medicationsMcp from './fixtures/anthropic/medications/mcp.json';
 import modelsList from './fixtures/anthropic/models.json';
 import stocksObject from './fixtures/anthropic/stocks/object.json';
 import stocksText from './fixtures/anthropic/stocks/text.json';
@@ -340,6 +341,70 @@ describe('anthropic', () => {
         'claude-3-haiku-20240307',
         'claude-3-opus-20240229',
       ]);
+    });
+  });
+
+  describe('MCP', () => {
+    it('should handle call to MCP server', async () => {
+      setResponse(medicationsMcp);
+      const result = await client.prompt({
+        template: 'medications',
+        input: 'I have lower back pain and insomnia.',
+        schema: yd
+          .object({
+            drugs: yd.array(
+              yd.object({
+                id: yd.string(),
+                name: yd.string(),
+                type: yd.string(),
+              })
+            ),
+          })
+          .requireAllWithin(),
+        tools: [
+          {
+            type: 'mcp',
+            server_label: 'test',
+            server_url: 'https://api.drugs.com/mcp',
+            require_approval: 'never',
+          },
+        ],
+      });
+
+      expect(result).toEqual({
+        drugs: [
+          {
+            id: 'ibuprofen',
+            name: 'Ibuprofen',
+            type: 'NSAID',
+          },
+          {
+            id: 'naproxen',
+            name: 'Naproxen',
+            type: 'NSAID',
+          },
+          {
+            id: 'acetaminophen',
+            name: 'Acetaminophen',
+            type: 'Analgesic',
+          },
+          {
+            id: 'melatonin',
+            name: 'Melatonin',
+            type: 'Sleep aid',
+          },
+          {
+            id: 'diphenhydramine',
+            name: 'Diphenhydramine',
+            type: 'Antihistamine/Sleep aid',
+          },
+          {
+            id: 'cyclobenzaprine',
+            name: 'Cyclobenzaprine',
+            type: 'Muscle relaxant',
+          },
+        ],
+      });
     });
   });
 

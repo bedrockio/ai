@@ -151,7 +151,7 @@
       "require_approval": "never",
       "server_description": null,
       "server_label": "test",
-      "server_url": "https://local-api.andrewplummer.com/<redacted>"
+      "server_url": "https://api.drugs.com/<redacted>"
     }
   ],
   "top_logprobs": 0,
