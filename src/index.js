@@ -2,6 +2,7 @@ import { AnthropicClient } from './anthropic.js';
 import { GoogleClient } from './google.js';
 import { OpenAiClient } from './openai.js';
 import { XAiClient } from './xai.js';
+export { default as McpServer } from './McpServer.js';
 
 export function createClient(options = {}) {
   const { platform } = options;
