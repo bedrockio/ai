@@ -2,9 +2,6 @@
 
 - Moved template rendering out to external package.
 - Normalized messages input.
-
-## 0.5.2
-
 - MCP use with Anthropic.
 
 ## 0.5.1
