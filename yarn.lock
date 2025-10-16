@@ -54,15 +54,15 @@
   resolved "https://registry.yarnpkg.com/@bedrockio/prettier-config/-/prettier-config-1.1.1.tgz#804cb96913e8dab50a237feaabdcd0e1715e34a7"
   integrity sha512-sL8BvR7z3X2z18AyfwgPqBTPPmS3iveJZe65JZk5YbN0s6Akba6W2F4JAygRVx6yueYRKErvpO0pcVMdtfYBSw==
 
-"@bedrockio/templates@^0.1.0":
-  version "0.1.0"
-  resolved "https://registry.yarnpkg.com/@bedrockio/templates/-/templates-0.1.0.tgz#aee74bd8a1bed04f4da60f89fd2f9739d27760d9"
-  integrity sha512-YnKu+aIOEDuje8V46+9W7HwpFMO6F1dbZbHcT7z4NurCBuehlVWKDUn0mlSt7PE/wbOdRe2u5LgDnLleyPkvkQ==
+"@bedrockio/templates@^0.1.1":
+  version "0.1.1"
+  resolved "https://registry.yarnpkg.com/@bedrockio/templates/-/templates-0.1.1.tgz#1a0227e569ff05c29730ed99d1245ebe746323ef"
+  integrity sha512-ZzX5M6tfCydr+z5IhcMk2m1eQXjmNlRhzTDA1gUKnJDikDXd/HBUea+6tt0RBcYamQ1UP4dduJR1KOIdGJnyJQ==
   dependencies:
     "@bedrockio/chrono" "^0.7.0"
     front-matter "^4.0.2"
     handlebars "^4.7.8"
-    lodash-es "^4.17.21"
+    lodash.memoize "^4.1.2"
 
 "@bedrockio/yada@^1.8.3":
   version "1.8.3"
@@ -2441,10 +2441,10 @@ locate-path@^6.0.0:
   dependencies:
     p-locate "^5.0.0"
 
-lodash-es@^4.17.21:
-  version "4.17.21"
-  resolved "https://registry.yarnpkg.com/lodash-es/-/lodash-es-4.17.21.tgz#43e626c46e6591b7750beb2b50117390c609e3ee"
-  integrity sha512-mKnC+QJ9pWVzv+C4/U3rRsHapFfHvQFoFB92e52xeyGMcX6/OlIl78je1u8vePzYZSkkogMPJ2yjxxsb89cxyw==
+lodash.memoize@^4.1.2:
+  version "4.1.2"
+  resolved "https://registry.yarnpkg.com/lodash.memoize/-/lodash.memoize-4.1.2.tgz#bcc6c49a42a2840ed997f323eada5ecd182e0bfe"
+  integrity sha512-t7j+NzmgnQzTAYXcsHYLgimltOV1MXHtlOWf6GjL9Kj8GK5FInw5JotxvbOs+IvV1/Dzo04/fCGfLVs7aXb4Ag==
 
 lodash.merge@^4.6.2:
   version "4.6.2"
