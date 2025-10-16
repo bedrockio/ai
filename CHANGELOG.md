@@ -1,3 +1,7 @@
+## 0.6.2
+
+- Pass tool_choice param.
+
 ## 0.6.0
 
 - Moved template rendering out to external package.

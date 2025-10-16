@@ -28,6 +28,7 @@ export class OpenAiClient extends BaseClient {
       prevResponseId,
       messages: input,
       system: instructions,
+      tool_choice = 'auto',
       stream = false,
     } = options;
 
@@ -36,6 +37,7 @@ export class OpenAiClient extends BaseClient {
       tools,
       input,
       stream,
+      tool_choice,
       temperature,
       instructions,
       previous_response_id: prevResponseId,
