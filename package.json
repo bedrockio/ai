@@ -36,9 +36,8 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.66.0",
+    "@bedrockio/templates": "^0.1.0",
     "@google/generative-ai": "^0.21.0",
-    "glob": "^11.0.1",
-    "mustache": "^4.2.0",
     "openai": "^6.3.0",
     "partial-json": "^0.1.7"
   },

@@ -408,35 +408,6 @@ describe('anthropic', () => {
     });
   });
 
-  describe('other', () => {
-    it('should build the partially interpolated template', async () => {
-      const result = await client.buildTemplate({
-        template: '{{foo}} {{bar}}',
-        foo: 'foo',
-      });
-      expect(result).toBe('foo {{{bar}}}');
-    });
-
-    it('should allow passing params as own field', async () => {
-      const result = await client.buildTemplate({
-        template: '{{foo}} {{bar}}',
-        params: {
-          foo: 'foo',
-        },
-      });
-
-      expect(result).toBe('foo {{{bar}}}');
-    });
-
-    it('should inject an array', async () => {
-      const result = await client.buildTemplate({
-        template: '{{arr}}',
-        arr: ['one', 'two', 'three'],
-      });
-      expect(result).toBe('- one\n- two\n- three');
-    });
-  });
-
   describe('messages', () => {
     it('should output all messages on the client for replay', async () => {
       setResponse(caloriesText);

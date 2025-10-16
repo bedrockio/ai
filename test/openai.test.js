@@ -508,31 +508,19 @@ This is a tiny example with a link: [OpenAI](https://openai.com)
   });
 
   describe('other', () => {
-    it('should build the partially interpolated template', async () => {
-      const result = await client.buildTemplate({
-        template: '{{foo}} {{bar}}',
-        foo: 'foo',
-      });
-      expect(result).toBe('foo {{{bar}}}');
-    });
-
-    it('should allow passing params as own field', async () => {
-      const result = await client.buildTemplate({
-        template: '{{foo}} {{bar}}',
+    it('should inject input from the template', async () => {
+      setResponse(caloriesText);
+      const result = await client.prompt({
+        template: 'mixed-roles',
         params: {
-          foo: 'foo',
+          fatigue: 'often',
+          headaches: 'often',
+          musclePain: 'often',
         },
       });
-
-      expect(result).toBe('foo {{{bar}}}');
-    });
-
-    it('should inject an array', async () => {
-      const result = await client.buildTemplate({
-        template: '{{arr}}',
-        arr: ['one', 'two', 'three'],
-      });
-      expect(result).toBe('- one\n- two\n- three');
+      expect(result).toContain(
+        'Total dinner calorie ballpark: about 490–1,370 kcal'
+      );
     });
 
     it('should pass through the previous response ID', async () => {

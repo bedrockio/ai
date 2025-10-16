@@ -21,20 +21,20 @@ export class OpenAiClient extends BaseClient {
 
   async runPrompt(options) {
     const {
-      input,
       model,
       tools,
       verbosity,
       temperature,
-      instructions,
       prevResponseId,
+      messages: input,
+      system: instructions,
       stream = false,
     } = options;
 
     const params = {
       model,
-      input,
       tools,
+      input,
       stream,
       temperature,
       instructions,
@@ -85,10 +85,11 @@ export class OpenAiClient extends BaseClient {
     return JSON.parse(last.text);
   }
 
-  getMessagesResponse(input, response) {
+  getMessagesResponse(response, options) {
+    const { messages } = options;
     return {
       messages: [
-        ...input,
+        ...messages,
         {
           role: 'assistant',
           content: response.output_text,

@@ -1,6 +1,7 @@
+import { TemplateRenderer } from '@bedrockio/templates';
+
 import { parseCode } from './utils/code.js';
 import { createMessageExtractor } from './utils/json.js';
-import { loadTemplates, renderTemplate } from './utils/templates.js';
 
 export default class BaseClient {
   constructor(options) {
@@ -9,7 +10,9 @@ export default class BaseClient {
       model: this.constructor.DEFAULT_MODEL,
       ...options,
     };
-    this.templates = null;
+    this.renderer = new TemplateRenderer({
+      dir: options.templates,
+    });
   }
 
   // Public
@@ -21,9 +24,9 @@ export default class BaseClient {
    * @param {PromptOptions} options
    */
   async prompt(options) {
-    options = await this.normalizeOptions(options);
+    options = this.normalizeOptions(options);
 
-    const { input, output, stream, schema } = options;
+    const { output, stream, schema } = options;
 
     const response = await this.runPrompt(options);
 
@@ -52,7 +55,7 @@ export default class BaseClient {
     if (output === 'messages') {
       return {
         result,
-        ...this.getMessagesResponse(input, response),
+        ...this.getMessagesResponse(response, options),
       };
     } else {
       return result;
@@ -66,7 +69,7 @@ export default class BaseClient {
    * @returns {AsyncIterator}
    */
   async *stream(options) {
-    options = await this.normalizeOptions(options);
+    options = this.normalizeOptions(options);
 
     const extractor = this.getMessageExtractor(options);
 
@@ -118,11 +121,6 @@ export default class BaseClient {
     }
   }
 
-  async buildTemplate(options) {
-    const template = await this.resolveTemplate(options);
-    return renderTemplate(template, options);
-  }
-
   // Protected
 
   runPrompt(options) {
@@ -166,29 +164,64 @@ export default class BaseClient {
 
   // Private
 
-  async normalizeOptions(options) {
-    options = {
-      input: '',
-      output: 'text',
+  /**
+   * @returns {Object}
+   */
+  normalizeOptions(options) {
+    return {
       ...this.options,
       ...options,
+      ...this.normalizeInputs(options),
+      ...this.normalizeSchema(options),
     };
+  }
 
-    options.input = this.normalizeInput(options);
-    options.schema = this.normalizeSchema(options);
-    options.instructions ||= await this.resolveInstructions(options);
+  normalizeInputs(options) {
+    const { template, params, output = 'text' } = options;
+    const { sections } = this.renderer.run({
+      params,
+      template,
+    });
 
-    return options;
+    let system = '';
+    let messages = [];
+
+    for (let section of sections) {
+      const { title = 'system', content } = section;
+
+      const role = title.toLowerCase();
+
+      if (role === 'system') {
+        system += [system, content].join('\n');
+      } else {
+        messages = [
+          ...messages,
+          {
+            role,
+            content,
+          },
+        ];
+      }
+    }
+
+    messages = [...messages, ...this.normalizeInput(options)];
+
+    if (output === 'json') {
+      system = [system, 'Output only valid JSON.'].join('\n\n');
+    }
+
+    return {
+      system,
+      messages,
+    };
   }
 
   normalizeInput(options) {
-    let { input = '', output } = options;
+    let { input = '' } = options;
 
-    if (typeof input === 'string') {
-      if (output === 'json') {
-        input += '\nOutput only valid JSON.';
-      }
-
+    if (!input) {
+      input = [];
+    } else if (typeof input === 'string') {
       input = [
         {
           role: 'user',
@@ -207,6 +240,8 @@ export default class BaseClient {
       return;
     }
 
+    let hasWrappedSchema = false;
+
     // Convert to JSON schema.
     schema = schema.toJSON?.() || schema;
 
@@ -219,10 +254,13 @@ export default class BaseClient {
         required: ['items'],
         additionalProperties: false,
       };
-      options.hasWrappedSchema = true;
+      hasWrappedSchema = true;
     }
 
-    return schema;
+    return {
+      schema,
+      hasWrappedSchema,
+    };
   }
 
   getMessageExtractor(options) {
@@ -244,24 +282,6 @@ export default class BaseClient {
       // eslint-disable-next-line
       console.debug(`${message}\n${JSON.stringify(arg, null, 2)}\n`);
     }
-  }
-
-  async resolveInstructions(options) {
-    if (options.template) {
-      const template = await this.resolveTemplate(options);
-      return renderTemplate(template, options);
-    }
-  }
-
-  async resolveTemplate(options) {
-    const { template } = options;
-    await this.loadTemplates();
-    return this.templates[template] || template;
-  }
-
-  async loadTemplates() {
-    const { templates } = this.options;
-    this.templates ||= await loadTemplates(templates);
   }
 }
 

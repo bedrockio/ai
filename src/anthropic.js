@@ -72,10 +72,11 @@ export class AnthropicClient extends BaseClient {
     return toolBlock?.input || null;
   }
 
-  getMessagesResponse(input, response) {
+  getMessagesResponse(response, options) {
+    const { messages } = options;
     return {
       messages: [
-        ...input,
+        ...messages,
         ...response.content
           .filter((item) => {
             return item.type === 'text';
