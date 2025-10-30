@@ -12,11 +12,38 @@ export class OpenAiClient extends BaseClient {
 
   /**
    * Lists available models.
+   * @param {OpenAICategory} category
    * {@link https://platform.openai.com/docs/models Documentation}
    */
-  async models() {
+  async models(category = 'general') {
     const { data } = await this.client.models.list();
-    return data.map((o) => o.id);
+
+    const names = [];
+
+    for (let entry of data) {
+      const model = {
+        ...entry,
+        category: getModelCategory(entry),
+      };
+
+      if (isMatch(model, category)) {
+        names.push(model.id);
+      }
+    }
+
+    names.sort((a, b) => {
+      // If one is a prefix of the other, the shorter one comes first
+      if (a.startsWith(b)) {
+        return 1;
+      } else if (b.startsWith(a)) {
+        return -1;
+      }
+
+      // Otherwise sort alphabetically
+      return b.localeCompare(a);
+    });
+
+    return names;
   }
 
   async runPrompt(options) {
@@ -152,4 +179,54 @@ export class OpenAiClient extends BaseClient {
       };
     }
   }
+}
+
+// Categories
+
+const DATE_REG = /\d{4}-\d{2}-\d{2}$|\d{4}/;
+
+/**
+ * @typedef {
+ *   | "all"
+ *   | "general"
+ *   | "reasoning"
+ *   | "lightweight"
+ *   | "moderation"
+ *   | "embedding"
+ *   | "speech"
+ *   | "audio"
+ *   | "image"
+ *   | "code"
+ *   | "legacy"
+ * } OpenAICategory
+ */
+
+const MODEL_CATEGORIES = [
+  { name: 'code', reg: /codex/ },
+  { name: 'image', reg: /(dall-e|image|sora)/ },
+  { name: 'audio', reg: /(audio|realtime)/ },
+  { name: 'speech', reg: /(transcribe|tts)/ },
+  { name: 'embedding', reg: /embedding/ },
+  { name: 'moderation', reg: /moderation/ },
+  { name: 'lightweight', reg: /(mini|nano|small)/ },
+  { name: 'reasoning', reg: /(^o\d|deep-research)/ },
+  { name: 'legacy', reg: /(davinci|babbage|curie|ada)/ },
+  { name: 'general', reg: /^gpt/ },
+];
+
+function getModelCategory(model) {
+  const category = MODEL_CATEGORIES.find((category) => {
+    return category.reg.test(model.id);
+  });
+
+  return category?.name || 'none';
+}
+
+function isMatch(model, category) {
+  if (model.owned_by === 'openai-internal') {
+    return false;
+  } else if (DATE_REG.test(model.id)) {
+    return false;
+  }
+  return category === 'all' || model.category === category;
 }

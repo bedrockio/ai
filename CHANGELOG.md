@@ -1,3 +1,7 @@
+## 0.7.1
+
+- Better model listing.
+
 ## 0.7.0
 
 - Allow getting the template source.
