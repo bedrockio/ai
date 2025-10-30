@@ -536,6 +536,17 @@ This is a tiny example with a link: [OpenAI](https://openai.com)
       expect(result).toBe('I am a new response in the thread!');
       expect(prevResponseId).toBe('resp_next');
     });
+
+    it('should get the template source', async () => {
+      const result = await client.getTemplateSource('calories');
+      expect(result).toBe(
+        `
+You are a helpful assistant.
+Your job is to classify foods that a user has eaten and guess
+additional information about it including an estimate of the calories.
+        `.trim()
+      );
+    });
   });
 
   describe('messages', () => {

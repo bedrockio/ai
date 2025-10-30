@@ -28,10 +28,10 @@
   resolved "https://registry.yarnpkg.com/@babel/runtime/-/runtime-7.28.4.tgz#a70226016fabe25c5783b2f22d3e1c9bc5ca3326"
   integrity sha512-Q/N6JNWvIvPnLDvjlE1OUBLPQHH6l3CltCEsHIujp45zQUSSh8K+gHnaEX45yAT1nyngnINhvWtzN+Nb9D8RAQ==
 
-"@bedrockio/chrono@^0.7.0":
-  version "0.7.0"
-  resolved "https://registry.yarnpkg.com/@bedrockio/chrono/-/chrono-0.7.0.tgz#9241d08ec79d985af7b244201903d0637e191f27"
-  integrity sha512-Bjz82ReG04G38029zeX4ZTzLkgHehGGo1mBx+gz7Xv9ZWkM9NnsS8UrzUjRuAP36P4EepR3MXLI6zmqhAtlzlA==
+"@bedrockio/chrono@^0.9.1":
+  version "0.9.1"
+  resolved "https://registry.yarnpkg.com/@bedrockio/chrono/-/chrono-0.9.1.tgz#f0f3c34d12743351545181fabfc16d72e5c93275"
+  integrity sha512-oUyiJXgYvu40dMBtjhhKVo9xFX9ufoxKdIkHmkK511kylZcEjTHnrzLPZ+LcerS6/HTdUOlUUUphQj/roiCrEA==
 
 "@bedrockio/eslint-plugin@^1.2.2":
   version "1.2.2"
@@ -54,12 +54,12 @@
   resolved "https://registry.yarnpkg.com/@bedrockio/prettier-config/-/prettier-config-1.1.1.tgz#804cb96913e8dab50a237feaabdcd0e1715e34a7"
   integrity sha512-sL8BvR7z3X2z18AyfwgPqBTPPmS3iveJZe65JZk5YbN0s6Akba6W2F4JAygRVx6yueYRKErvpO0pcVMdtfYBSw==
 
-"@bedrockio/templates@^0.1.1":
-  version "0.1.1"
-  resolved "https://registry.yarnpkg.com/@bedrockio/templates/-/templates-0.1.1.tgz#1a0227e569ff05c29730ed99d1245ebe746323ef"
-  integrity sha512-ZzX5M6tfCydr+z5IhcMk2m1eQXjmNlRhzTDA1gUKnJDikDXd/HBUea+6tt0RBcYamQ1UP4dduJR1KOIdGJnyJQ==
+"@bedrockio/templates@^0.3.0":
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/@bedrockio/templates/-/templates-0.3.0.tgz#7b9b2c3d7a501204f9c8915306e45e56f0f9f013"
+  integrity sha512-wEyd1o/guIiE6XWGGFhT/ofZNL7zee99eyYDpklkQ2TbSbdqxxHBINE36JSOQ/CpT/y8B5dmijgbbdjKjy3sUQ==
   dependencies:
-    "@bedrockio/chrono" "^0.7.0"
+    "@bedrockio/chrono" "^0.9.1"
     front-matter "^4.0.2"
     handlebars "^4.7.8"
     lodash.memoize "^4.1.2"

@@ -121,6 +121,15 @@ export default class BaseClient {
     }
   }
 
+  /**
+   * Gets the source for a given template.
+   *
+   * @param {string} name
+   */
+  getTemplateSource(name) {
+    return this.renderer.getTemplateSource(name);
+  }
+
   // Protected
 
   runPrompt(options) {

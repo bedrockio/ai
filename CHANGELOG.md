@@ -1,3 +1,7 @@
+## 0.7.0
+
+- Allow getting the template source.
+
 ## 0.6.2
 
 - Pass tool_choice param.
