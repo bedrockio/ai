@@ -54,10 +54,10 @@
   resolved "https://registry.yarnpkg.com/@bedrockio/prettier-config/-/prettier-config-1.1.1.tgz#804cb96913e8dab50a237feaabdcd0e1715e34a7"
   integrity sha512-sL8BvR7z3X2z18AyfwgPqBTPPmS3iveJZe65JZk5YbN0s6Akba6W2F4JAygRVx6yueYRKErvpO0pcVMdtfYBSw==
 
-"@bedrockio/templates@^0.3.0":
-  version "0.3.0"
-  resolved "https://registry.yarnpkg.com/@bedrockio/templates/-/templates-0.3.0.tgz#7b9b2c3d7a501204f9c8915306e45e56f0f9f013"
-  integrity sha512-wEyd1o/guIiE6XWGGFhT/ofZNL7zee99eyYDpklkQ2TbSbdqxxHBINE36JSOQ/CpT/y8B5dmijgbbdjKjy3sUQ==
+"@bedrockio/templates@^0.3.1":
+  version "0.3.1"
+  resolved "https://registry.yarnpkg.com/@bedrockio/templates/-/templates-0.3.1.tgz#e9235a5205d7329755de9888c40fb72360b92295"
+  integrity sha512-UtMBM9R4lxcwk/qOc5ZP8NysiAH9YJLrcHmVZ3izakQa7dRfu77sprtM6CkAaExMaRciRZ7LZ9Qi/NI4N8z49Q==
   dependencies:
     "@bedrockio/chrono" "^0.9.1"
     front-matter "^4.0.2"

@@ -187,6 +187,7 @@ export default class BaseClient {
 
   normalizeInputs(options) {
     const { template, params, output = 'text' } = options;
+
     const { sections } = this.renderer.run({
       params,
       template,
@@ -226,20 +227,13 @@ export default class BaseClient {
   }
 
   normalizeInput(options) {
-    let { input = '' } = options;
-
-    if (!input) {
-      input = [];
-    } else if (typeof input === 'string') {
-      input = [
-        {
-          role: 'user',
-          content: input,
-        },
-      ];
-    }
-
-    return input;
+    const { input = '' } = options;
+    return [
+      {
+        role: 'user',
+        content: input,
+      },
+    ];
   }
 
   normalizeSchema(options) {

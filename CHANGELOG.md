@@ -1,3 +1,7 @@
+## 0.7.2
+
+- Handling long filenames.
+
 ## 0.7.1
 
 - Better model listing.

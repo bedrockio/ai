@@ -557,5 +557,29 @@ additional information about it including an estimate of the calories.
         'resp_0594e6c81a245f130068ca4d5691648192a0b15b41dfc1b0b7'
       );
     });
+
+    it('should not choke on long template as input', async () => {
+      setResponse(caloriesText);
+
+      const template = await client.getTemplateSource('mixed-roles');
+
+      const { result } = await client.prompt({
+        template,
+        output: 'messages',
+      });
+
+      expect(result).toContain('Total dinner calorie ballpark:');
+    });
+
+    it('should not choke no input with template', async () => {
+      setResponse(caloriesText);
+
+      const { result } = await client.prompt({
+        template: 'foo',
+        output: 'messages',
+      });
+
+      expect(result).toContain('Total dinner calorie ballpark:');
+    });
   });
 });

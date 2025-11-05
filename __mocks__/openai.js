@@ -16,8 +16,8 @@ export default function MockOpenAiClient() {
     },
     responses: {
       create(options) {
-        const { previous_response_id = 'default' } = options;
-        if (!options.input) {
+        const { previous_response_id = 'default', input } = options;
+        if (!input || input.length === 0) {
           throw new Error('Missing parameter "input".');
         }
         const response = responses[previous_response_id];
