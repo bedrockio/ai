@@ -31,7 +31,7 @@ export default class BaseClient {
     const response = await this.runPrompt(options);
 
     if (!stream) {
-      this.debug('Response:', response);
+      this.debug('Response:', response, options);
     }
 
     if (output === 'raw') {
@@ -78,7 +78,7 @@ export default class BaseClient {
 
       // @ts-ignore
       for await (let event of stream) {
-        this.debug('Event:', event);
+        this.debug('Event:', event, options);
 
         event = this.normalizeStreamEvent(event);
 
@@ -106,7 +106,7 @@ export default class BaseClient {
             };
           }
 
-          this.debug('Extract:', extractEvent);
+          this.debug('Extract:', extractEvent, options);
 
           yield extractEvent;
         }
@@ -279,8 +279,8 @@ export default class BaseClient {
     };
   }
 
-  debug(message, arg) {
-    if (this.options.debug) {
+  debug(message, arg, options) {
+    if (options.debug) {
       // TODO: replace with logger when opentelemetry is removed
       // eslint-disable-next-line
       console.debug(`${message}\n${JSON.stringify(arg, null, 2)}\n`);

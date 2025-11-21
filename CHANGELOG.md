@@ -1,3 +1,7 @@
+## 0.7.3
+
+- Allow debug on individual calls.
+
 ## 0.7.2
 
 - Handling long filenames.

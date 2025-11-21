@@ -75,7 +75,7 @@ export class OpenAiClient extends BaseClient {
       },
     };
 
-    this.debug('Params:', params);
+    this.debug('Params:', params, options);
 
     // @ts-ignore
     return await this.client.responses.create(params);

@@ -43,8 +43,8 @@ export class AnthropicClient extends BaseClient {
 
     const clientOptions = this.getClientOptions(params);
 
-    this.debug('Params:', params);
-    this.debug('Options:', options);
+    this.debug('Params:', params, options);
+    this.debug('Options:', options, options);
 
     // @ts-ignore
     return await this.client.messages.create(params, clientOptions);
