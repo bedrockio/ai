@@ -1,0 +1,45 @@
+{
+  "sdkHttpResponse": {
+    "headers": {
+      "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+      "content-encoding": "gzip",
+      "content-type": "application/json; charset=UTF-8",
+      "date": "Mon, 08 Dec 2025 09:15:02 GMT",
+      "server": "scaffolding on HTTPServer2",
+      "server-timing": "gfet4t7; dur=2347",
+      "transfer-encoding": "chunked",
+      "vary": "Origin, X-Origin, Referer",
+      "x-content-type-options": "nosniff",
+      "x-frame-options": "SAMEORIGIN",
+      "x-xss-protection": "0"
+    }
+  },
+  "candidates": [
+    {
+      "content": {
+        "parts": [
+          {
+            "text": "Here is a list of some stocks from the S&P 500:\n\n*   **Apple Inc.** (AAPL)\n*   **Microsoft Corporation** (MSFT)\n*   **Amazon.com Inc.** (AMZN)\n*   **Alphabet Inc.** (GOOGL) (Class A)\n*   **Alphabet Inc.** (GOOG) (Class C)\n*   **Meta Platforms Inc.** (META)\n*   **NVIDIA Corporation** (NVDA)\n*   **Tesla Inc.** (TSLA)\n*   **Berkshire Hathaway Inc.** (BRK.B)\n*   **Johnson & Johnson** (JNJ)"
+          }
+        ],
+        "role": "model"
+      },
+      "finishReason": "STOP",
+      "index": 0
+    }
+  ],
+  "modelVersion": "gemini-2.5-flash",
+  "responseId": "Fpc2aYfxEpCU1e8P1veW0AU",
+  "usageMetadata": {
+    "promptTokenCount": 61,
+    "candidatesTokenCount": 143,
+    "totalTokenCount": 286,
+    "promptTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 61
+      }
+    ],
+    "thoughtsTokenCount": 82
+  }
+}

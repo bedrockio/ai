@@ -1,14 +1,16 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 
 import BaseClient from './BaseClient.js';
 
-const DEFAULT_MODEL = 'models/gemini-2.0-flash-exp';
+const DEFAULT_MODEL = 'gemini-2.5-flash';
 
 export class GoogleClient extends BaseClient {
   constructor(options) {
     super(options);
     const { apiKey } = options;
-    this.client = new GoogleGenerativeAI(apiKey);
+    this.client = new GoogleGenAI({
+      apiKey,
+    });
   }
 
   /**
@@ -17,72 +19,90 @@ export class GoogleClient extends BaseClient {
    */
   async models() {
     return [
-      'gemini-2.0-flash-exp',
-      'gemini-1.5-flash',
-      'gemini-1.5-flash-8b',
+      // Gemini 3 (Nov 2025)
+      'gemini-3-pro-preview',
+
+      // Gemini 2.5
+      'gemini-2.5-pro',
+      'gemini-2.5-flash',
+
+      // Gemini 2.0
+      'gemini-2.0-flash',
+
+      // Gemini 1.5 (legacy but still available)
       'gemini-1.5-pro',
+      'gemini-1.5-flash',
     ];
   }
 
-  async getCompletion(options) {
-    const { model = DEFAULT_MODEL, output = 'text', stream = false } = options;
-    const { client } = this;
+  async runPrompt(options) {
+    const { model = DEFAULT_MODEL, messages, system } = options;
 
-    const generator = client.getGenerativeModel({
-      model,
-    });
-
-    // @ts-ignore
-    const messages = await this.getMessages(options);
-
-    const prompts = messages.map((message) => {
-      return message.content;
-    });
-
-    let response;
-
-    if (stream) {
-      response = await generator.generateContentStream(prompts);
-    } else {
-      response = await generator.generateContent(prompts);
-    }
-
-    if (output === 'raw') {
-      return response;
-    }
-
-    // @ts-ignore
-    const parts = response.response.candidates.flatMap((candidate) => {
-      return candidate.content.parts;
-    });
-    const [message] = parts;
-
-    return message;
-  }
-  async getStream(options) {
-    // @ts-ignore
-    const response = await super.getStream(options);
-    // @ts-ignore
-    return response.stream;
-  }
-
-  getStreamedChunk(chunk, started) {
-    const [candidate] = chunk.candidates;
-
-    let type;
-    if (!started) {
-      type = 'start';
-    } else if (candidate.finishReason === 'STOP') {
-      type = 'stop';
-    } else {
-      type = 'chunk';
-    }
-
-    if (type) {
+    const contents = messages.map((message) => {
+      const { role, content } = message;
       return {
-        type,
-        text: candidate.content.parts[0].text || '',
+        role,
+        parts: [
+          {
+            text: content,
+          },
+        ],
       };
-    }
+    });
+
+    const params = {
+      model,
+      contents,
+      ...(system && {
+        config: {
+          systemInstruction: system,
+        },
+      }),
+    };
+
+    return await this.client.models.generateContent(params);
+  }
+
+  runStream(options) {
+    const params = this.getParams(options);
+    return this.client.models.generateContentStream(params);
+  }
+
+  getTextResponse(response) {
+    return response.text;
+  }
+
+  getParams(options) {
+    const { model = DEFAULT_MODEL, messages, system } = options;
+
+    const contents = messages.map((message) => {
+      const { role, content } = message;
+      return {
+        role,
+        parts: [
+          {
+            text: content,
+          },
+        ],
+      };
+    });
+
+    return {
+      model,
+      contents,
+      ...(system && {
+        config: {
+          systemInstruction: system,
+        },
+      }),
+    };
+  }
+
+  normalizeStreamEvent(event) {
+    // Note Gemini doesn't provide different events, only a single GenerateContentResponse.
+    return {
+      type: 'delta',
+      delta: event.text,
+    };
   }
 }

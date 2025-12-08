@@ -1,61 +1,88 @@
 import path from 'path';
 
-import { describe, expect, it } from 'vitest';
+import { setResponse } from '@google/genai';
+import { describe, expect, it, vi } from 'vitest';
 
 import { GoogleClient } from '../src/google';
+import stocksStream from './fixtures/google/stocks/stream.json';
+import stocksText from './fixtures/google/stocks/text.json';
+
+vi.mock('@google/genai');
 
 const client = new GoogleClient({
+  apiKey: process.env.GOOGLE_AI_API_KEY,
   templates: path.join(__dirname, './templates'),
 });
 
-describe.skip('google', () => {
-  describe('prompt', () => {
-    it('should succeed for a simple response', async () => {
-      const result = await client.prompt({
-        file: 'stocks',
-        output: 'json',
-      });
+describe('google', () => {
+  describe('models', () => {
+    it('should list models', async () => {
+      const result = await client.models();
       expect(result).toEqual([
-        {
-          name: 'Microsoft Corp.',
-          symbol: 'MSFT',
-        },
-        {
-          name: 'Apple Inc.',
-          symbol: 'AAPL',
-        },
-        {
-          name: 'NVIDIA Corporation',
-          symbol: 'NVDA',
-        },
-        {
-          name: 'Amazon.com Inc.',
-          symbol: 'AMZN',
-        },
-        {
-          name: 'Alphabet Inc Class A',
-          symbol: 'GOOGL',
-        },
+        'gemini-3-pro-preview',
+        'gemini-2.5-pro',
+        'gemini-2.5-flash',
+        'gemini-2.0-flash',
+        'gemini-1.5-pro',
+        'gemini-1.5-flash',
       ]);
+    });
+  });
+
+  describe('prompt', () => {
+    it('should succeed for a simple text response', async () => {
+      setResponse(stocksText);
+      const result = await client.prompt({
+        template: 'stocks',
+      });
+      expect(result).toBe(
+        `
+Here is a list of some stocks from the S&P 500:
+
+*   **Apple Inc.** (AAPL)
+*   **Microsoft Corporation** (MSFT)
+*   **Amazon.com Inc.** (AMZN)
+*   **Alphabet Inc.** (GOOGL) (Class A)
+*   **Alphabet Inc.** (GOOG) (Class C)
+*   **Meta Platforms Inc.** (META)
+*   **NVIDIA Corporation** (NVDA)
+*   **Tesla Inc.** (TSLA)
+*   **Berkshire Hathaway Inc.** (BRK.B)
+*   **Johnson & Johnson** (JNJ)
+        `.trim()
+      );
     });
   });
 
   describe('stream', () => {
     it('should stream response', async () => {
+      setResponse(stocksStream);
       const stream = await client.stream({
-        file: 'stocks',
+        template: 'stocks',
       });
 
-      const chunks = [];
+      const events = [];
 
-      for await (const chunk of stream) {
-        chunks.push(chunk.text);
+      for await (const event of stream) {
+        events.push(event);
       }
 
-      expect(chunks).toEqual([
-        '```json\n[\n  {\n    "name": "Microsoft Corp.",\n    "symbol": "MSFT"\n  },\n  {\n    "name": "Apple Inc.",\n    "sym',
-        'bol": "AAPL"\n  },\n    {\n    "name": "NVIDIA Corporation",\n    "symbol": "NVDA"\n  },\n  {\n    "name": "Amazon.c',
-        'om Inc.",\n    "symbol": "AMZN"\n  },\n  {\n    "name": "Alphabet Inc Class A",\n     "symbol": "GOOGL"\n    }\n]\n```\n',
+      expect(events).toEqual([
+        {
+          type: 'delta',
+          delta:
+            'Here are some stocks from the S&P 500:\n\n*   **Apple Inc.** (AAPL)\n*   **Microsoft Corporation** (MSFT)\n*   **Amazon.com Inc.** (AMZN)\n*   ',
+        },
+        {
+          type: 'delta',
+          delta:
+            '**Alphabet Inc. (Class A)** (GOOGL)\n*   **Alphabet Inc. (Class C)** (GOOG)\n*   **NVIDIA Corporation** (NVDA)\n*   **Tesla, Inc.** (TS',
+        },
+        {
+          type: 'delta',
+          delta:
+            'LA)\n*   **Meta Platforms, Inc.** (META)\n*   **Johnson & Johnson** (JNJ)\n*   **Exxon Mobil Corporation** (XOM)',
+        },
       ]);
     });
   });

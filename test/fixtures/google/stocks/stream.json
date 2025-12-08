@@ -1,0 +1,135 @@
+[
+  {
+    "candidates": [
+      {
+        "content": {
+          "parts": [
+            {
+              "text": "Here are some stocks from the S&P 500:\n\n*   **Apple Inc.** (AAPL)\n*   **Microsoft Corporation** (MSFT)\n*   **Amazon.com Inc.** (AMZN)\n*   "
+            }
+          ],
+          "role": "model"
+        },
+        "index": 0
+      }
+    ],
+    "modelVersion": "gemini-2.5-flash",
+    "responseId": "pJg2aabmFcm0vr0Puf-hiQU",
+    "usageMetadata": {
+      "promptTokenCount": 61,
+      "candidatesTokenCount": 50,
+      "totalTokenCount": 190,
+      "promptTokensDetails": [
+        {
+          "modality": "TEXT",
+          "tokenCount": 61
+        }
+      ],
+      "thoughtsTokenCount": 79
+    },
+    "sdkHttpResponse": {
+      "headers": {
+        "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+        "content-disposition": "attachment",
+        "content-type": "text/event-stream",
+        "date": "Mon, 08 Dec 2025 09:21:41 GMT",
+        "server": "scaffolding on HTTPServer2",
+        "server-timing": "gfet4t7; dur=1374",
+        "transfer-encoding": "chunked",
+        "vary": "Origin, X-Origin, Referer",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "SAMEORIGIN",
+        "x-xss-protection": "0"
+      }
+    }
+  },
+  {
+    "candidates": [
+      {
+        "content": {
+          "parts": [
+            {
+              "text": "**Alphabet Inc. (Class A)** (GOOGL)\n*   **Alphabet Inc. (Class C)** (GOOG)\n*   **NVIDIA Corporation** (NVDA)\n*   **Tesla, Inc.** (TS"
+            }
+          ],
+          "role": "model"
+        },
+        "index": 0
+      }
+    ],
+    "modelVersion": "gemini-2.5-flash",
+    "responseId": "pJg2aabmFcm0vr0Puf-hiQU",
+    "usageMetadata": {
+      "promptTokenCount": 61,
+      "candidatesTokenCount": 100,
+      "totalTokenCount": 240,
+      "promptTokensDetails": [
+        {
+          "modality": "TEXT",
+          "tokenCount": 61
+        }
+      ],
+      "thoughtsTokenCount": 79
+    },
+    "sdkHttpResponse": {
+      "headers": {
+        "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+        "content-disposition": "attachment",
+        "content-type": "text/event-stream",
+        "date": "Mon, 08 Dec 2025 09:21:41 GMT",
+        "server": "scaffolding on HTTPServer2",
+        "server-timing": "gfet4t7; dur=1374",
+        "transfer-encoding": "chunked",
+        "vary": "Origin, X-Origin, Referer",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "SAMEORIGIN",
+        "x-xss-protection": "0"
+      }
+    }
+  },
+  {
+    "candidates": [
+      {
+        "content": {
+          "parts": [
+            {
+              "text": "LA)\n*   **Meta Platforms, Inc.** (META)\n*   **Johnson & Johnson** (JNJ)\n*   **Exxon Mobil Corporation** (XOM)"
+            }
+          ],
+          "role": "model"
+        },
+        "finishReason": "STOP",
+        "index": 0
+      }
+    ],
+    "modelVersion": "gemini-2.5-flash",
+    "responseId": "pJg2aabmFcm0vr0Puf-hiQU",
+    "usageMetadata": {
+      "promptTokenCount": 61,
+      "candidatesTokenCount": 139,
+      "totalTokenCount": 279,
+      "promptTokensDetails": [
+        {
+          "modality": "TEXT",
+          "tokenCount": 61
+        }
+      ],
+      "thoughtsTokenCount": 79
+    },
+    "sdkHttpResponse": {
+      "headers": {
+        "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+        "content-disposition": "attachment",
+        "content-type": "text/event-stream",
+        "date": "Mon, 08 Dec 2025 09:21:41 GMT",
+        "server": "scaffolding on HTTPServer2",
+        "server-timing": "gfet4t7; dur=1374",
+        "transfer-encoding": "chunked",
+        "vary": "Origin, X-Origin, Referer",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "SAMEORIGIN",
+        "x-xss-protection": "0"
+      }
+    }
+  }
+]

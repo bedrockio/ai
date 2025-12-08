@@ -1,3 +1,7 @@
+## 0.7.4
+
+- Restored basic Gemini functionality.
+
 ## 0.7.3
 
 - Allow debug on individual calls.
