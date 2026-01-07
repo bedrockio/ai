@@ -287,35 +287,35 @@ describe('anthropic', () => {
         },
         {
           type: 'delta',
-          text: '#',
+          delta: '#',
         },
         {
           type: 'delta',
-          text: " Hello World\n\nHere's some **markdown** code for",
+          delta: " Hello World\n\nHere's some **markdown** code for",
         },
         {
           type: 'delta',
-          text: ' you:\n\n- First item\n- Second item with',
+          delta: ' you:\n\n- First item\n- Second item with',
         },
         {
           type: 'delta',
-          text: ' *italic text*\n- Third item with a',
+          delta: ' *italic text*\n- Third item with a',
         },
         {
           type: 'delta',
-          text: ' [link](https://example.com)',
+          delta: ' [link](https://example.com)',
         },
         {
           type: 'delta',
-          text: '\n\n```python\ndef hello():\n    print("Hello, World!")',
+          delta: '\n\n```python\ndef hello():\n    print("Hello, World!")',
         },
         {
           type: 'delta',
-          text: '\n```\n\n> This is a blockquote with',
+          delta: '\n```\n\n> This is a blockquote with',
         },
         {
           type: 'delta',
-          text: ' some `inline code`.',
+          delta: ' some `inline code`.',
         },
         {
           type: 'stop',

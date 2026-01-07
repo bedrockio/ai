@@ -109,7 +109,7 @@ export class AnthropicClient extends BaseClient {
       options.buffer += event.delta.text;
       return {
         type: 'delta',
-        text: event.delta.text,
+        delta: event.delta.text,
       };
     } else if (type === 'message_delta') {
       return {
