@@ -289,13 +289,6 @@ This is a simple markdown snippet with a [link](https://example.com).
         { type: 'delta', delta: ' Item' },
         { type: 'delta', delta: ' two' },
         {
-          type: 'done',
-          text: `# Quick Markdown
-This is a tiny example with a link: [OpenAI](https://openai.com)
-- Item one
-- Item two`.trim(),
-        },
-        {
           id: 'resp_0117717bc1b9c9890068e01576f9f8819db4cf03cdefda9185',
           type: 'stop',
           messages: [

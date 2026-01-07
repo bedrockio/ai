@@ -190,11 +190,6 @@ export class OpenAiClient extends BaseClient {
         type: 'delta',
         delta: event.delta,
       };
-    } else if (type === 'response.output_text.done') {
-      return {
-        type: 'done',
-        text: event.text,
-      };
     }
   }
 }
