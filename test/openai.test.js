@@ -1,7 +1,7 @@
 import path from 'path';
 
 import yd from '@bedrockio/yada';
-import { setModels, setResponse } from 'openai';
+import { getLastOptions, setModels, setResponse } from 'openai';
 import { describe, expect, it, vi } from 'vitest';
 
 import { OpenAiClient } from '../src/openai';
@@ -571,7 +571,7 @@ additional information about it including an estimate of the calories.
       expect(result).toContain('Total dinner calorie ballpark:');
     });
 
-    it('should not choke no input with template', async () => {
+    it('should not choke on no input with template', async () => {
       setResponse(caloriesText);
 
       const { result } = await client.prompt({
@@ -580,6 +580,98 @@ additional information about it including an estimate of the calories.
       });
 
       expect(result).toContain('Total dinner calorie ballpark:');
+    });
+  });
+
+  describe('input', () => {
+    it('should be able to pass a string as input', async () => {
+      await client.prompt({
+        input: 'How many calories are in an apple?',
+      });
+
+      expect(getLastOptions()).toMatchObject({
+        input: [
+          {
+            role: 'user',
+            content: 'How many calories are in an apple?',
+          },
+        ],
+        instructions: '',
+      });
+    });
+
+    it('should be able to pass message history as array', async () => {
+      await client.prompt({
+        input: [
+          {
+            role: 'user',
+            content: 'How many calories are in an apple?',
+          },
+          {
+            role: 'system',
+            content: 'A medium sized apple (~180g) has about 95 calories.',
+          },
+          {
+            role: 'user',
+            content: 'What about an orange?',
+          },
+        ],
+      });
+
+      expect(getLastOptions()).toMatchObject({
+        input: [
+          {
+            role: 'user',
+            content: 'How many calories are in an apple?',
+          },
+          {
+            role: 'system',
+            content: 'A medium sized apple (~180g) has about 95 calories.',
+          },
+          {
+            role: 'user',
+            content: 'What about an orange?',
+          },
+        ],
+        instructions: '',
+      });
+    });
+
+    it('should be able to pass message history as messages', async () => {
+      await client.prompt({
+        messages: [
+          {
+            role: 'user',
+            content: 'How many calories are in an apple?',
+          },
+          {
+            role: 'system',
+            content: 'A medium sized apple (~180g) has about 95 calories.',
+          },
+          {
+            role: 'user',
+            content: 'What about an orange?',
+          },
+        ],
+      });
+
+      expect(getLastOptions()).toMatchObject({
+        input: [
+          {
+            role: 'user',
+            content: 'How many calories are in an apple?',
+          },
+          {
+            role: 'system',
+            content: 'A medium sized apple (~180g) has about 95 calories.',
+          },
+          {
+            role: 'user',
+            content: 'What about an orange?',
+          },
+        ],
+        instructions: '',
+      });
     });
   });
 });

@@ -1,6 +1,7 @@
-## 0.7.4
+## Next
 
 - Restored basic Gemini functionality.
+- Normalize options inputs.
 
 ## 0.7.3
 

@@ -1,4 +1,5 @@
 let models;
+let lastOptions;
 let responses = {};
 
 export default function MockOpenAiClient() {
@@ -20,6 +21,7 @@ export default function MockOpenAiClient() {
         if (!input || input.length === 0) {
           throw new Error('Missing parameter "input".');
         }
+        lastOptions = options;
         const response = responses[previous_response_id];
         if (options.stream) {
           return streamMock(response);
@@ -44,6 +46,10 @@ export function setResponse(data, name = 'default') {
 
 export function setModels(data) {
   models = data;
+}
+
+export function getLastOptions() {
+  return lastOptions;
 }
 
 async function* streamMock(response) {

@@ -186,7 +186,22 @@ export default class BaseClient {
   }
 
   normalizeInputs(options) {
-    const { template, params, output = 'text' } = options;
+    const { output = 'text' } = options;
+
+    let { system, messages } = this.normalizeTemplateMessages(options);
+
+    if (output === 'json') {
+      system = [system, 'Output only valid JSON.'].join('\n\n');
+    }
+
+    return {
+      system,
+      messages: [...messages, ...this.normalizeOptionsMessages(options)],
+    };
+  }
+
+  normalizeTemplateMessages(options) {
+    const { template, params } = options;
 
     const { sections } = this.renderer.run({
       params,
@@ -214,11 +229,7 @@ export default class BaseClient {
       }
     }
 
-    messages = [...messages, ...this.normalizeInput(options)];
-
-    if (output === 'json') {
-      system = [system, 'Output only valid JSON.'].join('\n\n');
-    }
+    system = system.trim();
 
     return {
       system,
@@ -226,14 +237,19 @@ export default class BaseClient {
     };
   }
 
-  normalizeInput(options) {
-    const { input = '' } = options;
-    return [
-      {
-        role: 'user',
-        content: input,
-      },
-    ];
+  normalizeOptionsMessages(options) {
+    const input = options.input || options.messages;
+
+    if (Array.isArray(input)) {
+      return input;
+    } else {
+      return [
+        {
+          role: 'user',
+          content: input || '',
+        },
+      ];
+    }
   }
 
   normalizeSchema(options) {

@@ -23,10 +23,10 @@ export class AnthropicClient extends BaseClient {
 
   async runPrompt(options) {
     const {
-      input,
       model,
+      system,
+      messages,
       temperature,
-      instructions,
       stream = false,
       tokens = DEFAULT_TOKENS,
     } = options;
@@ -34,10 +34,10 @@ export class AnthropicClient extends BaseClient {
     const params = {
       model,
       stream,
+      system,
+      messages,
       temperature,
       max_tokens: tokens,
-      system: instructions,
-      messages: input,
       ...this.getToolOptions(options),
     };
 
@@ -59,7 +59,7 @@ export class AnthropicClient extends BaseClient {
   }
 
   getTextResponse(response) {
-    const textBlock = response.content.find((block) => {
+    const textBlock = response?.content.find((block) => {
       return block.type === 'text';
     });
     return textBlock?.text || null;

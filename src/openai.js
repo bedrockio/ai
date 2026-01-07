@@ -89,7 +89,7 @@ export class OpenAiClient extends BaseClient {
   }
 
   getTextResponse(response) {
-    return response.output_text;
+    return response?.output_text;
   }
 
   getStructuredResponse(response) {
