@@ -27,7 +27,7 @@ describe('anthropic', () => {
     describe('calories', () => {
       it('should succeed for a text response', async () => {
         setResponse(caloriesText);
-        const result = await client.prompt({
+        const { result } = await client.prompt({
           template: 'calories',
           input:
             'I had a burger and some french fries for dinner. For dessert I had a banana.',
@@ -39,7 +39,7 @@ describe('anthropic', () => {
 
       it('should succeed for a basic json response', async () => {
         setResponse(caloriesObject);
-        const result = await client.prompt({
+        const { result } = await client.prompt({
           template: 'calories',
           input:
             'I had a burger and some french fries for dinner. For dessert I had a banana.',
@@ -84,7 +84,7 @@ describe('anthropic', () => {
 
       it('should allow yada schema for output', async () => {
         setResponse(caloriesStructured);
-        const result = await client.prompt({
+        const { result } = await client.prompt({
           template: 'calories',
           input:
             'I had a burger and some french fries for dinner. For dessert I had a banana.',
@@ -119,7 +119,7 @@ describe('anthropic', () => {
 
       it('should allow a JSON schema for output', async () => {
         setResponse(caloriesStructured);
-        const result = await client.prompt({
+        const { result } = await client.prompt({
           template: 'calories',
           input:
             'I had a burger and some french fries for dinner. For dessert I had a banana.',
@@ -163,7 +163,7 @@ describe('anthropic', () => {
 
       it('should wrap an array schema', async () => {
         setResponse(caloriesWrapped);
-        const result = await client.prompt({
+        const { result } = await client.prompt({
           template: 'calories',
           input:
             'I had a burger and some french fries for dinner. For dessert I had a banana.',
@@ -192,14 +192,13 @@ describe('anthropic', () => {
 
       it('should get the raw response', async () => {
         setResponse(caloriesText);
-        const result = await client.prompt({
+        const { response } = await client.prompt({
           template: 'calories',
           input:
             'I had a burger and some french fries for dinner. For dessert I had a banana.',
-          output: 'raw',
         });
 
-        expect(result).toMatchObject({
+        expect(response).toMatchObject({
           id: 'msg_01Wc7kf31bhkFAZY5zXCHiri',
           type: 'message',
           role: 'assistant',
@@ -230,7 +229,7 @@ describe('anthropic', () => {
     describe('stocks', () => {
       it('should succeed for a text response', async () => {
         setResponse(stocksText);
-        const result = await client.prompt({
+        const { result } = await client.prompt({
           template: 'stocks',
           input: 'List the current top 5 stocks.',
         });
@@ -241,7 +240,7 @@ describe('anthropic', () => {
 
       it('should succeed for a basic json response', async () => {
         setResponse(stocksObject);
-        const result = await client.prompt({
+        const { result } = await client.prompt({
           template: 'stocks',
           input: 'List the current top 5 stocks.',
           output: 'json',
@@ -261,7 +260,7 @@ describe('anthropic', () => {
     describe('markdown', () => {
       it('should extract code', async () => {
         setResponse(markdownCode);
-        const result = await client.prompt({
+        const { result } = await client.prompt({
           input: 'Please generate some markdown code for me. Just a few lines.',
         });
         expect(result).toContain('# Sample Markdown');
@@ -320,6 +319,37 @@ describe('anthropic', () => {
         },
         {
           type: 'stop',
+          messages: [
+            {
+              role: 'user',
+              content:
+                'Please generate some markdown code for me. Just a few lines.',
+            },
+            {
+              role: 'assistant',
+              content: `
+# Hello World
+
+Here's some **markdown** code for you:
+
+- First item
+- Second item with *italic text*
+- Third item with a [link](https://example.com)
+
+\`\`\`python
+def hello():
+    print("Hello, World!")
+\`\`\`
+
+> This is a blockquote with some \`inline code\`.
+
+`.trim(),
+            },
+          ],
+          usage: {
+            input_tokens: 20,
+            output_tokens: 76,
+          },
         },
       ]);
     });
@@ -347,7 +377,7 @@ describe('anthropic', () => {
   describe('MCP', () => {
     it('should handle call to MCP server', async () => {
       setResponse(medicationsMcp);
-      const result = await client.prompt({
+      const { result } = await client.prompt({
         template: 'medications',
         input: 'I have lower back pain and insomnia.',
         schema: yd
@@ -408,13 +438,25 @@ describe('anthropic', () => {
     });
   });
 
+  describe('other', () => {
+    it('should include usage', async () => {
+      setResponse(caloriesText);
+      const { usage } = await client.prompt({
+        input: 'How many calories are in an apple?',
+      });
+      expect(usage).toEqual({
+        input_tokens: 59,
+        output_tokens: 369,
+      });
+    });
+  });
+
   describe('messages', () => {
     it('should output all messages on the client for replay', async () => {
       setResponse(caloriesText);
 
       const { result, messages } = await client.prompt({
         input: 'Hello',
-        output: 'messages',
       });
 
       expect(result).toContain(

@@ -43,7 +43,7 @@ describe('createClient', () => {
       apiKey: 'test-key',
     });
 
-    const result = await client.prompt({
+    const { result } = await client.prompt({
       file: 'stocks',
       output: 'json',
     });
@@ -88,7 +88,7 @@ describe('createClient', () => {
       apiKey: 'test-key',
     });
 
-    const result = await client.prompt({
+    const { result } = await client.prompt({
       file: 'stocks',
       output: 'json',
     });

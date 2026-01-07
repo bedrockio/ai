@@ -16,7 +16,7 @@ describe('xAi', () => {
   describe('prompt', () => {
     it('should transform code', async () => {
       setResponse(code);
-      const result = await client.prompt({
+      const { result } = await client.prompt({
         input:
           'Please generate some a basic Javascript function that sums two numbers.',
       });

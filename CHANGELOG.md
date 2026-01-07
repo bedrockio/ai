@@ -1,7 +1,9 @@
-## Next
+## 0.8.0
 
+- Simplified return values.
 - Restored basic Gemini functionality.
 - Normalize options inputs.
+- Normalize stream event outputs.
 
 ## 0.7.3
 

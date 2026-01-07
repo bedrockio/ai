@@ -2,10 +2,10 @@
 # yarn lockfile v1
 
 
-"@anthropic-ai/sdk@^0.66.0":
-  version "0.66.0"
-  resolved "https://registry.yarnpkg.com/@anthropic-ai/sdk/-/sdk-0.66.0.tgz#5d007120d2315bb8683a6a960c1126bb15c4fea4"
-  integrity sha512-GBSSby0P4BW/sOdvsTXaHJDPnGEL5tuB4TtsU4SXG7+dVULQ9MkKgNznCALDCgSV5yhrtQlctvEdMqePVIXTiw==
+"@anthropic-ai/sdk@^0.71.2":
+  version "0.71.2"
+  resolved "https://registry.npmjs.org/@anthropic-ai/sdk/-/sdk-0.71.2.tgz#1e3e08a7b2c3129828480a3d0ca4487472fdde3d"
+  integrity sha512-TGNDEUuEstk/DKu0/TflXAEt+p+p/WhTlFzEnoosvbaDU2LTjm42igSdlL0VijrKpWejtOKxX0b8A7uc+XiSAQ==
   dependencies:
     json-schema-to-ts "^3.1.1"
 

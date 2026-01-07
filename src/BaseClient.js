@@ -34,10 +34,6 @@ export default class BaseClient {
       this.debug('Response:', response, options);
     }
 
-    if (output === 'raw') {
-      return response;
-    }
-
     let result;
     if (schema) {
       result = this.getStructuredResponse(response);
@@ -52,14 +48,11 @@ export default class BaseClient {
       result = parseCode(this.getTextResponse(response));
     }
 
-    if (output === 'messages') {
-      return {
-        result,
-        ...this.getMessagesResponse(response, options),
-      };
-    } else {
-      return result;
-    }
+    return {
+      result,
+      response,
+      ...this.normalizeResponse(response, options),
+    };
   }
 
   /**
@@ -80,7 +73,7 @@ export default class BaseClient {
       for await (let event of stream) {
         this.debug('Event:', event, options);
 
-        event = this.normalizeStreamEvent(event);
+        event = this.normalizeStreamEvent(event, options);
 
         if (event) {
           yield event;
@@ -158,16 +151,18 @@ export default class BaseClient {
   /**
    * @returns {Object}
    */
-  getMessagesResponse(input, response) {
+  normalizeResponse(response, options) {
     void response;
+    void options;
     throw new Error('Method not implemented.');
   }
 
   /**
    * @returns {Object}
    */
-  normalizeStreamEvent(event) {
+  normalizeStreamEvent(event, options) {
     void event;
+    void options;
     throw new Error('Method not implemented.');
   }
 
@@ -310,7 +305,7 @@ export default class BaseClient {
  * @property {string} [model] - The model to use.
  * @property {boolean} stream - Stream response.
  * @property {Object} [schema] - A JSON schema compatible object that defines the output shape.
- * @property {"raw" | "text" | "json" | "messages"} [output] - The return value type.
+ * @property {"text" | "json"} [output] - The result output type.
  * @property {Object} [params] - Params to be interpolated into the template.
  *                               May also be passed as additional props to options.
  */

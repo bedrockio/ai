@@ -114,7 +114,7 @@ export class OpenAiClient extends BaseClient {
     return JSON.parse(last.text);
   }
 
-  getMessagesResponse(response, options) {
+  normalizeResponse(response, options) {
     const { messages } = options;
     return {
       messages: [
@@ -127,6 +127,14 @@ export class OpenAiClient extends BaseClient {
       // Note that this ability currently only
       // exists for OpenAI compatible providers.
       prevResponseId: response.id,
+      usage: this.normalizeUsage(response),
+    };
+  }
+
+  normalizeUsage(response) {
+    return {
+      input_tokens: response.usage.input_tokens,
+      output_tokens: response.usage.output_tokens,
     };
   }
 
@@ -153,7 +161,7 @@ export class OpenAiClient extends BaseClient {
     }
   }
 
-  normalizeStreamEvent(event) {
+  normalizeStreamEvent(event, options) {
     const { type } = event;
 
     if (type === 'response.created') {
@@ -162,10 +170,20 @@ export class OpenAiClient extends BaseClient {
         id: event.response.id,
       };
     } else if (type === 'response.completed') {
+      const output = event.response.output.find((item) => {
+        return item.type === 'message';
+      });
       return {
         type: 'stop',
         id: event.response.id,
-        usage: event.response.usage,
+        messages: [
+          ...options.messages,
+          {
+            role: 'assistant',
+            content: output?.content[0].text,
+          },
+        ],
+        usage: this.normalizeUsage(event.response),
       };
     } else if (type === 'response.output_text.delta') {
       return {

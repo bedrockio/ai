@@ -35,7 +35,7 @@
     "url": "https://github.com/bedrockio/router"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.66.0",
+    "@anthropic-ai/sdk": "^0.71.2",
     "@bedrockio/templates": "^0.3.1",
     "@google/genai": "^1.31.0",
     "openai": "^6.3.0",

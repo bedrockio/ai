@@ -32,7 +32,7 @@ describe('google', () => {
   describe('prompt', () => {
     it('should succeed for a simple text response', async () => {
       setResponse(stocksText);
-      const result = await client.prompt({
+      const { result } = await client.prompt({
         template: 'stocks',
       });
       expect(result).toBe(
@@ -51,6 +51,19 @@ Here is a list of some stocks from the S&P 500:
 *   **Johnson & Johnson** (JNJ)
         `.trim()
       );
+    });
+  });
+
+  describe('other', () => {
+    it('should include usage', async () => {
+      setResponse(stocksText);
+      const { usage } = await client.prompt({
+        input: 'How many calories are in an apple?',
+      });
+      expect(usage).toEqual({
+        input_tokens: 61,
+        output_tokens: 143,
+      });
     });
   });
 

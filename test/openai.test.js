@@ -29,7 +29,7 @@ describe('openai', () => {
     describe('calories', () => {
       it('should succeed for a text response', async () => {
         setResponse(caloriesText);
-        const result = await client.prompt({
+        const { result } = await client.prompt({
           template: 'calories',
           input:
             'I had a burger and some french fries for dinner. For dessert I had a banana.',
@@ -41,7 +41,7 @@ describe('openai', () => {
 
       it('should succeed for a basic json response', async () => {
         setResponse(caloriesObject);
-        const result = await client.prompt({
+        const { result } = await client.prompt({
           template: 'calories',
           input:
             'I had a burger and some french fries for dinner. For dessert I had a banana.',
@@ -67,7 +67,7 @@ describe('openai', () => {
 
       it('should allow a yada schema for output', async () => {
         setResponse(caloriesStructured);
-        const result = await client.prompt({
+        const { result } = await client.prompt({
           template: 'calories',
           input:
             'I had a burger and some french fries for dinner. For dessert I had a banana.',
@@ -102,7 +102,7 @@ describe('openai', () => {
 
       it('should allow a JSON schema for output', async () => {
         setResponse(caloriesStructured);
-        const result = await client.prompt({
+        const { result } = await client.prompt({
           template: 'calories',
           input:
             'I had a burger and some french fries for dinner. For dessert I had a banana.',
@@ -146,7 +146,7 @@ describe('openai', () => {
 
       it('should wrap an array schema', async () => {
         setResponse(caloriesWrapped);
-        const result = await client.prompt({
+        const { result } = await client.prompt({
           template: 'calories',
           input:
             'I had a burger and some french fries for dinner. For dessert I had a banana.',
@@ -175,14 +175,13 @@ describe('openai', () => {
 
       it('should get the raw response', async () => {
         setResponse(caloriesText);
-        const result = await client.prompt({
+        const { response } = await client.prompt({
           template: 'calories',
           input:
             'I had a burger and some french fries for dinner. For dessert I had a banana.',
-          output: 'raw',
         });
 
-        expect(result).toMatchObject({
+        expect(response).toMatchObject({
           id: 'resp_0594e6c81a245f130068ca4d5691648192a0b15b41dfc1b0b7',
           object: 'response',
           status: 'completed',
@@ -193,7 +192,7 @@ describe('openai', () => {
     describe('stocks', () => {
       it('should succeed for a text response', async () => {
         setResponse(stocksText);
-        const result = await client.prompt({
+        const { result } = await client.prompt({
           template: 'stocks',
           input: 'List the current top 5 stocks.',
         });
@@ -204,7 +203,7 @@ describe('openai', () => {
 
       it('should succeed for a basic json response', async () => {
         setResponse(stocksObject);
-        const result = await client.prompt({
+        const { result } = await client.prompt({
           template: 'stocks',
           input: 'List the current top 5 stocks.',
           output: 'json',
@@ -224,7 +223,7 @@ describe('openai', () => {
     describe('markdown', () => {
       it('should extract code', async () => {
         setResponse(markdownCode);
-        const result = await client.prompt({
+        const { result } = await client.prompt({
           input: 'Please generate some markdown code for me. Just a few lines.',
         });
         expect(result).toBe(
@@ -299,16 +298,23 @@ This is a tiny example with a link: [OpenAI](https://openai.com)
         {
           id: 'resp_0117717bc1b9c9890068e01576f9f8819db4cf03cdefda9185',
           type: 'stop',
+          messages: [
+            {
+              role: 'user',
+              content:
+                'Please generate some markdown code for me. Just a few lines.',
+            },
+            {
+              role: 'assistant',
+              content: `# Quick Markdown
+This is a tiny example with a link: [OpenAI](https://openai.com)
+- Item one
+- Item two`.trim(),
+            },
+          ],
           usage: {
             input_tokens: 19,
-            input_tokens_details: {
-              cached_tokens: 0,
-            },
             output_tokens: 1060,
-            output_tokens_details: {
-              reasoning_tokens: 1024,
-            },
-            total_tokens: 1079,
           },
         },
       ]);
@@ -440,7 +446,7 @@ This is a tiny example with a link: [OpenAI](https://openai.com)
   describe('MCP', () => {
     it('should handle call to MCP server', async () => {
       setResponse(medicationsMcp);
-      const result = await client.prompt({
+      const { result } = await client.prompt({
         model: 'gpt-4o',
         template: 'medications',
         input: 'I have lower back pain and insomnia.',
@@ -484,7 +490,7 @@ This is a tiny example with a link: [OpenAI](https://openai.com)
   describe('other', () => {
     it('should inject input from the template', async () => {
       setResponse(caloriesText);
-      const result = await client.prompt({
+      const { result } = await client.prompt({
         template: 'mixed-roles',
         params: {
           fatigue: 'often',
@@ -503,7 +509,6 @@ This is a tiny example with a link: [OpenAI](https://openai.com)
 
       const { result, prevResponseId } = await client.prompt({
         input: 'Hello',
-        output: 'messages',
         prevResponseId: 'prev-id',
       });
 
@@ -521,6 +526,17 @@ additional information about it including an estimate of the calories.
         `.trim()
       );
     });
+
+    it('should include usage', async () => {
+      setResponse(caloriesText);
+      const { usage } = await client.prompt({
+        input: 'How many calories are in an apple?',
+      });
+      expect(usage).toEqual({
+        input_tokens: 59,
+        output_tokens: 1455,
+      });
+    });
   });
 
   describe('messages', () => {
@@ -529,7 +545,6 @@ additional information about it including an estimate of the calories.
 
       const { result, messages } = await client.prompt({
         input: 'Hello',
-        output: 'messages',
       });
 
       expect(result).toContain('Total dinner calorie ballpark:');
@@ -550,7 +565,6 @@ additional information about it including an estimate of the calories.
 
       const { prevResponseId } = await client.prompt({
         input: 'Hello',
-        output: 'messages',
       });
 
       expect(prevResponseId).toBe(
@@ -565,7 +579,6 @@ additional information about it including an estimate of the calories.
 
       const { result } = await client.prompt({
         template,
-        output: 'messages',
       });
 
       expect(result).toContain('Total dinner calorie ballpark:');
@@ -576,7 +589,6 @@ additional information about it including an estimate of the calories.
 
       const { result } = await client.prompt({
         template: 'foo',
-        output: 'messages',
       });
 
       expect(result).toContain('Total dinner calorie ballpark:');

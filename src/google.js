@@ -72,6 +72,27 @@ export class GoogleClient extends BaseClient {
     return response.text;
   }
 
+  normalizeResponse(response, options) {
+    const { messages } = options;
+    return {
+      messages: [
+        ...messages,
+        {
+          role: 'assistant',
+          content: response.text,
+        },
+      ],
+      usage: this.normalizeUsage(response),
+    };
+  }
+
+  normalizeUsage(response) {
+    return {
+      input_tokens: response.usageMetadata.promptTokenCount,
+      output_tokens: response.usageMetadata.candidatesTokenCount,
+    };
+  }
+
   getParams(options) {
     const { model = DEFAULT_MODEL, messages, system } = options;
 

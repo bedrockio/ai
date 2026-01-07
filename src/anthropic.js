@@ -53,7 +53,6 @@ export class AnthropicClient extends BaseClient {
   async runStream(options) {
     return await this.runPrompt({
       ...options,
-      output: 'raw',
       stream: true,
     });
   }
@@ -72,7 +71,7 @@ export class AnthropicClient extends BaseClient {
     return toolBlock?.input || null;
   }
 
-  getMessagesResponse(response, options) {
+  normalizeResponse(response, options) {
     const { messages } = options;
     return {
       messages: [
@@ -88,23 +87,41 @@ export class AnthropicClient extends BaseClient {
             };
           }),
       ],
+      usage: this.normalizeUsage(response),
     };
   }
 
-  normalizeStreamEvent(event) {
+  normalizeUsage(response) {
+    return {
+      input_tokens: response.usage.input_tokens,
+      output_tokens: response.usage.output_tokens,
+    };
+  }
+
+  normalizeStreamEvent(event, options) {
     let { type } = event;
+    options.buffer ||= '';
     if (type === 'content_block_start') {
       return {
         type: 'start',
       };
-    } else if (type === 'content_block_stop') {
-      return {
-        type: 'stop',
-      };
     } else if (type === 'content_block_delta') {
+      options.buffer += event.delta.text;
       return {
         type: 'delta',
         text: event.delta.text,
+      };
+    } else if (type === 'message_delta') {
+      return {
+        type: 'stop',
+        messages: [
+          ...options.messages,
+          {
+            role: 'assistant',
+            content: options.buffer,
+          },
+        ],
+        usage: this.normalizeUsage(event),
       };
     }
   }
