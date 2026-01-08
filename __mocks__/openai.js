@@ -7,10 +7,11 @@ export default function MockOpenAiClient() {
     chat: {
       completions: {
         create(options) {
+          const response = responses['default'];
           if (options.stream) {
-            return streamMock();
+            return streamMock(response);
           } else {
-            return responses['default'];
+            return response;
           }
         },
       },
@@ -53,6 +54,9 @@ export function getLastOptions() {
 }
 
 async function* streamMock(response) {
+  if (!response) {
+    throw new Error('No response to stream!');
+  }
   for await (let event of response) {
     yield event;
   }
