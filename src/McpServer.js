@@ -1,4 +1,4 @@
-const SUPPORTED_VERSIONS = ['2025-03-26', '2025-06-18'];
+const MIN_SUPPORTED_VERSION = '2025-03-26';
 
 const ERROR_INVALID_SESSION = -32000;
 const ERROR_UNAUTHORIZED = -32001;
@@ -178,7 +178,7 @@ export default class McpServer {
         message: 'Unsupported protocol version',
         data: {
           requested: request.params.protocolVersion,
-          supported: SUPPORTED_VERSIONS,
+          minimum: MIN_SUPPORTED_VERSION,
         },
       },
     };
@@ -229,7 +229,7 @@ export default class McpServer {
   // Version helpers
 
   isSupportedVersion(version) {
-    return SUPPORTED_VERSIONS.includes(version);
+    return version >= MIN_SUPPORTED_VERSION;
   }
 }
 

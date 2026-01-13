@@ -420,7 +420,7 @@ describe('McpServer', () => {
           code: -32602,
           message: 'Unsupported protocol version',
           data: {
-            supported: ['2025-03-26', '2025-06-18'],
+            minimum: '2025-03-26',
             requested: '1.0.0',
           },
         },
