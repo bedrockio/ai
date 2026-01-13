@@ -1,3 +1,7 @@
+## 0.8.2
+
+- Fixed issue with extra input element being appended.
+
 ## 0.8.1
 
 - Change to minimum protocol version to avoid supporing fixed versions.

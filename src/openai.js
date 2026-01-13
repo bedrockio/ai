@@ -54,7 +54,7 @@ export class OpenAiClient extends BaseClient {
       temperature,
       prevResponseId,
       messages: input,
-      system: instructions,
+      system: instructions = '',
       tool_choice = 'auto',
       stream = false,
     } = options;

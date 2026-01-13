@@ -24,9 +24,9 @@ export class AnthropicClient extends BaseClient {
   async runPrompt(options) {
     const {
       model,
-      system,
       messages,
       temperature,
+      system = '',
       stream = false,
       tokens = DEFAULT_TOKENS,
     } = options;

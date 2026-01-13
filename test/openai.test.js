@@ -483,7 +483,7 @@ This is a tiny example with a link: [OpenAI](https://openai.com)
   describe('other', () => {
     it('should inject input from the template', async () => {
       setResponse(caloriesText);
-      const { result } = await client.prompt({
+      const { result, messages } = await client.prompt({
         template: 'mixed-roles',
         params: {
           fatigue: 'often',
@@ -494,6 +494,7 @@ This is a tiny example with a link: [OpenAI](https://openai.com)
       expect(result).toContain(
         'Total dinner calorie ballpark: about 490–1,370 kcal'
       );
+      expect(messages.length).toBe(2);
     });
 
     it('should pass through the previous response ID', async () => {
@@ -606,6 +607,7 @@ additional information about it including an estimate of the calories.
     });
 
     it('should be able to pass message history as array', async () => {
+      setResponse(caloriesText);
       await client.prompt({
         input: [
           {
@@ -643,6 +645,8 @@ additional information about it including an estimate of the calories.
     });
 
     it('should be able to pass message history as messages', async () => {
+      setResponse(caloriesText);
+
       await client.prompt({
         messages: [
           {
