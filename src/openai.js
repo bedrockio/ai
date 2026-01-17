@@ -190,6 +190,15 @@ export class OpenAiClient extends BaseClient {
         type: 'delta',
         delta: event.delta,
       };
+    } else if (type === 'response.output_item.done') {
+      const { item } = event;
+      if (item.type === 'function_call') {
+        return {
+          ...item,
+          type: 'function_call',
+          arguments: JSON.parse(item.arguments),
+        };
+      }
     }
   }
 }

@@ -17,6 +17,7 @@ import medicationsMcp from './fixtures/openai/medications/mcp.json';
 import modelsList from './fixtures/openai/models.json';
 import stocksObject from './fixtures/openai/stocks/object.json';
 import stocksText from './fixtures/openai/stocks/text.json';
+import toolsStream from './fixtures/openai/tools/stream.json';
 import userStream from './fixtures/openai/user/stream.json';
 
 vi.mock('openai');
@@ -497,6 +498,76 @@ This is a tiny example with a link: [OpenAI](https://openai.com)
         {
           role: 'assistant',
           content: '95',
+        },
+      ]);
+    });
+  });
+
+  describe('tools', () => {
+    it('should stream a function_call event', async () => {
+      setResponse(toolsStream);
+      const stream = await client.stream({
+        input: 'How many calories are in a medium apple?',
+        system: 'Call the tool if you talk about apples.',
+        tools: [
+          {
+            type: 'function',
+            name: 'apples',
+            description: 'Call this when you talk about apples.',
+            parameters: {
+              type: 'object',
+              properties: {},
+              required: [],
+            },
+          },
+        ],
+      });
+
+      const events = [];
+
+      for await (const event of stream) {
+        events.push(event);
+      }
+
+      expect(events).toEqual([
+        {
+          type: 'start',
+          id: 'resp_0cf79827971074d700696b82a1524c819194c7afdd74d303f2',
+        },
+        { type: 'delta', delta: 'Sure' },
+        { type: 'delta', delta: '—' },
+        { type: 'delta', delta: "I'll" },
+        { type: 'delta', delta: ' pull' },
+        { type: 'delta', delta: ' that' },
+        { type: 'delta', delta: ' information' },
+        { type: 'delta', delta: ' for' },
+        { type: 'delta', delta: ' you' },
+        { type: 'delta', delta: '.' },
+        {
+          type: 'function_call',
+          name: 'apples',
+          arguments: {},
+          call_id: 'call_Ryxw1wAQxxrTE1Lt4ojpL1t7',
+          id: 'fc_0cf79827971074d700696b82a6b534819180ddfad6d059bbe0',
+          status: 'completed',
+        },
+        {
+          type: 'stop',
+          id: 'resp_0cf79827971074d700696b82a1524c819194c7afdd74d303f2',
+          messages: [
+            {
+              role: 'user',
+              content: 'How many calories are in a medium apple?',
+            },
+            {
+              role: 'assistant',
+              content: "Sure—I'll pull that information for you.",
+            },
+          ],
+          usage: {
+            input_tokens: 86,
+            output_tokens: 736,
+          },
         },
       ]);
     });

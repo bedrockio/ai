@@ -43,8 +43,8 @@ export class AnthropicClient extends BaseClient {
 
     const clientOptions = this.getClientOptions(params);
 
-    this.debug('Params:', params, options);
     this.debug('Options:', options, options);
+    this.debug('Params:', params, options);
 
     // @ts-ignore
     return await this.client.messages.create(params, clientOptions);
@@ -102,15 +102,27 @@ export class AnthropicClient extends BaseClient {
     let { type } = event;
     options.buffer ||= '';
     if (type === 'content_block_start') {
-      return {
-        type: 'start',
-      };
+      const { content_block } = event;
+      if (content_block?.type === 'tool_use') {
+        return {
+          type: 'function_call',
+          id: content_block.id,
+          name: content_block.name,
+          arguments: content_block.input,
+        };
+      } else {
+        return {
+          type: 'start',
+        };
+      }
     } else if (type === 'content_block_delta') {
-      options.buffer += event.delta.text;
-      return {
-        type: 'delta',
-        delta: event.delta.text,
-      };
+      if (event.delta.type === 'text_delta') {
+        options.buffer += event.delta.text;
+        return {
+          type: 'delta',
+          delta: event.delta.text,
+        };
+      }
     } else if (type === 'message_delta') {
       return {
         type: 'stop',
@@ -131,6 +143,10 @@ export class AnthropicClient extends BaseClient {
   getToolOptions(options) {
     let { tools = [], schema } = options;
     let toolChoice;
+
+    tools = tools.map((tool) => {
+      return this.normalizeToolInput(tool);
+    });
 
     if (schema) {
       tools.push({
@@ -165,6 +181,30 @@ export class AnthropicClient extends BaseClient {
       tools,
       mcp_servers: mcpServers,
       tool_choice: toolChoice,
+    };
+  }
+
+  normalizeToolInput(input) {
+    if (input.type === 'function') {
+      input = this.normalizeOpenAiToolInput(input);
+    }
+    return input;
+  }
+
+  // OpenAI uses the following input for custom tools
+  // so map it here to Anthropic styles when passed.
+  // {
+  //   type: 'function',
+  //   name: 'apples',
+  //   description: 'Call this when you talk about apples.',
+  //   parameters: { type: 'object', properties: {}, required: [] }
+  // }
+  normalizeOpenAiToolInput(input) {
+    const { name, description, parameters } = input;
+    return {
+      name,
+      description,
+      input_schema: parameters,
     };
   }
 

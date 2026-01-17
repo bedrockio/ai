@@ -15,6 +15,7 @@ import medicationsMcp from './fixtures/anthropic/medications/mcp.json';
 import modelsList from './fixtures/anthropic/models.json';
 import stocksObject from './fixtures/anthropic/stocks/object.json';
 import stocksText from './fixtures/anthropic/stocks/text.json';
+import toolsStream from './fixtures/anthropic/tools/stream.json';
 
 vi.mock('@anthropic-ai/sdk');
 
@@ -33,7 +34,7 @@ describe('anthropic', () => {
             'I had a burger and some french fries for dinner. For dessert I had a banana.',
         });
         expect(result).toContain(
-          "I'll classify your meal and provide nutritional estimates:"
+          "I'll classify your meal and provide nutritional estimates:",
         );
       });
 
@@ -94,7 +95,7 @@ describe('anthropic', () => {
                 yd.object({
                   name: yd.string().required(),
                   calories: yd.number().required(),
-                })
+                }),
               )
               .required(),
           }),
@@ -171,7 +172,7 @@ describe('anthropic', () => {
             yd.object({
               name: yd.string().required(),
               calories: yd.number().required(),
-            })
+            }),
           ),
         });
         expect(result).toEqual([
@@ -234,7 +235,7 @@ describe('anthropic', () => {
           input: 'List the current top 5 stocks.',
         });
         expect(result).toContain(
-          'Here are the current top 5 stocks by market capitalization from the S&P 500:'
+          'Here are the current top 5 stocks by market capitalization from the S&P 500:',
         );
       });
 
@@ -355,6 +356,98 @@ def hello():
     });
   });
 
+  describe('tools', () => {
+    it('should stream a function_call event', async () => {
+      setResponse(toolsStream);
+      const stream = await client.stream({
+        input: 'How many calories are in a medium apple?',
+        system: 'Call the tool if you talk about apples.',
+        tools: [
+          {
+            type: 'function',
+            name: 'apples',
+            description:
+              'Call this when you talk about apples. You MUST write a friendly message to the user BEFORE calling this function. Only after writing to the user do you invoke the tool in the same response.',
+            parameters: {
+              type: 'object',
+              properties: {},
+              required: [],
+            },
+          },
+        ],
+      });
+
+      const events = [];
+
+      for await (const event of stream) {
+        events.push(event);
+      }
+
+      expect(events).toEqual([
+        { type: 'start' },
+        { type: 'delta', delta: 'A' },
+        { type: 'delta', delta: ' medium apple (' },
+        { type: 'delta', delta: 'approximately 182' },
+        { type: 'delta', delta: ' ' },
+        { type: 'delta', delta: 'grams or' },
+        { type: 'delta', delta: ' 6.4' },
+        { type: 'delta', delta: ' ounces) contains about **' },
+        { type: 'delta', delta: '95' },
+        { type: 'delta', delta: ' calories**' },
+        { type: 'delta', delta: '. ' },
+        { type: 'delta', delta: '\n\nApples are a' },
+        { type: 'delta', delta: ' great' },
+        { type: 'delta', delta: ' low' },
+        { type: 'delta', delta: '-calorie snack that' },
+        { type: 'delta', delta: "'s also" },
+        { type: 'delta', delta: ' packed with fiber (' },
+        { type: 'delta', delta: 'about 4 grams),' },
+        { type: 'delta', delta: ' vitamin' },
+        { type: 'delta', delta: ' C,' },
+        { type: 'delta', delta: ' and various' },
+        { type: 'delta', delta: ' antioxidants. The' },
+        { type: 'delta', delta: ' exact' },
+        {
+          type: 'delta',
+          delta: ' calorie count can vary slightly depending on',
+        },
+        { type: 'delta', delta: ' the variety' },
+        { type: 'delta', delta: ' and exact' },
+        { type: 'delta', delta: ' size of the apple, but most' },
+        { type: 'delta', delta: ' medium apples fall' },
+        { type: 'delta', delta: ' in' },
+        { type: 'delta', delta: ' the ' },
+        { type: 'delta', delta: '90' },
+        { type: 'delta', delta: '-100' },
+        { type: 'delta', delta: ' calorie range.' },
+        {
+          type: 'function_call',
+          name: 'apples',
+          arguments: {},
+          id: 'toolu_01Vkg4Likq1r4R35GFFdDKxB',
+        },
+        {
+          type: 'stop',
+          messages: [
+            {
+              role: 'user',
+              content: 'How many calories are in a medium apple?',
+            },
+            {
+              role: 'assistant',
+              content:
+                "A medium apple (approximately 182 grams or 6.4 ounces) contains about **95 calories**. \n\nApples are a great low-calorie snack that's also packed with fiber (about 4 grams), vitamin C, and various antioxidants. The exact calorie count can vary slightly depending on the variety and exact size of the apple, but most medium apples fall in the 90-100 calorie range.",
+            },
+          ],
+          usage: {
+            input_tokens: 600,
+            output_tokens: 138,
+          },
+        },
+      ]);
+    });
+  });
+
   describe('models', () => {
     it('should list out available models', async () => {
       setModels(modelsList);
@@ -387,7 +480,7 @@ def hello():
                 id: yd.string(),
                 name: yd.string(),
                 type: yd.string(),
-              })
+              }),
             ),
           })
           .requireAllWithin(),
@@ -460,7 +553,7 @@ def hello():
       });
 
       expect(result).toContain(
-        "I'll classify your meal and provide nutritional estimates:"
+        "I'll classify your meal and provide nutritional estimates:",
       );
 
       expect(messages).toEqual([

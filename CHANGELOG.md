@@ -1,3 +1,7 @@
+## 0.9.0
+
+- Function calls are now handled out of the box.
+
 ## 0.8.4
 
 - Fixed issue with user roles parsed from template is injected into conversation
