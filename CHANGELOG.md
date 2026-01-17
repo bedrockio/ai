@@ -1,3 +1,7 @@
+## 0.8.3
+
+- Fixed issue with message history not being retained.
+
 ## 0.8.2
 
 - Fixed issue with extra input element being appended.

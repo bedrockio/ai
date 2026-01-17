@@ -189,9 +189,11 @@ export default class BaseClient {
       system = [system, 'Output only valid JSON.'].join('\n\n');
     }
 
+    const messages = this.normalizeMessages(options);
+
     return {
       system,
-      messages: this.normalizeMessages(options),
+      messages,
     };
   }
 
@@ -208,7 +210,8 @@ export default class BaseClient {
     });
 
     let system = '';
-    let messages = [];
+
+    let { messages = [] } = options;
 
     for (let section of sections) {
       const { title = 'system', content } = section;
@@ -248,7 +251,9 @@ export default class BaseClient {
     if (Array.isArray(input)) {
       return input;
     } else {
+      const { messages = [] } = options;
       return [
+        ...messages,
         {
           role: 'user',
           content: input || '',

@@ -7,6 +7,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { OpenAiClient } from '../src/openai';
 import caloriesFollowUp from './fixtures/openai/calories/follow-up.json';
 import caloriesObject from './fixtures/openai/calories/object.json';
+import caloriesStream from './fixtures/openai/calories/stream.json';
 import caloriesStructured from './fixtures/openai/calories/structured.json';
 import caloriesText from './fixtures/openai/calories/text.json';
 import caloriesWrapped from './fixtures/openai/calories/wrapped.json';
@@ -35,7 +36,7 @@ describe('openai', () => {
             'I had a burger and some french fries for dinner. For dessert I had a banana.',
         });
         expect(result).toContain(
-          'Total dinner calorie ballpark: about 490–1,370 kcal'
+          'Total dinner calorie ballpark: about 490–1,370 kcal',
         );
       });
 
@@ -77,7 +78,7 @@ describe('openai', () => {
                 yd.object({
                   name: yd.string().required(),
                   calories: yd.number().required(),
-                })
+                }),
               )
               .required(),
           }),
@@ -154,7 +155,7 @@ describe('openai', () => {
             yd.object({
               name: yd.string().required(),
               calories: yd.number().required(),
-            })
+            }),
           ),
         });
         expect(result).toEqual([
@@ -197,7 +198,7 @@ describe('openai', () => {
           input: 'List the current top 5 stocks.',
         });
         expect(result).toContain(
-          'Top 5 stocks by market cap within the S&P 500:'
+          'Top 5 stocks by market cap within the S&P 500:',
         );
       });
 
@@ -234,14 +235,56 @@ This is a simple markdown snippet with a [link](https://example.com).
 
 - One
 - Two
-`.trim()
+`.trim(),
         );
       });
     });
   });
 
   describe('stream', () => {
-    it('should stream response', async () => {
+    it('should stream basic', async () => {
+      setResponse(caloriesStream);
+      const stream = await client.stream({
+        input: 'How many calories are in a medium apple?',
+      });
+
+      const events = [];
+
+      for await (const event of stream) {
+        events.push(event);
+      }
+
+      expect(events).toEqual([
+        {
+          type: 'start',
+          id: 'resp_026cc6e6c9d2114900696b21b5f824819297c5d19b6a6d097f',
+        },
+        {
+          type: 'delta',
+          delta: '95',
+        },
+        {
+          type: 'stop',
+          id: 'resp_026cc6e6c9d2114900696b21b5f824819297c5d19b6a6d097f',
+          messages: [
+            {
+              role: 'user',
+              content: 'How many calories are in a medium apple?',
+            },
+            {
+              role: 'assistant',
+              content: '95',
+            },
+          ],
+          usage: {
+            input_tokens: 20,
+            output_tokens: 199,
+          },
+        },
+      ]);
+    });
+
+    it('should stream markdown', async () => {
       setResponse(markdownStream);
       const stream = await client.stream({
         input: 'Please generate some markdown code for me. Just a few lines.',
@@ -364,6 +407,99 @@ This is a tiny example with a link: [OpenAI](https://openai.com)
         { type: 'extract:delta', delta: '.', key: 'text' },
       ]);
     });
+
+    it('should retain message history', async () => {
+      setResponse(caloriesStream);
+      const stream = await client.stream({
+        template: 'user',
+        messages: [
+          {
+            role: 'user',
+            content: 'Hello!',
+          },
+          {
+            role: 'assistant',
+            content: 'Hello! How can I help you?',
+          },
+          {
+            role: 'user',
+            content: 'How many calories are in an apple?',
+          },
+        ],
+      });
+
+      let messages;
+
+      for await (const event of stream) {
+        if (event.type === 'stop') {
+          messages = event.messages;
+        }
+      }
+
+      expect(messages).toEqual([
+        {
+          role: 'user',
+          content: 'Hello!',
+        },
+        {
+          role: 'assistant',
+          content: 'Hello! How can I help you?',
+        },
+        {
+          role: 'user',
+          content: 'How many calories are in an apple?',
+        },
+        {
+          role: 'assistant',
+          content: '95',
+        },
+      ]);
+    });
+
+    it('should retain message history with input', async () => {
+      setResponse(caloriesStream);
+      const stream = await client.stream({
+        input: 'How many calories are in an apple?',
+        template: 'user',
+        messages: [
+          {
+            role: 'user',
+            content: 'Hello!',
+          },
+          {
+            role: 'assistant',
+            content: 'Hello! How can I help you?',
+          },
+        ],
+      });
+
+      let messages;
+
+      for await (const event of stream) {
+        if (event.type === 'stop') {
+          messages = event.messages;
+        }
+      }
+
+      expect(messages).toEqual([
+        {
+          role: 'user',
+          content: 'Hello!',
+        },
+        {
+          role: 'assistant',
+          content: 'Hello! How can I help you?',
+        },
+        {
+          role: 'user',
+          content: 'How many calories are in an apple?',
+        },
+        {
+          role: 'assistant',
+          content: '95',
+        },
+      ]);
+    });
   });
 
   describe('models', () => {
@@ -450,7 +586,7 @@ This is a tiny example with a link: [OpenAI](https://openai.com)
                 id: yd.string(),
                 name: yd.string(),
                 type: yd.string(),
-              })
+              }),
             ),
           })
           .requireAllWithin(),
@@ -492,7 +628,7 @@ This is a tiny example with a link: [OpenAI](https://openai.com)
         },
       });
       expect(result).toContain(
-        'Total dinner calorie ballpark: about 490–1,370 kcal'
+        'Total dinner calorie ballpark: about 490–1,370 kcal',
       );
       expect(messages.length).toBe(2);
     });
@@ -517,7 +653,7 @@ This is a tiny example with a link: [OpenAI](https://openai.com)
 You are a helpful assistant.
 Your job is to classify foods that a user has eaten and guess
 additional information about it including an estimate of the calories.
-        `.trim()
+        `.trim(),
       );
     });
 
@@ -562,7 +698,7 @@ additional information about it including an estimate of the calories.
       });
 
       expect(prevResponseId).toBe(
-        'resp_0594e6c81a245f130068ca4d5691648192a0b15b41dfc1b0b7'
+        'resp_0594e6c81a245f130068ca4d5691648192a0b15b41dfc1b0b7',
       );
     });
 
