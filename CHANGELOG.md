@@ -1,3 +1,8 @@
+## 0.8.4
+
+- Fixed issue with user roles parsed from template is injected into conversation
+  history.
+
 ## 0.8.3
 
 - Fixed issue with message history not being retained.

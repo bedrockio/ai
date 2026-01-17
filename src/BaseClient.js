@@ -213,6 +213,14 @@ export default class BaseClient {
 
     let { messages = [] } = options;
 
+    // Templates may contain multiple roles, ie SYSTEM or USER, making them
+    // useful for one-off prompting. However in a multi-turn conversation
+    // the entire chat history will be passed, so do not inject user messages
+    // when they already exist in the options.
+    const hasUserMessages = messages.some((message) => {
+      return message.role === 'user';
+    });
+
     for (let section of sections) {
       const { title = 'system', content } = section;
 
@@ -220,7 +228,7 @@ export default class BaseClient {
 
       if (role === 'system') {
         system += [system, content].join('\n');
-      } else {
+      } else if (!hasUserMessages) {
         messages = [
           ...messages,
           {

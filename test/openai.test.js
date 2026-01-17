@@ -723,6 +723,31 @@ additional information about it including an estimate of the calories.
 
       expect(result).toContain('Total dinner calorie ballpark:');
     });
+
+    it('should not inject user role from template if input exists', async () => {
+      setResponse(caloriesText);
+
+      const { messages } = await client.prompt({
+        template: 'mixed-roles',
+        messages: [
+          {
+            role: 'user',
+            content: 'I have been feeling fatigued.',
+          },
+        ],
+      });
+
+      expect(messages).toEqual([
+        {
+          role: 'user',
+          content: 'I have been feeling fatigued.',
+        },
+        {
+          role: 'assistant',
+          content: expect.stringContaining('Total dinner calorie ballpark:'),
+        },
+      ]);
+    });
   });
 
   describe('input', () => {
