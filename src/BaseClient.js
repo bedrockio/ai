@@ -26,7 +26,7 @@ export default class BaseClient {
   async prompt(options) {
     options = this.normalizeOptions(options);
 
-    const { output, stream, schema } = options;
+    const { output, stream, schema, instructions } = options;
 
     const response = await this.runPrompt(options);
 
@@ -51,6 +51,7 @@ export default class BaseClient {
     return {
       result,
       response,
+      instructions,
       ...this.normalizeResponse(response, options),
     };
   }
@@ -183,17 +184,17 @@ export default class BaseClient {
   normalizeInputs(options) {
     options = this.normalizeTemplateOptions(options);
 
-    let { system, output = 'text' } = options;
+    let { instructions, output = 'text' } = options;
 
     if (output === 'json') {
-      system = [system, 'Output only valid JSON.'].join('\n\n');
+      instructions = [instructions, 'Output only valid JSON.'].join('\n\n');
     }
 
     const messages = this.normalizeMessages(options);
 
     return {
-      system,
       messages,
+      instructions,
     };
   }
 
@@ -209,7 +210,7 @@ export default class BaseClient {
       template,
     });
 
-    let system = '';
+    let instructions = '';
 
     let { messages = [] } = options;
 
@@ -227,7 +228,7 @@ export default class BaseClient {
       const role = title.toLowerCase();
 
       if (role === 'system') {
-        system += [system, content].join('\n');
+        instructions += [instructions, content].join('\n');
       } else if (!hasUserMessages) {
         messages = [
           ...messages,
@@ -239,11 +240,11 @@ export default class BaseClient {
       }
     }
 
-    system = system.trim();
+    instructions = instructions.trim();
 
     return {
       ...options,
-      system,
+      instructions,
       messages,
     };
   }
@@ -324,7 +325,9 @@ export default class BaseClient {
 
 /**
  * @typedef {Object} PromptOptions
- * @property {string|PromptMessage[]} input - Input to use.
+ * @property {string} input - Basic input to be comes user message.
+ * @property {string} instructions
+ * @property {PromptMessage[]} messages - Full message input.
  * @property {string} [model] - The model to use.
  * @property {boolean} stream - Stream response.
  * @property {Object} [schema] - A JSON schema compatible object that defines the output shape.

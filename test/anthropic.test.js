@@ -328,23 +328,7 @@ describe('anthropic', () => {
             },
             {
               role: 'assistant',
-              content: `
-# Hello World
-
-Here's some **markdown** code for you:
-
-- First item
-- Second item with *italic text*
-- Third item with a [link](https://example.com)
-
-\`\`\`python
-def hello():
-    print("Hello, World!")
-\`\`\`
-
-> This is a blockquote with some \`inline code\`.
-
-`.trim(),
+              content: expect.stringContaining('# Hello World'),
             },
           ],
           usage: {

@@ -1,3 +1,7 @@
+## 0.9.1
+
+- Pass interpolated instructions back in result.
+
 ## 0.9.0
 
 - Function calls are now handled out of the box.

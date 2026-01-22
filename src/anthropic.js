@@ -26,9 +26,9 @@ export class AnthropicClient extends BaseClient {
       model,
       messages,
       temperature,
-      system = '',
       stream = false,
       tokens = DEFAULT_TOKENS,
+      instructions: system = '',
     } = options;
 
     const params = {

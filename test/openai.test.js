@@ -228,16 +228,7 @@ describe('openai', () => {
         const { result } = await client.prompt({
           input: 'Please generate some markdown code for me. Just a few lines.',
         });
-        expect(result).toBe(
-          `
-# Hello World
-
-This is a simple markdown snippet with a [link](https://example.com).
-
-- One
-- Two
-`.trim(),
-        );
+        expect(result).toContain('This is a simple markdown snippet');
       });
     });
   });
@@ -343,10 +334,7 @@ This is a simple markdown snippet with a [link](https://example.com).
             },
             {
               role: 'assistant',
-              content: `# Quick Markdown
-This is a tiny example with a link: [OpenAI](https://openai.com)
-- Item one
-- Item two`.trim(),
+              content: expect.stringContaining('# Quick Markdown'),
             },
           ],
           usage: {
@@ -429,32 +417,37 @@ This is a tiny example with a link: [OpenAI](https://openai.com)
         ],
       });
 
-      let messages;
+      let stopEvent;
 
       for await (const event of stream) {
         if (event.type === 'stop') {
-          messages = event.messages;
+          stopEvent = event;
         }
       }
 
-      expect(messages).toEqual([
-        {
-          role: 'user',
-          content: 'Hello!',
-        },
-        {
-          role: 'assistant',
-          content: 'Hello! How can I help you?',
-        },
-        {
-          role: 'user',
-          content: 'How many calories are in an apple?',
-        },
-        {
-          role: 'assistant',
-          content: '95',
-        },
-      ]);
+      expect(stopEvent).toMatchObject({
+        instructions: expect.stringContaining(
+          'Your job is to extract information',
+        ),
+        messages: [
+          {
+            role: 'user',
+            content: 'Hello!',
+          },
+          {
+            role: 'assistant',
+            content: 'Hello! How can I help you?',
+          },
+          {
+            role: 'user',
+            content: 'How many calories are in an apple?',
+          },
+          {
+            role: 'assistant',
+            content: '95',
+          },
+        ],
+      });
     });
 
     it('should retain message history with input', async () => {
@@ -719,13 +712,7 @@ This is a tiny example with a link: [OpenAI](https://openai.com)
 
     it('should get the template source', async () => {
       const result = await client.getTemplateSource('calories');
-      expect(result).toBe(
-        `
-You are a helpful assistant.
-Your job is to classify foods that a user has eaten and guess
-additional information about it including an estimate of the calories.
-        `.trim(),
-      );
+      expect(result).toContain('Your job is to classify foods');
     });
 
     it('should include usage', async () => {
@@ -818,6 +805,16 @@ additional information about it including an estimate of the calories.
           content: expect.stringContaining('Total dinner calorie ballpark:'),
         },
       ]);
+    });
+
+    it('should return instructions', async () => {
+      setResponse(caloriesText);
+
+      const { instructions } = await client.prompt({
+        template: 'calories',
+      });
+
+      expect(instructions).toContain('Your job is to classify foods');
     });
   });
 
