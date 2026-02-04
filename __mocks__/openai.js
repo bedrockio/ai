@@ -21,6 +21,8 @@ export default function MockOpenAiClient() {
         const { previous_response_id = 'default', input } = options;
         if (!input || input.length === 0) {
           throw new Error('Missing parameter "input".');
+        } else if (Array.isArray(input) && !input[0].content) {
+          throw new Error('Missing input content.');
         }
         lastOptions = options;
         const response = responses[previous_response_id];

@@ -127,7 +127,7 @@ export default class BaseClient {
   getFilteredMessages(options) {
     const { messages = [] } = options;
     return messages.filter((message) => {
-      return message.content;
+      return message.content.trim();
     });
   }
 
@@ -264,18 +264,32 @@ export default class BaseClient {
       input = '';
     }
 
+    let result = [];
+
     if (Array.isArray(input)) {
-      return input;
+      result = input;
     } else {
       const { messages = [] } = options;
-      return [
+      result = [
         ...messages,
         {
           role: 'user',
-          content: input || '',
+          content: input,
         },
       ];
     }
+
+    if (result.length === 1 && !result[0].content) {
+      // If a single user input is passed and is nullish, coerce it to a
+      // single space. Combined with getFilteredMessages below this allows
+      // a chatbot the ability to "speak first" by prompting it with empty
+      // content. The empty message will be filtered out of the final result
+      // appearing as if the chatbot went first. Note empty string will also
+      // fail here hence the single space.
+      result[0].content = ' ';
+    }
+
+    return result;
   }
 
   normalizeSchema(options) {

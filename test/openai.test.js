@@ -518,6 +518,34 @@ describe('openai', () => {
         },
       ]);
     });
+
+    it('should handle undefined message content', async () => {
+      setResponse(caloriesStream);
+
+      const stream = await client.stream({
+        input: [
+          {
+            role: 'user',
+          },
+        ],
+        template: 'user',
+      });
+
+      let messages;
+
+      for await (const event of stream) {
+        if (event.type === 'stop') {
+          messages = event.messages;
+        }
+      }
+
+      expect(messages).toEqual([
+        {
+          role: 'assistant',
+          content: '95',
+        },
+      ]);
+    });
   });
 
   describe('tools', () => {
