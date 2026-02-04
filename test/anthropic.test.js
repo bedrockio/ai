@@ -338,6 +338,30 @@ describe('anthropic', () => {
         },
       ]);
     });
+
+    it('should strip empty messages', async () => {
+      setResponse(markdownStream);
+
+      const stream = await client.stream({
+        input: '',
+        template: 'user',
+      });
+
+      let messages;
+
+      for await (const event of stream) {
+        if (event.type === 'stop') {
+          messages = event.messages;
+        }
+      }
+
+      expect(messages).toEqual([
+        {
+          role: 'assistant',
+          content: expect.stringContaining('# Hello World'),
+        },
+      ]);
+    });
   });
 
   describe('tools', () => {
@@ -526,6 +550,21 @@ describe('anthropic', () => {
         output_tokens: 369,
       });
     });
+
+    it('should strip empty messages', async () => {
+      setResponse(caloriesText);
+
+      const { messages } = await client.prompt({
+        input: '',
+      });
+
+      expect(messages).toEqual([
+        {
+          role: 'assistant',
+          content: expect.stringContaining('Total Meal Estimate'),
+        },
+      ]);
+    });
   });
 
   describe('messages', () => {
@@ -547,7 +586,7 @@ describe('anthropic', () => {
         },
         {
           role: 'assistant',
-          content: expect.stringContaining('s'),
+          content: expect.stringContaining('Total Meal Estimate'),
         },
       ]);
     });

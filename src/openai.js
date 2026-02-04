@@ -115,10 +115,9 @@ export class OpenAiClient extends BaseClient {
   }
 
   normalizeResponse(response, options) {
-    const { messages } = options;
     return {
       messages: [
-        ...messages,
+        ...this.getFilteredMessages(options),
         {
           role: 'assistant',
           content: response.output_text,
@@ -178,7 +177,7 @@ export class OpenAiClient extends BaseClient {
         id: event.response.id,
         instructions: options.instructions,
         messages: [
-          ...options.messages,
+          ...this.getFilteredMessages(options),
           {
             role: 'assistant',
             content: output?.content[0].text,

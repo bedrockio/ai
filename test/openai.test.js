@@ -494,6 +494,30 @@ describe('openai', () => {
         },
       ]);
     });
+
+    it('should strip empty messages', async () => {
+      setResponse(caloriesStream);
+
+      const stream = await client.stream({
+        input: '',
+        template: 'user',
+      });
+
+      let messages;
+
+      for await (const event of stream) {
+        if (event.type === 'stop') {
+          messages = event.messages;
+        }
+      }
+
+      expect(messages).toEqual([
+        {
+          role: 'assistant',
+          content: '95',
+        },
+      ]);
+    });
   });
 
   describe('tools', () => {
@@ -815,6 +839,21 @@ describe('openai', () => {
       });
 
       expect(instructions).toContain('Your job is to classify foods');
+    });
+
+    it('should strip empty messages', async () => {
+      setResponse(caloriesText);
+
+      const { messages } = await client.prompt({
+        input: '',
+      });
+
+      expect(messages).toEqual([
+        {
+          role: 'assistant',
+          content: expect.stringContaining('Total dinner calorie ballpark:'),
+        },
+      ]);
     });
   });
 

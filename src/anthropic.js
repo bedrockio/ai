@@ -72,10 +72,9 @@ export class AnthropicClient extends BaseClient {
   }
 
   normalizeResponse(response, options) {
-    const { messages } = options;
     return {
       messages: [
-        ...messages,
+        ...this.getFilteredMessages(options),
         ...response.content
           .filter((item) => {
             return item.type === 'text';
@@ -127,7 +126,7 @@ export class AnthropicClient extends BaseClient {
       return {
         type: 'stop',
         messages: [
-          ...options.messages,
+          ...this.getFilteredMessages(options),
           {
             role: 'assistant',
             content: options.buffer,

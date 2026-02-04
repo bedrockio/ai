@@ -124,6 +124,13 @@ export default class BaseClient {
     return this.renderer.getTemplateSource(name);
   }
 
+  getFilteredMessages(options) {
+    const { messages = [] } = options;
+    return messages.filter((message) => {
+      return message.content;
+    });
+  }
+
   // Protected
 
   runPrompt(options) {

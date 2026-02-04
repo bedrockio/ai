@@ -1,3 +1,7 @@
+## 0.9.2
+
+- Strip empty input out of resulting messages.
+
 ## 0.9.1
 
 - Pass interpolated instructions back in result.
