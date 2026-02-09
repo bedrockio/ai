@@ -491,7 +491,7 @@ describe('anthropic', () => {
               }),
             ),
           })
-          .requireAllWithin(),
+          .toOpenAi(),
         tools: [
           {
             type: 'mcp',

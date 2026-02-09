@@ -360,7 +360,7 @@ describe('openai', () => {
               lastName: yd.string(),
             }),
           })
-          .requireAllWithin(),
+          .toOpenAi(),
       });
 
       const events = [];
@@ -705,7 +705,7 @@ describe('openai', () => {
               }),
             ),
           })
-          .requireAllWithin(),
+          .toOpenAi(),
         tools: [
           {
             type: 'mcp',
