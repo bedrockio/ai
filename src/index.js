@@ -23,3 +23,5 @@ export function createClient(options = {}) {
     throw new Error(`Unknown platform "${platform}".`);
   }
 }
+
+export { AnthropicClient, GoogleClient, OpenAiClient, XAiClient };

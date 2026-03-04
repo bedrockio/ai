@@ -1,3 +1,8 @@
+## 0.9.5
+
+- Export all clients.
+- Error if template directory incorrect.
+
 ## 0.9.4
 
 - Bumped yada dev version.

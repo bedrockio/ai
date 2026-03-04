@@ -1,3 +1,5 @@
+import { existsSync } from 'node:fs';
+
 import { TemplateRenderer } from '@bedrockio/templates';
 
 import { parseCode } from './utils/code.js';
@@ -13,6 +15,14 @@ export default class BaseClient {
     this.renderer = new TemplateRenderer({
       dir: options.templates,
     });
+    this.assertTemplatesDir();
+  }
+
+  assertTemplatesDir() {
+    const { templates } = this.options;
+    if (templates && !existsSync(templates)) {
+      throw new Error(`Directory not found: ${templates}`);
+    }
   }
 
   // Public
