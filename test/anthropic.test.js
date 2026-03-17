@@ -274,6 +274,7 @@ describe('anthropic', () => {
       setResponse(markdownStream);
       const stream = await client.stream({
         input: 'Please generate some markdown code for me. Just a few lines.',
+        instructions: 'You are a nice chatbot!',
       });
 
       const events = [];
@@ -320,6 +321,7 @@ describe('anthropic', () => {
         },
         {
           type: 'stop',
+          instructions: 'You are a nice chatbot!',
           messages: [
             {
               role: 'user',

@@ -125,6 +125,7 @@ export class AnthropicClient extends BaseClient {
     } else if (type === 'message_delta') {
       return {
         type: 'stop',
+        instructions: options.instructions,
         messages: [
           ...this.getFilteredMessages(options),
           {
