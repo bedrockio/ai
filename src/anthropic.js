@@ -71,6 +71,14 @@ export class AnthropicClient extends BaseClient {
     return toolBlock?.input || null;
   }
 
+  normalizeContentBlock(block) {
+    return block;
+  }
+
+  normalizeFileBlock(block) {
+    return block;
+  }
+
   normalizeResponse(response, options) {
     return {
       messages: [

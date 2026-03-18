@@ -596,6 +596,8 @@ describe('anthropic', () => {
 
   describe('input', () => {
     it('should be able to pass a string as input', async () => {
+      setResponse(caloriesText);
+
       await client.prompt({
         input: 'How many calories are in an apple?',
       });
@@ -612,6 +614,8 @@ describe('anthropic', () => {
     });
 
     it('should be able to pass message history as array', async () => {
+      setResponse(caloriesText);
+
       await client.prompt({
         input: [
           {
@@ -685,6 +689,212 @@ describe('anthropic', () => {
         ],
         system: '',
       });
+    });
+  });
+
+  describe('files', () => {
+    it('should be able to pass files', async () => {
+      setResponse(caloriesObject);
+      await client.prompt({
+        messages: [
+          {
+            role: 'user',
+            content: 'Hello',
+          },
+        ],
+        files: [
+          {
+            type: 'document',
+            source: {
+              type: 'url',
+              url: 'https://example.com/my-doc.pdf',
+            },
+          },
+        ],
+      });
+
+      expect(getLastOptions()).toMatchObject({
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: 'Hello',
+              },
+              {
+                type: 'document',
+                source: {
+                  type: 'url',
+                  url: 'https://example.com/my-doc.pdf',
+                },
+              },
+            ],
+          },
+        ],
+      });
+    });
+
+    it('should be able to pass base64 files', async () => {
+      setResponse(caloriesObject);
+      await client.prompt({
+        messages: [
+          {
+            role: 'user',
+            content: 'Hello',
+          },
+        ],
+        files: [
+          {
+            type: 'document',
+            source: {
+              type: 'base64',
+              media_type: 'application/pdf',
+              data: 'bXl1cmw=',
+            },
+          },
+        ],
+      });
+
+      expect(getLastOptions()).toMatchObject({
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: 'Hello',
+              },
+              {
+                type: 'document',
+                source: {
+                  type: 'base64',
+                  media_type: 'application/pdf',
+                  data: 'bXl1cmw=',
+                },
+              },
+            ],
+          },
+        ],
+      });
+    });
+
+    it('should be able to pass by file id', async () => {
+      setResponse(caloriesObject);
+      await client.prompt({
+        messages: [
+          {
+            role: 'user',
+            content: 'Hello',
+          },
+        ],
+        files: [
+          {
+            type: 'document',
+            source: {
+              type: 'file',
+              file_id: 'file_01',
+            },
+          },
+        ],
+      });
+
+      expect(getLastOptions()).toMatchObject({
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: 'Hello',
+              },
+              {
+                type: 'document',
+                source: {
+                  type: 'file',
+                  file_id: 'file_01',
+                },
+              },
+            ],
+          },
+        ],
+      });
+    });
+  });
+
+  it('should be able to pass an image', async () => {
+    setResponse(caloriesObject);
+    await client.prompt({
+      messages: [
+        {
+          role: 'user',
+          content: 'Hello',
+        },
+      ],
+      files: [
+        {
+          type: 'image',
+          source: {
+            type: 'url',
+            url: 'https://example.com/my-image.jpg',
+          },
+        },
+      ],
+    });
+
+    expect(getLastOptions()).toMatchObject({
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'text',
+              text: 'Hello',
+            },
+            {
+              type: 'image',
+              source: {
+                type: 'url',
+                url: 'https://example.com/my-image.jpg',
+              },
+            },
+          ],
+        },
+      ],
+    });
+  });
+
+  it('should work with only files and instructions', async () => {
+    setResponse(caloriesObject);
+    await client.prompt({
+      files: [
+        {
+          type: 'document',
+          source: {
+            type: 'url',
+            url: 'https://example.com/my-doc.pdf',
+          },
+        },
+      ],
+      instructions: 'Tell me what is in this document.',
+    });
+
+    expect(getLastOptions()).toMatchObject({
+      system: 'Tell me what is in this document.',
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'document',
+              source: {
+                type: 'url',
+                url: 'https://example.com/my-doc.pdf',
+              },
+            },
+          ],
+        },
+      ],
     });
   });
 });

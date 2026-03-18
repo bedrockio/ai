@@ -452,6 +452,7 @@ describe('openai', () => {
 
     it('should retain message history with input', async () => {
       setResponse(caloriesStream);
+
       const stream = await client.stream({
         input: 'How many calories are in an apple?',
         template: 'user',
@@ -977,6 +978,165 @@ describe('openai', () => {
         ],
         instructions: '',
       });
+    });
+  });
+
+  describe('files', () => {
+    it('should be able to pass files', async () => {
+      setResponse(caloriesObject);
+      await client.prompt({
+        messages: [
+          {
+            role: 'user',
+            content: 'Hello',
+          },
+        ],
+        files: [
+          {
+            type: 'document',
+            source: {
+              type: 'url',
+              url: 'https://example.com/my-doc.pdf',
+            },
+          },
+        ],
+      });
+
+      expect(getLastOptions()).toMatchObject({
+        input: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'input_text',
+                text: 'Hello',
+              },
+              {
+                type: 'input_file',
+                file_url: 'https://example.com/my-doc.pdf',
+              },
+            ],
+          },
+        ],
+      });
+    });
+
+    it('should be able to pass base64 files', async () => {
+      setResponse(caloriesObject);
+      await client.prompt({
+        input: [
+          {
+            role: 'user',
+            content: 'Hello',
+          },
+        ],
+        files: [
+          {
+            type: 'document',
+            source: {
+              type: 'base64',
+              media_type: 'application/pdf',
+              data: 'bXl1cmw=',
+            },
+          },
+        ],
+      });
+
+      expect(getLastOptions()).toMatchObject({
+        input: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'input_text',
+                text: 'Hello',
+              },
+              {
+                type: 'input_file',
+                file_data: 'data:application/pdf;base64,bXl1cmw=',
+              },
+            ],
+          },
+        ],
+      });
+    });
+
+    it('should be able to pass by file id', async () => {
+      setResponse(caloriesObject);
+      await client.prompt({
+        input: [
+          {
+            role: 'user',
+            content: 'Hello',
+          },
+        ],
+        files: [
+          {
+            type: 'document',
+            source: {
+              type: 'file',
+              file_id: 'file_01',
+            },
+          },
+        ],
+      });
+
+      expect(getLastOptions()).toMatchObject({
+        input: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'input_text',
+                text: 'Hello',
+              },
+              {
+                type: 'input_file',
+                file_id: 'file_01',
+              },
+            ],
+          },
+        ],
+      });
+    });
+  });
+
+  it('should be able to pass an image', async () => {
+    setResponse(caloriesObject);
+    await client.prompt({
+      messages: [
+        {
+          role: 'user',
+          content: 'Hello',
+        },
+      ],
+      files: [
+        {
+          type: 'image',
+          source: {
+            type: 'url',
+            url: 'https://example.com/my-image.jpg',
+          },
+        },
+      ],
+    });
+
+    expect(getLastOptions()).toMatchObject({
+      input: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'input_text',
+              text: 'Hello',
+            },
+            {
+              type: 'input_image',
+              image_url: 'https://example.com/my-image.jpg',
+            },
+          ],
+        },
+      ],
     });
   });
 });

@@ -114,6 +114,58 @@ export class OpenAiClient extends BaseClient {
     return JSON.parse(last.text);
   }
 
+  normalizeContentBlock(block) {
+    const { type, text } = block;
+
+    if (type === 'text') {
+      block = {
+        type: 'input_text',
+        text,
+      };
+    }
+    return block;
+  }
+
+  normalizeFileBlock(block) {
+    const { type, source } = block;
+
+    if (type === 'image') {
+      block = {
+        type: 'input_image',
+        ...this.normalizeSourceParams(source, 'image'),
+      };
+    } else if (type === 'document') {
+      block = {
+        type: 'input_file',
+        ...this.normalizeSourceParams(source, 'file'),
+      };
+    }
+
+    return block;
+  }
+
+  normalizeSourceParams(source, prefix) {
+    const { type } = source;
+    if (type === 'url') {
+      return {
+        [`${prefix}_url`]: source.url,
+      };
+    } else if (type === 'base64') {
+      const { filename, data } = source;
+      const mimeType = source.mimeType || source.media_type;
+      return {
+        file_data: `data:${mimeType};base64,${data}`,
+        ...(filename && {
+          filename,
+        }),
+      };
+    } else if (type === 'file') {
+      return {
+        file_id: source.id || source.file_id,
+      };
+    }
+  }
+
   normalizeResponse(response, options) {
     return {
       messages: [

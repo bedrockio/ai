@@ -1,3 +1,7 @@
+## 0.10.0
+
+- Allow file input.
+
 ## 0.9.5
 
 - Export all clients.

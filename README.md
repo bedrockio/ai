@@ -6,6 +6,7 @@ usage.
 
 - [Install](#install)
 - [Usage](#usage)
+- [Files](#files)
 - [Streaming](#stream)
 - [Templates](#templates)
 - [Platforms](#platforms)
@@ -51,6 +52,43 @@ const response = await client.prompt({
   // interpolated into the template.
   text: 'a long yellow fruit',
   fruit: 'banana, apple, pear',
+});
+```
+
+## Files
+
+Files can be passed directly in the options object and follow the same input
+type as the Anthropic API:
+
+```js
+await client.prompt({
+  files: [
+    // By URL
+    {
+      type: 'document',
+      source: {
+        type: 'url',
+        url: 'https://example.com/my-file.pdf',
+      },
+    },
+    // By base64
+    {
+      type: 'document',
+      source: {
+        type: 'base64',
+        media_type: 'application/pdf',
+        data: 'bXl1cmw=',
+      },
+    },
+    // By uploaded ID
+    {
+      type: 'document',
+      source: {
+        type: 'file',
+        file_id: 'file_01',
+      },
+    },
+  ],
 });
 ```
 

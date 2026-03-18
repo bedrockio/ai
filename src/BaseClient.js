@@ -136,10 +136,42 @@ export default class BaseClient {
 
   getFilteredMessages(options) {
     const { messages = [] } = options;
-    return messages.filter((message) => {
-      const trimmed = message.content.trim();
-      return trimmed && trimmed !== '.';
-    });
+    return messages
+      .map((message) => {
+        const { content } = message;
+        return {
+          ...message,
+          content: this.getFilteredContent(content),
+        };
+      })
+      .filter((message) => {
+        const { content } = message;
+        if (typeof content === 'string') {
+          return !!content;
+        } else {
+          return content.length > 0;
+        }
+      });
+  }
+
+  getFilteredContent(content) {
+    if (typeof content === 'string') {
+      return this.isEmptyContent(content) ? '' : content;
+    } else {
+      return content.filter((block) => {
+        const { type, text } = block;
+        if (type === 'text') {
+          return !this.isEmptyContent(text);
+        } else {
+          return true;
+        }
+      });
+    }
+  }
+
+  isEmptyContent(str) {
+    str = str.trim();
+    return !str || str === '.';
   }
 
   // Protected
@@ -182,6 +214,16 @@ export default class BaseClient {
   normalizeStreamEvent(event, options) {
     void event;
     void options;
+    throw new Error('Method not implemented.');
+  }
+
+  normalizeContentBlock(block) {
+    void block;
+    throw new Error('Method not implemented.');
+  }
+
+  normalizeFileBlock(block) {
+    void block;
     throw new Error('Method not implemented.');
   }
 
@@ -268,41 +310,71 @@ export default class BaseClient {
   }
 
   normalizeMessages(options) {
-    let input = options.input || options.messages;
+    const { files = [] } = options;
 
-    // Empty array is equivalent to no input.
-    if (Array.isArray(input) && !input.length) {
-      input = '';
-    }
-
-    let result = [];
+    let { input, messages = [] } = options;
 
     if (Array.isArray(input)) {
-      result = input;
-    } else {
-      const { messages = [] } = options;
-      result = [
+      messages = input;
+    } else if (typeof input === 'string') {
+      messages = [
         ...messages,
         {
           role: 'user',
           content: input,
         },
       ];
+    } else if (!input && !messages.length) {
+      messages = [
+        {
+          role: 'user',
+        },
+      ];
     }
 
-    if (result.length === 1 && !result[0].content) {
-      // If a single user input is passed and is nullish, coerce it to a
-      // single period. Combined with getFilteredMessages below this allows
-      // a chatbot the ability to "speak first" by prompting it with empty
-      // content. The empty message will be filtered out of the final result
-      // appearing as if the chatbot went first.
-      // Note that:
-      // GPT will fail on an empty string but on whitespace
-      // Anthropic will fail on all whitespace
-      result[0].content = '.';
-    }
+    return messages.map((message) => {
+      let { content } = message;
 
-    return result;
+      if (files.length) {
+        content = [
+          ...this.expandContentBlocks(content),
+          ...files.map((block) => {
+            return this.normalizeFileBlock(block);
+          }),
+        ];
+      } else if (!content) {
+        // If no user input is passed, coerce it to a single period.
+        // Combined with getFilteredMessages below this allows
+        // a chatbot the ability to "speak first" by prompting it with empty
+        // content. The empty message will be filtered out of the final result
+        // appearing as if the chatbot went first.
+        // Note that:
+        // GPT will fail on an empty string but on whitespace
+        // Anthropic will fail on all whitespace
+        content = '.';
+      }
+
+      return {
+        ...message,
+        content,
+      };
+    });
+  }
+
+  expandContentBlocks(content) {
+    if (typeof content === 'string') {
+      content = [
+        {
+          type: 'text',
+          text: content,
+        },
+      ];
+    } else if (!content) {
+      content = [];
+    }
+    return content.map((block) => {
+      return this.normalizeContentBlock(block);
+    });
   }
 
   normalizeSchema(options) {
