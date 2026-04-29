@@ -1,7 +1,16 @@
-const MIN_SUPPORTED_VERSION = '2025-03-26';
+const LATEST_PROTOCOL_VERSION = '2025-11-25';
+const SUPPORTED_PROTOCOL_VERSIONS = [
+  '2025-11-25',
+  '2025-06-18',
+  '2025-03-26',
+];
+// Per spec: when a non-initialize HTTP request omits the
+// MCP-Protocol-Version header, assume this version.
+const ASSUMED_PROTOCOL_VERSION = '2025-03-26';
 
 const ERROR_INVALID_SESSION = -32000;
 const ERROR_UNAUTHORIZED = -32001;
+const ERROR_FORBIDDEN = -32002;
 const ERROR_METHOD_NOT_FOUND = -32601;
 const ERROR_INVALID_REQUEST = -32600;
 const ERROR_INVALID_PARAMS = -32602;
@@ -13,40 +22,49 @@ export default class McpServer {
   }
 
   async handleRequest(ctx) {
-    const { body } = ctx.request;
-    const { method } = body;
+    this.assertValidOrigin(ctx);
 
-    if (method === 'notifications/initialized') {
+    const { body } = ctx.request;
+
+    if (Array.isArray(body)) {
+      throw new InvalidRequestError();
+    }
+
+    const { method, id } = body;
+
+    if (this.isNotification(method)) {
+      ctx.status = 202;
       return;
     }
 
     this.assertValidTransport(body);
-    await this.assertAuthorization(ctx);
+    await this.assertAuthorization(ctx, id);
 
     let result;
 
     if (method === 'initialize') {
-      this.setNewSessionId(ctx);
       result = this.initialize(body);
+      this.setNewSessionId(ctx);
+    } else {
+      this.assertValidProtocolVersion(ctx, id);
+      this.assertValidSession(ctx, id);
+
+      if (method === 'ping') {
+        result = this.ping();
+      } else if (method === 'tools/list') {
+        result = this.listTools();
+      } else if (method === 'tools/call') {
+        result = await this.callTool(body, ctx);
+      } else {
+        result = this.unknownMethod();
+      }
     }
 
-    this.assertValidSession(ctx);
-
-    if (method === 'ping') {
-      result = this.ping();
-    } else if (method === 'tools/list') {
-      result = this.listTools();
-    } else if (method === 'tools/call') {
-      result = await this.callTool(body, ctx);
-    } else if (!result) {
-      result = this.unknownMethod();
-    }
-
-    return {
+    return this.respond(ctx, {
       jsonrpc: '2.0',
-      id: body.id,
+      id,
       ...result,
-    };
+    });
   }
 
   // Validation
@@ -60,44 +78,63 @@ export default class McpServer {
     }
   }
 
+  assertValidOrigin(ctx) {
+    const { allowedOrigins } = this.options;
+    if (!allowedOrigins) {
+      return;
+    }
+    const origin = ctx.get('origin');
+    if (origin && !allowedOrigins.includes(origin)) {
+      throw new ForbiddenError();
+    }
+  }
+
   assertValidTransport(body) {
     const { id, method, jsonrpc } = body;
-    if (id == null || !method || !jsonrpc) {
+    if (id == null || !method || jsonrpc !== '2.0') {
       throw new InvalidRequestError();
     }
   }
 
-  async assertAuthorization(ctx) {
+  assertValidProtocolVersion(ctx, id) {
+    const version = ctx.get('mcp-protocol-version') || ASSUMED_PROTOCOL_VERSION;
+    if (!SUPPORTED_PROTOCOL_VERSIONS.includes(version)) {
+      throw new InvalidRequestError(id);
+    }
+  }
+
+  async assertAuthorization(ctx, id) {
     const { apiKeyRequired, isValidApiKey } = this.options;
     const bearer = this.getBearer(ctx);
 
     if (apiKeyRequired || bearer) {
       const isValid = await isValidApiKey(bearer, ctx);
       if (!isValid) {
-        throw new UnauthorizedError();
+        throw new UnauthorizedError(id);
       }
     }
   }
 
-  assertValidSession(ctx) {
+  assertValidSession(ctx, id) {
     if (!this.hasValidSessionId(ctx)) {
-      throw new InvalidSessionError();
+      throw new InvalidSessionError(id);
     }
-    ctx.set('content-type', 'application/json; charset=utf-8');
   }
 
   // Calls
 
   initialize(body) {
     const { protocolVersion } = body.params;
-    if (!this.isSupportedVersion(protocolVersion)) {
-      return this.invalidVersion(body);
-    }
+    // Per spec: echo the client's version if we support it,
+    // otherwise respond with our latest supported version.
+    const negotiated = SUPPORTED_PROTOCOL_VERSIONS.includes(protocolVersion)
+      ? protocolVersion
+      : LATEST_PROTOCOL_VERSION;
 
     const { name, version } = this.options;
     return {
       result: {
-        protocolVersion,
+        protocolVersion: negotiated,
         serverInfo: {
           name,
           version,
@@ -129,26 +166,48 @@ export default class McpServer {
 
   async callTool(body, ctx) {
     const { name, arguments: args } = body.params;
-    if (this.hasTool(name)) {
-      return await this.callValidTool(name, args, ctx);
-    } else {
+    if (!this.hasTool(name)) {
       return this.invalidToolCall(name);
     }
+    return await this.callValidTool(name, args, ctx);
   }
 
   async callValidTool(name, args, ctx) {
     const tool = this.getTool(name);
-    const result = await tool.handler(args, ctx);
-    return {
-      result: {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify(result),
-          },
-        ],
-      },
-    };
+    try {
+      await this.validateArgs(tool, args);
+      const result = await tool.handler(args, ctx);
+      return {
+        result: {
+          content: [
+            {
+              type: 'text',
+              text:
+                typeof result === 'string' ? result : JSON.stringify(result),
+            },
+          ],
+        },
+      };
+    } catch (err) {
+      return {
+        result: {
+          content: [
+            {
+              type: 'text',
+              text: err.message,
+            },
+          ],
+          isError: true,
+        },
+      };
+    }
+  }
+
+  async validateArgs(tool, args) {
+    const { inputSchema } = tool;
+    if (inputSchema && typeof inputSchema.validate === 'function') {
+      await inputSchema.validate(args);
+    }
   }
 
   invalidToolCall(name) {
@@ -171,17 +230,16 @@ export default class McpServer {
     };
   }
 
-  invalidVersion(request) {
-    return {
-      error: {
-        code: ERROR_INVALID_PARAMS,
-        message: 'Unsupported protocol version',
-        data: {
-          requested: request.params.protocolVersion,
-          minimum: MIN_SUPPORTED_VERSION,
-        },
-      },
-    };
+  // Helpers
+
+  isNotification(method) {
+    return typeof method === 'string' && method.startsWith('notifications/');
+  }
+
+  respond(ctx, body) {
+    ctx.set('content-type', 'application/json; charset=utf-8');
+    ctx.body = body;
+    return body;
   }
 
   // Tool helpers
@@ -225,20 +283,20 @@ export default class McpServer {
     const authorization = ctx.get('authorization') || '';
     return authorization.match(/Bearer (.+)/)?.[1];
   }
-
-  // Version helpers
-
-  isSupportedVersion(version) {
-    return version >= MIN_SUPPORTED_VERSION;
-  }
 }
 
 class InvalidRequestError extends Error {
   status = 400;
 
+  constructor(id) {
+    super('Invalid Request');
+    this.id = id;
+  }
+
   toJSON() {
     return {
       jsonrpc: '2.0',
+      id: this.id,
       error: {
         code: ERROR_INVALID_REQUEST,
         message: 'Invalid Request',
@@ -250,9 +308,15 @@ class InvalidRequestError extends Error {
 class UnauthorizedError extends Error {
   status = 401;
 
+  constructor(id) {
+    super('Unauthorized');
+    this.id = id;
+  }
+
   toJSON() {
     return {
       jsonrpc: '2.0',
+      id: this.id,
       error: {
         code: ERROR_UNAUTHORIZED,
         message: 'Unauthorized',
@@ -261,12 +325,32 @@ class UnauthorizedError extends Error {
   }
 }
 
-class InvalidSessionError extends Error {
-  status = 404;
+class ForbiddenError extends Error {
+  status = 403;
 
   toJSON() {
     return {
       jsonrpc: '2.0',
+      error: {
+        code: ERROR_FORBIDDEN,
+        message: 'Forbidden',
+      },
+    };
+  }
+}
+
+class InvalidSessionError extends Error {
+  status = 404;
+
+  constructor(id) {
+    super('Invalid Session');
+    this.id = id;
+  }
+
+  toJSON() {
+    return {
+      jsonrpc: '2.0',
+      id: this.id,
       error: {
         code: ERROR_INVALID_SESSION,
         message: 'Invalid Session',

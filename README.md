@@ -11,6 +11,7 @@ usage.
 - [Templates](#templates)
 - [Platforms](#platforms)
 - [Models](#models)
+- [MCP Server](#mcp-server)
 
 ## Install
 
@@ -184,3 +185,143 @@ Available models can be listed with:
 ```js
 const models = await client.models();
 ```
+
+## MCP Server
+
+The `McpServer` class provides a minimal
+[MCP](https://modelcontextprotocol.io/) server that exposes tools to LLM
+clients over the Streamable HTTP transport. It is designed to be mounted in a
+Koa route handler — `handleRequest(ctx)` reads from `ctx.request.body` and
+writes the response (status, body, and `mcp-session-id` / `content-type`
+headers) directly onto `ctx`.
+
+The server targets the `2025-11-25` revision of the MCP spec but negotiates
+down to `2025-06-18` and `2025-03-26` if the client requests them.
+
+```js
+import yd from '@bedrockio/yada';
+import { McpServer } from '@bedrockio/ai';
+
+const server = new McpServer({
+  name: 'my-app',
+  version: '1.0.0',
+
+  // Optional: return a stable session id for the request. The id is
+  // echoed back in the `mcp-session-id` response header on `initialize`
+  // and validated on subsequent requests. Note that the example below
+  // uses the `GCLB` cookie, which requires session affinity to be
+  // enabled on the GCP load balancer so that follow-up requests land
+  // on the same backend.
+  getSessionId(ctx) {
+    return ctx.cookies.get('GCLB');
+  },
+
+  // Optional: allow-list of `Origin` header values. When set, requests
+  // with an `Origin` that is not in this list are rejected with HTTP 403.
+  // This is the spec-mandated DNS-rebinding defense for browser clients.
+  allowedOrigins: ['https://app.example.com'],
+
+  // Optional: require a Bearer token on every request. When `apiKeyRequired`
+  // is true (or when a Bearer token is present), `isValidApiKey` is called
+  // and must resolve truthy or the request is rejected with 401.
+  apiKeyRequired: true,
+  async isValidApiKey(token, ctx) {
+    return token === process.env.MCP_API_KEY;
+  },
+
+  // Tools exposed to the client. `inputSchema` accepts a yada schema
+  // (or any JSON schema). If the schema has a `validate` method (yada
+  // does), arguments are validated before the handler runs and validation
+  // failures are returned as tool execution errors. The handler receives
+  // the parsed arguments and the Koa context; the return value is sent
+  // back as the tool result (strings as-is, everything else JSON-encoded).
+  tools: [
+    {
+      name: 'search_drugs',
+      description: 'Search for drug information by name.',
+      inputSchema: yd.object({
+        name: yd.string().description('Name of the drug to search for.'),
+      }),
+      async handler(params, ctx) {
+        const { name } = params;
+        return await Drug.search({ keyword: name });
+      },
+    },
+  ],
+});
+```
+
+Mount it on a route — typically `POST /mcp`:
+
+```js
+router.post('/mcp', async (ctx) => {
+  await server.handleRequest(ctx);
+});
+```
+
+`handleRequest` sets `ctx.body` and `ctx.status` itself — do not assign
+`ctx.body = await server.handleRequest(ctx)`, because notifications respond
+with `202 Accepted` and no body, which Koa would otherwise rewrite to `204`.
+
+### Sessions
+
+If `getSessionId` is provided, the returned id is set on the response as
+`mcp-session-id` during `initialize`. Subsequent requests that include an
+`mcp-session-id` header must match the value returned by `getSessionId`, or
+the request is rejected with an `Invalid Session` error. Returning `undefined`
+disables session validation for that request.
+
+When deriving the session id from a load-balancer cookie like `GCLB` on GCP,
+session affinity must be enabled on the load balancer — otherwise follow-up
+requests may be routed to a different backend and the cookie value (and
+therefore the session id) will not match.
+
+### Authorization
+
+Authorization is opt-in. When `apiKeyRequired` is `true`, every request must
+include an `Authorization: Bearer <token>` header and `isValidApiKey` must
+resolve truthy. When `apiKeyRequired` is falsy, the check only runs if a
+Bearer token is present — useful for servers that allow anonymous access but
+still want to validate tokens when supplied.
+
+### Tool errors
+
+If a tool's `inputSchema.validate` rejects the arguments, or its `handler`
+throws, the error is returned as a tool execution error
+(`{ content: [...], isError: true }`) rather than as a JSON-RPC error. This is
+what the spec recommends so the model can self-correct.
+
+### Errors and Koa middleware
+
+Protocol-level errors (`Invalid Request`, `Unauthorized`, `Forbidden`,
+`Invalid Session`) are thrown as `Error` instances with a `status` property
+and a `toJSON()` that produces the JSON-RPC error body. A typical Koa setup
+serializes them with an error middleware:
+
+```js
+app.use(async (ctx, next) => {
+  try {
+    await next();
+  } catch (err) {
+    ctx.status = err.status || 500;
+    ctx.body = err.toJSON ? err.toJSON() : { error: { message: err.message } };
+  }
+});
+```
+
+### Supported methods
+
+`initialize`, `ping`, `tools/list`, `tools/call`, plus any `notifications/*`
+notification (acknowledged with `202 Accepted`). Unknown methods return a
+JSON-RPC `Method not found` error.
+
+### What is not implemented
+
+This is intentionally a minimal implementation. The following parts of the
+Streamable HTTP transport are out of scope:
+
+- Server-Sent Events (`GET` on the MCP endpoint)
+- Session termination via `DELETE`
+- `tools/list` pagination
+- `outputSchema` / `structuredContent` on tool results
+- Resources, prompts, sampling, elicitation, and tasks

@@ -231,7 +231,7 @@ export class AnthropicClient extends BaseClient {
     if (params.mcp_servers) {
       return {
         headers: {
-          'anthropic-beta': 'mcp-client-2025-04-04',
+          'anthropic-beta': 'mcp-client-2025-11-20',
         },
       };
     }

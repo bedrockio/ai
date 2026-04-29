@@ -94,6 +94,28 @@ describe('McpServer', () => {
     const result = await server.handleRequest(ctx);
 
     expect(result).toBeUndefined();
+    expect(ctx.status).toBe(202);
+    expect(ctx.body).toBeUndefined();
+  });
+
+  it('should accept any notifications/* method with 202', async () => {
+    const server = new McpServer({
+      name: 'MyServer',
+      version: '1.0.0',
+    });
+
+    const ctx = new MockContext({
+      body: {
+        jsonrpc: '2.0',
+        method: 'notifications/cancelled',
+        params: { requestId: 'req-1' },
+      },
+    });
+
+    const result = await server.handleRequest(ctx);
+
+    expect(result).toBeUndefined();
+    expect(ctx.status).toBe(202);
   });
 
   it('should list available tools', async () => {
@@ -389,7 +411,7 @@ describe('McpServer', () => {
       });
     });
 
-    it('should return error for unsupported protocol version', async () => {
+    it('should negotiate down to the latest supported version', async () => {
       const server = new McpServer({
         name: 'MyServer',
         version: '1.0.0',
@@ -416,12 +438,14 @@ describe('McpServer', () => {
       expect(JSON.parse(JSON.stringify(result))).toEqual({
         jsonrpc: '2.0',
         id: 'init-bad',
-        error: {
-          code: -32602,
-          message: 'Unsupported protocol version',
-          data: {
-            minimum: '2025-03-26',
-            requested: '1.0.0',
+        result: {
+          protocolVersion: '2025-11-25',
+          serverInfo: {
+            name: 'MyServer',
+            version: '1.0.0',
+          },
+          capabilities: {
+            tools: {},
           },
         },
       });
@@ -523,6 +547,7 @@ describe('McpServer', () => {
       expect(error.status).toBe(404);
       expect(JSON.parse(JSON.stringify(error))).toEqual({
         jsonrpc: '2.0',
+        id: 'list-1',
         error: {
           code: -32000,
           message: 'Invalid Session',
@@ -560,6 +585,7 @@ describe('McpServer', () => {
       expect(error.status).toBe(401);
       expect(JSON.parse(JSON.stringify(error))).toEqual({
         jsonrpc: '2.0',
+        id: 'list-1',
         error: {
           code: -32001,
           message: 'Unauthorized',
@@ -598,6 +624,7 @@ describe('McpServer', () => {
       expect(error.status).toBe(401);
       expect(JSON.parse(JSON.stringify(error))).toEqual({
         jsonrpc: '2.0',
+        id: 'list-1',
         error: {
           code: -32001,
           message: 'Unauthorized',
@@ -695,6 +722,359 @@ describe('McpServer', () => {
           tools: [],
         },
       });
+    });
+  });
+
+  describe('protocol version header', () => {
+    it('should accept a request with no MCP-Protocol-Version header', async () => {
+      const server = new McpServer({
+        name: 'MyServer',
+        version: '1.0.0',
+      });
+
+      const ctx = new MockContext({
+        body: {
+          jsonrpc: '2.0',
+          id: 'ping-1',
+          method: 'ping',
+        },
+      });
+
+      const result = await server.handleRequest(ctx);
+
+      expect(result).toEqual({
+        jsonrpc: '2.0',
+        id: 'ping-1',
+        result: {},
+      });
+    });
+
+    it('should accept a supported MCP-Protocol-Version', async () => {
+      const server = new McpServer({
+        name: 'MyServer',
+        version: '1.0.0',
+      });
+
+      const ctx = new MockContext({
+        body: {
+          jsonrpc: '2.0',
+          id: 'ping-1',
+          method: 'ping',
+        },
+        headers: {
+          'mcp-protocol-version': '2025-11-25',
+        },
+      });
+
+      const result = await server.handleRequest(ctx);
+
+      expect(result.result).toEqual({});
+    });
+
+    it('should reject an unsupported MCP-Protocol-Version', async () => {
+      const server = new McpServer({
+        name: 'MyServer',
+        version: '1.0.0',
+      });
+
+      const ctx = new MockContext({
+        body: {
+          jsonrpc: '2.0',
+          id: 'ping-1',
+          method: 'ping',
+        },
+        headers: {
+          'mcp-protocol-version': '1.0.0',
+        },
+      });
+
+      let error;
+      try {
+        await server.handleRequest(ctx);
+      } catch (err) {
+        error = err;
+      }
+
+      expect(error.status).toBe(400);
+      expect(JSON.parse(JSON.stringify(error))).toEqual({
+        jsonrpc: '2.0',
+        id: 'ping-1',
+        error: {
+          code: -32600,
+          message: 'Invalid Request',
+        },
+      });
+    });
+
+    it('should not enforce the version header on initialize', async () => {
+      const server = new McpServer({
+        name: 'MyServer',
+        version: '1.0.0',
+      });
+
+      const ctx = new MockContext({
+        body: {
+          jsonrpc: '2.0',
+          id: 'init-1',
+          method: 'initialize',
+          params: {
+            protocolVersion: '2025-11-25',
+            capabilities: {},
+            clientInfo: { name: 'test', version: '1.0.0' },
+          },
+        },
+        headers: {
+          'mcp-protocol-version': '1.0.0',
+        },
+      });
+
+      const result = await server.handleRequest(ctx);
+
+      expect(result.id).toBe('init-1');
+      expect(result.result.protocolVersion).toBe('2025-11-25');
+    });
+  });
+
+  describe('origin validation', () => {
+    it('should accept any origin when allowedOrigins is not set', async () => {
+      const server = new McpServer({
+        name: 'MyServer',
+        version: '1.0.0',
+      });
+
+      const ctx = new MockContext({
+        body: {
+          jsonrpc: '2.0',
+          id: 'ping-1',
+          method: 'ping',
+        },
+        headers: {
+          origin: 'https://attacker.example.com',
+        },
+      });
+
+      const result = await server.handleRequest(ctx);
+
+      expect(result.result).toEqual({});
+    });
+
+    it('should accept an allowed origin', async () => {
+      const server = new McpServer({
+        name: 'MyServer',
+        version: '1.0.0',
+        allowedOrigins: ['https://app.example.com'],
+      });
+
+      const ctx = new MockContext({
+        body: {
+          jsonrpc: '2.0',
+          id: 'ping-1',
+          method: 'ping',
+        },
+        headers: {
+          origin: 'https://app.example.com',
+        },
+      });
+
+      const result = await server.handleRequest(ctx);
+
+      expect(result.result).toEqual({});
+    });
+
+    it('should reject a disallowed origin with 403', async () => {
+      const server = new McpServer({
+        name: 'MyServer',
+        version: '1.0.0',
+        allowedOrigins: ['https://app.example.com'],
+      });
+
+      const ctx = new MockContext({
+        body: {
+          jsonrpc: '2.0',
+          id: 'ping-1',
+          method: 'ping',
+        },
+        headers: {
+          origin: 'https://attacker.example.com',
+        },
+      });
+
+      let error;
+      try {
+        await server.handleRequest(ctx);
+      } catch (err) {
+        error = err;
+      }
+
+      expect(error.status).toBe(403);
+      expect(JSON.parse(JSON.stringify(error))).toEqual({
+        jsonrpc: '2.0',
+        error: {
+          code: -32002,
+          message: 'Forbidden',
+        },
+      });
+    });
+
+    it('should accept a request with no Origin header', async () => {
+      const server = new McpServer({
+        name: 'MyServer',
+        version: '1.0.0',
+        allowedOrigins: ['https://app.example.com'],
+      });
+
+      const ctx = new MockContext({
+        body: {
+          jsonrpc: '2.0',
+          id: 'ping-1',
+          method: 'ping',
+        },
+      });
+
+      const result = await server.handleRequest(ctx);
+
+      expect(result.result).toEqual({});
+    });
+  });
+
+  describe('batched requests', () => {
+    it('should reject array bodies as Invalid Request', async () => {
+      const server = new McpServer({
+        name: 'MyServer',
+        version: '1.0.0',
+      });
+
+      const ctx = new MockContext({
+        body: [
+          {
+            jsonrpc: '2.0',
+            id: 'ping-1',
+            method: 'ping',
+          },
+        ],
+      });
+
+      let error;
+      try {
+        await server.handleRequest(ctx);
+      } catch (err) {
+        error = err;
+      }
+
+      expect(error.status).toBe(400);
+      expect(JSON.parse(JSON.stringify(error))).toEqual({
+        jsonrpc: '2.0',
+        error: {
+          code: -32600,
+          message: 'Invalid Request',
+        },
+      });
+    });
+  });
+
+  describe('tool execution', () => {
+    it('should return isError when input fails schema validation', async () => {
+      const server = new McpServer({
+        name: 'MyServer',
+        version: '1.0.0',
+        tools: [
+          {
+            name: 'MyTool',
+            description: 'It does stuff.',
+            inputSchema: yd.object({
+              foo: yd.string().required(),
+            }),
+            handler() {
+              return 'should not run';
+            },
+          },
+        ],
+      });
+
+      const ctx = new MockContext({
+        body: {
+          jsonrpc: '2.0',
+          id: 'call-1',
+          method: 'tools/call',
+          params: {
+            name: 'MyTool',
+            arguments: {},
+          },
+        },
+      });
+
+      const result = await server.handleRequest(ctx);
+
+      expect(result.result.isError).toBe(true);
+      expect(result.result.content[0].type).toBe('text');
+      expect(typeof result.result.content[0].text).toBe('string');
+    });
+
+    it('should return isError when handler throws', async () => {
+      const server = new McpServer({
+        name: 'MyServer',
+        version: '1.0.0',
+        tools: [
+          {
+            name: 'MyTool',
+            description: 'It does stuff.',
+            handler() {
+              throw new Error('boom');
+            },
+          },
+        ],
+      });
+
+      const ctx = new MockContext({
+        body: {
+          jsonrpc: '2.0',
+          id: 'call-1',
+          method: 'tools/call',
+          params: {
+            name: 'MyTool',
+            arguments: {},
+          },
+        },
+      });
+
+      const result = await server.handleRequest(ctx);
+
+      expect(result.result).toEqual({
+        content: [{ type: 'text', text: 'boom' }],
+        isError: true,
+      });
+    });
+
+    it('should not double-stringify a string result', async () => {
+      const server = new McpServer({
+        name: 'MyServer',
+        version: '1.0.0',
+        tools: [
+          {
+            name: 'MyTool',
+            description: 'It does stuff.',
+            handler() {
+              return 'hello';
+            },
+          },
+        ],
+      });
+
+      const ctx = new MockContext({
+        body: {
+          jsonrpc: '2.0',
+          id: 'call-1',
+          method: 'tools/call',
+          params: {
+            name: 'MyTool',
+            arguments: {},
+          },
+        },
+      });
+
+      const result = await server.handleRequest(ctx);
+
+      expect(result.result.content[0].text).toBe('hello');
     });
   });
 });
