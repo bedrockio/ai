@@ -126,9 +126,23 @@ export class AnthropicClient extends BaseClient {
           type: 'delta',
           delta: event.delta.text,
         };
+      } else if (event.delta.type === 'input_json_delta') {
+        block.partial ||= '';
+        block.partial += event.delta.partial_json;
       }
     } else if (type === 'content_block_stop') {
       const block = options.blocks.get(event.index);
+
+      if (typeof block.partial === 'string') {
+        try {
+          block.input = JSON.parse(block.partial);
+        } catch {
+          block.input = {};
+        } finally {
+          delete block.partial;
+        }
+      }
+
       if (block.type !== 'text') {
         return event;
       }

@@ -476,6 +476,68 @@ describe('anthropic', () => {
       ]);
     });
 
+    it('should accumulate input_json_delta partials into the final tool_use input', async () => {
+      // Anthropic streams a tool's input as a sequence of
+      // `input_json_delta` events whose `partial_json` strings
+      // concatenate to the full JSON. The library must accumulate
+      // them so the final `stop` message carries the parsed input.
+      setResponse([
+        { type: 'message_start', message: {} },
+        {
+          type: 'content_block_start',
+          index: 0,
+          content_block: {
+            type: 'mcp_tool_use',
+            id: 'mcptoolu_01',
+            name: 'search_drugs',
+            input: {},
+          },
+        },
+        {
+          type: 'content_block_delta',
+          index: 0,
+          delta: { type: 'input_json_delta', partial_json: '{"na' },
+        },
+        {
+          type: 'content_block_delta',
+          index: 0,
+          delta: { type: 'input_json_delta', partial_json: 'me": "ib' },
+        },
+        {
+          type: 'content_block_delta',
+          index: 0,
+          delta: { type: 'input_json_delta', partial_json: 'uprofen"' },
+        },
+        {
+          type: 'content_block_delta',
+          index: 0,
+          delta: { type: 'input_json_delta', partial_json: '}' },
+        },
+        { type: 'content_block_stop', index: 0 },
+        {
+          type: 'message_delta',
+          usage: { input_tokens: 5, output_tokens: 10 },
+        },
+        { type: 'message_stop' },
+      ]);
+
+      const stream = await client.stream({
+        input: 'Find ibuprofen.',
+      });
+
+      let stopEvent;
+      for await (const event of stream) {
+        if (event.type === 'stop') {
+          stopEvent = event;
+        }
+      }
+
+      const block = stopEvent.messages[1].content.find((b) => {
+        return b.type === 'mcp_tool_use';
+      });
+      expect(block.input).toEqual({ name: 'ibuprofen' });
+    });
+
     it('should default missing input on tool_use blocks in incoming messages', async () => {
       // Mongoose's `Mixed` type strips empty `{}` on save, so when a
       // stored conversation is replayed, tool_use blocks come back
@@ -506,7 +568,6 @@ describe('anthropic', () => {
         }),
       ).resolves.toBeDefined();
     });
-
   });
 
   describe('models', () => {
