@@ -9,7 +9,6 @@ const SUPPORTED_PROTOCOL_VERSIONS = [
 const ASSUMED_PROTOCOL_VERSION = '2025-03-26';
 
 const ERROR_INVALID_SESSION = -32000;
-const ERROR_UNAUTHORIZED = -32001;
 const ERROR_FORBIDDEN = -32002;
 const ERROR_METHOD_NOT_FOUND = -32601;
 const ERROR_INVALID_REQUEST = -32600;
@@ -44,7 +43,6 @@ export default class McpServer {
     }
 
     this.assertValidTransport(body);
-    await this.assertAuthorization(ctx, id);
 
     let result;
 
@@ -106,18 +104,6 @@ export default class McpServer {
     const version = ctx.get('mcp-protocol-version') || ASSUMED_PROTOCOL_VERSION;
     if (!SUPPORTED_PROTOCOL_VERSIONS.includes(version)) {
       throw new InvalidRequestError(id);
-    }
-  }
-
-  async assertAuthorization(ctx, id) {
-    const { apiKeyRequired, isValidApiKey } = this.options;
-    const bearer = this.getBearer(ctx);
-
-    if (apiKeyRequired || bearer) {
-      const isValid = await isValidApiKey(bearer, ctx);
-      if (!isValid) {
-        throw new UnauthorizedError(id);
-      }
     }
   }
 
@@ -282,13 +268,6 @@ export default class McpServer {
       ctx.set('mcp-session-id', sessionId);
     }
   }
-
-  // Authorization helpers
-
-  getBearer(ctx) {
-    const authorization = ctx.get('authorization') || '';
-    return authorization.match(/Bearer (.+)/)?.[1];
-  }
 }
 
 class InvalidRequestError extends Error {
@@ -306,26 +285,6 @@ class InvalidRequestError extends Error {
       error: {
         code: ERROR_INVALID_REQUEST,
         message: 'Invalid Request',
-      },
-    };
-  }
-}
-
-class UnauthorizedError extends Error {
-  status = 401;
-
-  constructor(id) {
-    super('Unauthorized');
-    this.id = id;
-  }
-
-  toJSON() {
-    return {
-      jsonrpc: '2.0',
-      id: this.id,
-      error: {
-        code: ERROR_UNAUTHORIZED,
-        message: 'Unauthorized',
       },
     };
   }

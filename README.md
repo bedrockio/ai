@@ -188,15 +188,14 @@ const models = await client.models();
 
 ## MCP Server
 
-The `McpServer` class provides a minimal
-[MCP](https://modelcontextprotocol.io/) server that exposes tools to LLM
-clients over the Streamable HTTP transport. It is designed to be mounted in a
-Koa route handler — `handleRequest(ctx)` reads from `ctx.request.body` and
-writes the response (status, body, and `mcp-session-id` / `content-type`
-headers) directly onto `ctx`.
+The `McpServer` class provides a minimal [MCP](https://modelcontextprotocol.io/)
+server that exposes tools to LLM clients over the Streamable HTTP transport. It
+is designed to be mounted in a Koa route handler — `handleRequest(ctx)` reads
+from `ctx.request.body` and writes the response (status, body, and
+`content-type` header) directly onto `ctx`.
 
-The server targets the `2025-11-25` revision of the MCP spec but negotiates
-down to `2025-06-18` and `2025-03-26` if the client requests them.
+The server targets the `2025-11-25` revision of the MCP spec but negotiates down
+to `2025-06-18` and `2025-03-26` if the client requests them.
 
 ```js
 import yd from '@bedrockio/yada';
@@ -206,28 +205,10 @@ const server = new McpServer({
   name: 'my-app',
   version: '1.0.0',
 
-  // Optional: return a stable session id for the request. The id is
-  // echoed back in the `mcp-session-id` response header on `initialize`
-  // and validated on subsequent requests. Note that the example below
-  // uses the `GCLB` cookie, which requires session affinity to be
-  // enabled on the GCP load balancer so that follow-up requests land
-  // on the same backend.
-  getSessionId(ctx) {
-    return ctx.cookies.get('GCLB');
-  },
-
   // Optional: allow-list of `Origin` header values. When set, requests
   // with an `Origin` that is not in this list are rejected with HTTP 403.
   // This is the spec-mandated DNS-rebinding defense for browser clients.
   allowedOrigins: ['https://app.example.com'],
-
-  // Optional: require a Bearer token on every request. When `apiKeyRequired`
-  // is true (or when a Bearer token is present), `isValidApiKey` is called
-  // and must resolve truthy or the request is rejected with 401.
-  apiKeyRequired: true,
-  async isValidApiKey(token, ctx) {
-    return token === process.env.MCP_API_KEY;
-  },
 
   // Tools exposed to the client. `inputSchema` accepts a yada schema
   // (or any JSON schema). If the schema has a `validate` method (yada
@@ -251,6 +232,10 @@ const server = new McpServer({
 });
 ```
 
+Authentication is the consumer's concern — wire it as Koa middleware before the
+route, or inside the route handler, using whatever scheme your app already uses
+(JWT, session cookie, etc.).
+
 Mount it on a route — typically at `/mcp` — using `.all()` so the server can
 respond with `405 Method Not Allowed` for `GET`/`DELETE` (which the spec
 requires when SSE and session termination aren't supported):
@@ -262,29 +247,23 @@ router.all('/mcp', async (ctx) => {
 ```
 
 `handleRequest` sets `ctx.body` and `ctx.status` itself — do not assign
-`ctx.body = await server.handleRequest(ctx)`, because notifications respond
-with `202 Accepted` and no body, which Koa would otherwise rewrite to `204`.
+`ctx.body = await server.handleRequest(ctx)`, because notifications respond with
+`202 Accepted` and no body, which Koa would otherwise rewrite to `204`.
 
-### Sessions
+### Sessions (advanced)
 
-If `getSessionId` is provided, the returned id is set on the response as
-`mcp-session-id` during `initialize`. Subsequent requests that include an
-`mcp-session-id` header must match the value returned by `getSessionId`, or
-the request is rejected with an `Invalid Session` error. Returning `undefined`
-disables session validation for that request.
+`Mcp-Session-Id` is optional in the spec and is only useful if your server keeps
+per-session state (subscriptions, caches keyed by conversation, `listChanged`
+push notifications, etc.). For stateless tool calls — the typical "Claude calls
+a tool, the handler queries the DB, returns a result" shape — skip this section.
 
-When deriving the session id from a load-balancer cookie like `GCLB` on GCP,
-session affinity must be enabled on the load balancer — otherwise follow-up
-requests may be routed to a different backend and the cookie value (and
-therefore the session id) will not match.
-
-### Authorization
-
-Authorization is opt-in. When `apiKeyRequired` is `true`, every request must
-include an `Authorization: Bearer <token>` header and `isValidApiKey` must
-resolve truthy. When `apiKeyRequired` is falsy, the check only runs if a
-Bearer token is present — useful for servers that allow anonymous access but
-still want to validate tokens when supplied.
+If you do need it, pass `getSessionId(ctx)` and return a session identifier. The
+value is set on the response as `mcp-session-id` during `initialize` and
+validated on subsequent requests; returning `undefined` disables session
+validation for that request. Spec-canonical practice is to generate a UUID
+server-side at initialization and store any associated state keyed by that UUID.
+In a multi-backend deployment you'll also need either backend affinity or shared
+storage so any backend can resolve the session.
 
 ### Tool errors
 
@@ -295,10 +274,10 @@ what the spec recommends so the model can self-correct.
 
 ### Errors and Koa middleware
 
-Protocol-level errors (`Invalid Request`, `Unauthorized`, `Forbidden`,
-`Invalid Session`) are thrown as `Error` instances with a `status` property
-and a `toJSON()` that produces the JSON-RPC error body. A typical Koa setup
-serializes them with an error middleware:
+Protocol-level errors (`Invalid Request`, `Forbidden`, `Invalid Session`) are
+thrown as `Error` instances with a `status` property and a `toJSON()` that
+produces the JSON-RPC error body. A typical Koa setup serializes them with an
+error middleware:
 
 ```js
 app.use(async (ctx, next) => {
@@ -319,9 +298,8 @@ JSON-RPC `Method not found` error.
 
 ### What is not implemented
 
-This is intentionally a minimal implementation. Non-`POST` requests are
-answered with `405 Method Not Allowed`. The following parts of the spec are
-out of scope:
+This is intentionally a minimal implementation. Non-`POST` requests are answered
+with `405 Method Not Allowed`. The following parts of the spec are out of scope:
 
 - Server-Sent Events on `GET`
 - Session termination via `DELETE`

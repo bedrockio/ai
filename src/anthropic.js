@@ -178,10 +178,14 @@ export class AnthropicClient extends BaseClient {
         return tool.type === 'mcp';
       })
       .map((tool) => {
+        const { name, url, authorization_token } = tool;
         return {
           type: 'url',
-          name: tool.name,
-          url: tool.url,
+          name,
+          url,
+          ...(authorization_token && {
+            authorization_token,
+          }),
         };
       });
 

@@ -540,6 +540,52 @@ describe('anthropic', () => {
       });
     });
 
+    it('should forward authorization_token to the mcp_servers payload', async () => {
+      setResponse(caloriesText);
+
+      await client.prompt({
+        input: 'Hello',
+        tools: [
+          {
+            type: 'mcp',
+            name: 'drugs',
+            url: 'https://api.drugs.com/mcp',
+            authorization_token: 'jwt-for-this-user',
+          },
+        ],
+      });
+
+      const options = getLastOptions();
+
+      expect(options.mcp_servers).toEqual([
+        {
+          type: 'url',
+          name: 'drugs',
+          url: 'https://api.drugs.com/mcp',
+          authorization_token: 'jwt-for-this-user',
+        },
+      ]);
+    });
+
+    it('should omit authorization_token when not provided', async () => {
+      setResponse(caloriesText);
+
+      await client.prompt({
+        input: 'Hello',
+        tools: [
+          {
+            type: 'mcp',
+            name: 'drugs',
+            url: 'https://api.drugs.com/mcp',
+          },
+        ],
+      });
+
+      const options = getLastOptions();
+
+      expect(options.mcp_servers[0]).not.toHaveProperty('authorization_token');
+    });
+
     it('should add an mcp_toolset for each mcp server', async () => {
       setResponse(caloriesText);
 
