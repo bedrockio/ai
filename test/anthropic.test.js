@@ -476,57 +476,37 @@ describe('anthropic', () => {
       ]);
     });
 
-    it('should attach the tool name to mcp_tool_result blocks during streaming', async () => {
-      setResponse([
-        { type: 'message_start', message: {} },
-        {
-          type: 'content_block_start',
-          index: 0,
-          content_block: {
-            type: 'mcp_tool_use',
-            id: 'mcptoolu_01MqCKN2QptvS7aP94EGa511',
-            name: 'search_drugs',
-            input: {},
-          },
-        },
-        { type: 'content_block_stop', index: 0 },
-        {
-          type: 'content_block_start',
-          index: 1,
-          content_block: {
-            type: 'mcp_tool_result',
-            tool_use_id: 'mcptoolu_01MqCKN2QptvS7aP94EGa511',
-            is_error: false,
-            content: [{ type: 'text', text: 'OK' }],
-          },
-        },
-        { type: 'content_block_stop', index: 1 },
-        { type: 'message_delta', usage: { input_tokens: 5, output_tokens: 10 } },
-        { type: 'message_stop' },
-      ]);
+    it('should default missing input on tool_use blocks in incoming messages', async () => {
+      // Mongoose's `Mixed` type strips empty `{}` on save, so when a
+      // stored conversation is replayed, tool_use blocks come back
+      // without the `input` field. Anthropic's API rejects that with
+      // a 400. The library should default `input: {}` so the call
+      // succeeds.
+      setResponse(caloriesText);
 
-      const stream = await client.stream({
-        input: 'Find ibuprofen.',
-      });
-
-      const events = [];
-      for await (const event of stream) {
-        events.push(event);
-      }
-
-      const resultEvent = events.find((e) => {
-        return e.content_block?.type === 'mcp_tool_result';
-      });
-      expect(resultEvent.content_block.name).toBe('search_drugs');
-
-      const stopEvent = events.find((e) => {
-        return e.type === 'stop';
-      });
-      const resultBlock = stopEvent.messages[1].content.find((b) => {
-        return b.type === 'mcp_tool_result';
-      });
-      expect(resultBlock.name).toBe('search_drugs');
+      await expect(
+        client.prompt({
+          input: 'Follow up.',
+          messages: [
+            {
+              role: 'user',
+              content: 'Find ibuprofen.',
+            },
+            {
+              role: 'assistant',
+              content: [
+                {
+                  type: 'mcp_tool_use',
+                  id: 'mcptoolu_01',
+                  name: 'search_drugs',
+                },
+              ],
+            },
+          ],
+        }),
+      ).resolves.toBeDefined();
     });
+
   });
 
   describe('models', () => {

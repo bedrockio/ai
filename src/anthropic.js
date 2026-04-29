@@ -113,22 +113,9 @@ export class AnthropicClient extends BaseClient {
     options.blocks ||= new Map();
 
     if (type === 'content_block_start') {
-      let block = event.content_block;
-      if (block.type === 'mcp_tool_result') {
-        const use = this.findMcpToolUse(options.blocks, block.tool_use_id);
-        if (use) {
-          block = {
-            ...block,
-            name: use.name,
-          };
-        }
-      }
-      options.blocks.set(event.index, block);
-      if (block.type !== 'text') {
-        return {
-          ...event,
-          content_block: block,
-        };
+      options.blocks.set(event.index, event.content_block);
+      if (event.content_block.type !== 'text') {
+        return event;
       }
     } else if (type === 'content_block_delta') {
       const block = options.blocks.get(event.index);
@@ -256,14 +243,6 @@ export class AnthropicClient extends BaseClient {
       description,
       input_schema: parameters,
     };
-  }
-
-  findMcpToolUse(blocks, toolUseId) {
-    for (const block of blocks.values()) {
-      if (block.type === 'mcp_tool_use' && block.id === toolUseId) {
-        return block;
-      }
-    }
   }
 
   compactContentBlocks(blocks) {

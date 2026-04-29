@@ -358,6 +358,19 @@ export default class BaseClient {
         content = '.';
       }
 
+      if (Array.isArray(content)) {
+        content = content.map((block) => {
+          if (block.type === 'mcp_tool_use' && !block.input) {
+            return {
+              ...block,
+              input: {},
+            };
+          } else {
+            return block;
+          }
+        });
+      }
+
       return {
         ...message,
         content,
