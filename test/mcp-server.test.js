@@ -6,6 +6,7 @@ import McpServer from '../src/McpServer';
 class MockContext {
   constructor(request) {
     this.request = request;
+    this.method = request.method || 'POST';
     this.response = {
       headers: {},
     };
@@ -934,6 +935,25 @@ describe('McpServer', () => {
       const result = await server.handleRequest(ctx);
 
       expect(result.result).toEqual({});
+    });
+  });
+
+  describe('http method', () => {
+    it('should return 405 for non-POST requests', async () => {
+      const server = new McpServer({
+        name: 'MyServer',
+        version: '1.0.0',
+      });
+
+      const ctx = new MockContext({
+        method: 'GET',
+      });
+
+      const result = await server.handleRequest(ctx);
+
+      expect(result).toBeUndefined();
+      expect(ctx.status).toBe(405);
+      expect(ctx.response.headers['allow']).toBe('POST');
     });
   });
 

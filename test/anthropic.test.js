@@ -539,6 +539,146 @@ describe('anthropic', () => {
         ],
       });
     });
+
+    it('should add an mcp_toolset for each mcp server', async () => {
+      setResponse(caloriesText);
+
+      await client.prompt({
+        input: 'Hello',
+        tools: [
+          {
+            type: 'mcp',
+            name: 'drugs',
+            url: 'https://api.drugs.com/mcp',
+          },
+        ],
+      });
+
+      const options = getLastOptions();
+
+      expect(options.mcp_servers).toEqual([
+        {
+          type: 'url',
+          name: 'drugs',
+          url: 'https://api.drugs.com/mcp',
+        },
+      ]);
+      expect(options.tools).toEqual([
+        {
+          type: 'mcp_toolset',
+          mcp_server_name: 'drugs',
+        },
+      ]);
+    });
+
+    it('should not duplicate an mcp_toolset that the caller already provided', async () => {
+      setResponse(caloriesText);
+
+      await client.prompt({
+        input: 'Hello',
+        tools: [
+          {
+            type: 'mcp',
+            name: 'drugs',
+            url: 'https://api.drugs.com/mcp',
+          },
+          {
+            type: 'mcp_toolset',
+            mcp_server_name: 'drugs',
+            allowed_tools: ['search_drugs'],
+          },
+        ],
+      });
+
+      const options = getLastOptions();
+
+      expect(options.tools).toEqual([
+        {
+          type: 'mcp_toolset',
+          mcp_server_name: 'drugs',
+          allowed_tools: ['search_drugs'],
+        },
+      ]);
+    });
+
+    it('should add a toolset for each of multiple mcp servers', async () => {
+      setResponse(caloriesText);
+
+      await client.prompt({
+        input: 'Hello',
+        tools: [
+          {
+            type: 'mcp',
+            name: 'drugs',
+            url: 'https://api.drugs.com/mcp',
+          },
+          {
+            type: 'mcp',
+            name: 'weather',
+            url: 'https://api.weather.com/mcp',
+          },
+        ],
+      });
+
+      const options = getLastOptions();
+
+      expect(options.mcp_servers).toEqual([
+        {
+          type: 'url',
+          name: 'drugs',
+          url: 'https://api.drugs.com/mcp',
+        },
+        {
+          type: 'url',
+          name: 'weather',
+          url: 'https://api.weather.com/mcp',
+        },
+      ]);
+      expect(options.tools).toEqual([
+        {
+          type: 'mcp_toolset',
+          mcp_server_name: 'drugs',
+        },
+        {
+          type: 'mcp_toolset',
+          mcp_server_name: 'weather',
+        },
+      ]);
+    });
+
+    it('should preserve non-mcp tools alongside the toolset', async () => {
+      setResponse(caloriesText);
+
+      await client.prompt({
+        input: 'Hello',
+        tools: [
+          {
+            name: 'apples',
+            description: 'Call when discussing apples.',
+            input_schema: { type: 'object', properties: {} },
+          },
+          {
+            type: 'mcp',
+            name: 'drugs',
+            url: 'https://api.drugs.com/mcp',
+          },
+        ],
+      });
+
+      const options = getLastOptions();
+
+      expect(options.tools).toEqual([
+        {
+          name: 'apples',
+          description: 'Call when discussing apples.',
+          input_schema: { type: 'object', properties: {} },
+        },
+        {
+          type: 'mcp_toolset',
+          mcp_server_name: 'drugs',
+        },
+      ]);
+    });
   });
 
   describe('other', () => {

@@ -251,10 +251,12 @@ const server = new McpServer({
 });
 ```
 
-Mount it on a route — typically `POST /mcp`:
+Mount it on a route — typically at `/mcp` — using `.all()` so the server can
+respond with `405 Method Not Allowed` for `GET`/`DELETE` (which the spec
+requires when SSE and session termination aren't supported):
 
 ```js
-router.post('/mcp', async (ctx) => {
+router.all('/mcp', async (ctx) => {
   await server.handleRequest(ctx);
 });
 ```
@@ -317,10 +319,11 @@ JSON-RPC `Method not found` error.
 
 ### What is not implemented
 
-This is intentionally a minimal implementation. The following parts of the
-Streamable HTTP transport are out of scope:
+This is intentionally a minimal implementation. Non-`POST` requests are
+answered with `405 Method Not Allowed`. The following parts of the spec are
+out of scope:
 
-- Server-Sent Events (`GET` on the MCP endpoint)
+- Server-Sent Events on `GET`
 - Session termination via `DELETE`
 - `tools/list` pagination
 - `outputSchema` / `structuredContent` on tool results

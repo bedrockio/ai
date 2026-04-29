@@ -178,12 +178,30 @@ export class AnthropicClient extends BaseClient {
         return tool.type === 'mcp';
       })
       .map((tool) => {
-        return this.mapMcpTool(tool);
+        return {
+          type: 'url',
+          name: tool.name,
+          url: tool.url,
+        };
       });
 
     tools = tools.filter((tool) => {
       return tool.type !== 'mcp';
     });
+
+    for (let server of mcpServers) {
+      const hasToolset = tools.some((tool) => {
+        const { type, mcp_server_name: name } = tool;
+        return type === 'mcp_toolset' && name === server.name;
+      });
+
+      if (!hasToolset) {
+        tools.push({
+          type: 'mcp_toolset',
+          mcp_server_name: server.name,
+        });
+      }
+    }
 
     return {
       tools,
@@ -213,17 +231,6 @@ export class AnthropicClient extends BaseClient {
       name,
       description,
       input_schema: parameters,
-    };
-  }
-
-  // Map OpenAI-like input of MCP servers as "tools" to
-  // Anthropic's mcp_servers.
-  mapMcpTool(tool) {
-    const { server_label, server_url } = tool;
-    return {
-      type: 'url',
-      name: server_label,
-      url: server_url,
     };
   }
 

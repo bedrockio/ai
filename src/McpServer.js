@@ -22,6 +22,12 @@ export default class McpServer {
   }
 
   async handleRequest(ctx) {
+    if (ctx.method !== 'POST') {
+      ctx.status = 405;
+      ctx.set('allow', 'POST');
+      return;
+    }
+
     this.assertValidOrigin(ctx);
 
     const { body } = ctx.request;
