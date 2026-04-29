@@ -94,43 +94,50 @@ export class AnthropicClient extends BaseClient {
             };
           }),
       ],
-      usage: this.normalizeUsage(response),
+      usage: this.normalizeUsage(response.usage),
     };
   }
 
-  normalizeUsage(response) {
-    return {
-      input_tokens: response.usage.input_tokens,
-      output_tokens: response.usage.output_tokens,
-    };
+  normalizeUsage(usage) {
+    if (usage) {
+      return {
+        input_tokens: usage.input_tokens,
+        output_tokens: usage.output_tokens,
+      };
+    }
   }
 
   normalizeStreamEvent(event, options) {
-    let { type } = event;
-    options.buffer ||= '';
+    const { type } = event;
+
+    options.blocks ||= new Map();
+
     if (type === 'content_block_start') {
-      const { content_block } = event;
-      if (content_block?.type === 'tool_use') {
-        return {
-          type: 'function_call',
-          id: content_block.id,
-          name: content_block.name,
-          arguments: content_block.input,
-        };
-      } else {
-        return {
-          type: 'start',
-        };
+      options.blocks.set(event.index, event.content_block);
+      if (event.content_block.type !== 'text') {
+        return event;
       }
     } else if (type === 'content_block_delta') {
+      const block = options.blocks.get(event.index);
       if (event.delta.type === 'text_delta') {
-        options.buffer += event.delta.text;
+        block.text ||= '';
+        block.text += event.delta.text;
         return {
           type: 'delta',
           delta: event.delta.text,
         };
       }
+    } else if (type === 'content_block_stop') {
+      const block = options.blocks.get(event.index);
+      if (block.type !== 'text') {
+        return event;
+      }
+    } else if (type === 'message_start') {
+      return { type: 'start' };
     } else if (type === 'message_delta') {
+      options.usage = event.usage;
+    } else if (type === 'message_stop') {
+      const blocks = Array.from(options.blocks.values());
       return {
         type: 'stop',
         instructions: options.instructions,
@@ -138,10 +145,10 @@ export class AnthropicClient extends BaseClient {
           ...this.getFilteredMessages(options),
           {
             role: 'assistant',
-            content: options.buffer,
+            content: this.compactContentBlocks(blocks),
           },
         ],
-        usage: this.normalizeUsage(event),
+        usage: this.normalizeUsage(options.usage),
       };
     }
   }
@@ -236,6 +243,14 @@ export class AnthropicClient extends BaseClient {
       description,
       input_schema: parameters,
     };
+  }
+
+  compactContentBlocks(blocks) {
+    if (blocks.length === 1 && blocks[0].type === 'text') {
+      return blocks[0].text;
+    } else {
+      return blocks;
+    }
   }
 
   getClientOptions(params) {

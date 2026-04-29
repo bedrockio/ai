@@ -227,6 +227,10 @@ export default class BaseClient {
     throw new Error('Method not implemented.');
   }
 
+  compactContentBlocks(blocks) {
+    void blocks;
+    throw new Error('Method not implemented.');
+  }
   // Private
 
   /**

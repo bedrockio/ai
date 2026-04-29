@@ -52,7 +52,6 @@ export class OpenAiClient extends BaseClient {
       tools,
       verbosity,
       temperature,
-      prevResponseId,
       messages: input,
       instructions = '',
       tool_choice = 'auto',
@@ -67,7 +66,6 @@ export class OpenAiClient extends BaseClient {
       tool_choice,
       temperature,
       instructions,
-      previous_response_id: prevResponseId,
 
       text: {
         format: this.getOutputFormat(options),
@@ -167,26 +165,72 @@ export class OpenAiClient extends BaseClient {
   }
 
   normalizeResponse(response, options) {
+    const blocks = response.output.flatMap((item) => {
+      return this.itemToBlock(item) || [];
+    });
+
     return {
       messages: [
         ...this.getFilteredMessages(options),
         {
           role: 'assistant',
-          content: response.output_text,
+          content: this.compactContentBlocks(blocks),
         },
       ],
-      // Note that this ability currently only
-      // exists for OpenAI compatible providers.
-      prevResponseId: response.id,
-      usage: this.normalizeUsage(response),
+      usage: this.normalizeUsage(response.usage),
     };
   }
 
-  normalizeUsage(response) {
-    return {
-      input_tokens: response.usage.input_tokens,
-      output_tokens: response.usage.output_tokens,
-    };
+  normalizeUsage(usage) {
+    if (usage) {
+      return {
+        input_tokens: usage.input_tokens,
+        output_tokens: usage.output_tokens,
+      };
+    }
+  }
+
+  itemToBlock(item) {
+    const { type } = item;
+    if (type === 'message') {
+      const text = item.content
+        .filter((c) => {
+          return c.type === 'output_text';
+        })
+        .map((c) => {
+          return c.text;
+        })
+        .join('');
+      return {
+        type: 'text',
+        text,
+      };
+    } else if (type === 'function_call') {
+      return {
+        type: 'tool_use',
+        id: item.id,
+        call_id: item.call_id,
+        name: item.name,
+        input: item.arguments ? JSON.parse(item.arguments) : {},
+      };
+    } else if (type === 'mcp_call') {
+      return {
+        type: 'mcp_tool_use',
+        id: item.id,
+        name: item.name,
+        server_label: item.server_label,
+        input: item.arguments ? JSON.parse(item.arguments) : {},
+        output: item.output,
+      };
+    }
+  }
+
+  compactContentBlocks(blocks) {
+    if (blocks.length === 1 && blocks[0].type === 'text') {
+      return blocks[0].text;
+    } else {
+      return blocks;
+    }
   }
 
   // Private
@@ -215,42 +259,53 @@ export class OpenAiClient extends BaseClient {
   normalizeStreamEvent(event, options) {
     const { type } = event;
 
+    options.blocks ||= new Map();
+
     if (type === 'response.created') {
       return {
         type: 'start',
-        id: event.response.id,
-      };
-    } else if (type === 'response.completed') {
-      const output = event.response.output.find((item) => {
-        return item.type === 'message';
-      });
-      return {
-        type: 'stop',
-        id: event.response.id,
-        instructions: options.instructions,
-        messages: [
-          ...this.getFilteredMessages(options),
-          {
-            role: 'assistant',
-            content: output?.content[0].text,
-          },
-        ],
-        usage: this.normalizeUsage(event.response),
       };
     } else if (type === 'response.output_text.delta') {
       return {
         type: 'delta',
         delta: event.delta,
       };
-    } else if (type === 'response.output_item.done') {
-      const { item } = event;
-      if (item.type === 'function_call') {
+    } else if (type === 'response.output_item.added') {
+      // MCP tool calls emit start/stop so the UI can show a
+      // loading state. Function calls accumulate silently.
+      if (event.item.type === 'mcp_call') {
         return {
-          ...item,
-          type: 'function_call',
-          arguments: JSON.parse(item.arguments),
+          type: 'content_block_start',
+          index: event.output_index,
+          content_block: this.itemToBlock(event.item),
         };
       }
+    } else if (type === 'response.output_item.done') {
+      const block = this.itemToBlock(event.item);
+      if (!block) {
+        return;
+      }
+      options.blocks.set(event.output_index, block);
+      if (block.type === 'mcp_tool_use') {
+        return {
+          type: 'content_block_stop',
+          index: event.output_index,
+        };
+      }
+    } else if (type === 'response.completed') {
+      const blocks = Array.from(options.blocks.values());
+      return {
+        type: 'stop',
+        instructions: options.instructions,
+        messages: [
+          ...this.getFilteredMessages(options),
+          {
+            role: 'assistant',
+            content: this.compactContentBlocks(blocks),
+          },
+        ],
+        usage: this.normalizeUsage(event.response.usage),
+      };
     }
   }
 }

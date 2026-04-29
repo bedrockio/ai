@@ -392,6 +392,7 @@ describe('anthropic', () => {
       for await (const event of stream) {
         events.push(event);
       }
+      // console.info('HRM', JSON.stringify(events, null, 2));
 
       expect(events).toEqual([
         { type: 'start' },
@@ -431,10 +432,18 @@ describe('anthropic', () => {
         { type: 'delta', delta: '-100' },
         { type: 'delta', delta: ' calorie range.' },
         {
-          type: 'function_call',
-          name: 'apples',
-          arguments: {},
-          id: 'toolu_01Vkg4Likq1r4R35GFFdDKxB',
+          type: 'content_block_start',
+          index: 1,
+          content_block: {
+            type: 'tool_use',
+            name: 'apples',
+            input: {},
+            id: 'toolu_01Vkg4Likq1r4R35GFFdDKxB',
+          },
+        },
+        {
+          type: 'content_block_stop',
+          index: 1,
         },
         {
           type: 'stop',
@@ -445,8 +454,18 @@ describe('anthropic', () => {
             },
             {
               role: 'assistant',
-              content:
-                "A medium apple (approximately 182 grams or 6.4 ounces) contains about **95 calories**. \n\nApples are a great low-calorie snack that's also packed with fiber (about 4 grams), vitamin C, and various antioxidants. The exact calorie count can vary slightly depending on the variety and exact size of the apple, but most medium apples fall in the 90-100 calorie range.",
+              content: [
+                {
+                  type: 'text',
+                  text: "A medium apple (approximately 182 grams or 6.4 ounces) contains about **95 calories**. \n\nApples are a great low-calorie snack that's also packed with fiber (about 4 grams), vitamin C, and various antioxidants. The exact calorie count can vary slightly depending on the variety and exact size of the apple, but most medium apples fall in the 90-100 calorie range.",
+                },
+                {
+                  id: 'toolu_01Vkg4Likq1r4R35GFFdDKxB',
+                  input: {},
+                  name: 'apples',
+                  type: 'tool_use',
+                },
+              ],
             },
           ],
           usage: {

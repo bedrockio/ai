@@ -1,3 +1,32 @@
+## 0.11.0
+
+### McpServer
+
+- **Breaking:** Removed `apiKeyRequired` and `isValidApiKey` options.
+  Authentication is the consumer's concern — wire it as Koa middleware.
+- **Breaking:** `handleRequest(ctx)` mutates `ctx` directly. Use
+  `await server.handleRequest(ctx)`, not `ctx.body = await ...`.
+- **Breaking:** Mount with `router.all('/mcp', ...)` — non-`POST` returns 405.
+- Tightened to MCP spec `2025-11-25`: Origin allow-list (`allowedOrigins`),
+  tool input validation, tool errors as `isError: true`, 202 for notifications.
+
+### Anthropic client
+
+- **Breaking:** `mcp` tool input shape changed from `server_label`/`server_url`
+  to `name`/`url`.
+- Forwards `authorization_token` and auto-adds an `mcp_toolset` entry per
+  `mcp` server.
+- Stream events pass non-text content blocks through unchanged.
+
+### OpenAI client (aligned to Anthropic shape)
+
+- **Breaking:** Removed `prevResponseId`. Pass full message history yourself.
+- **Breaking:** `id` removed from `start` and `stop` stream events.
+- **Breaking:** Tool calls no longer emit a `function_call` stream event;
+  they appear as `tool_use` blocks in the final `stop` message.
+- MCP tool calls emit `content_block_start` / `content_block_stop` so a UI
+  can show a loading state while the call is in flight.
+
 ## 0.10.0
 
 - Allow file input.

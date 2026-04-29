@@ -11,6 +11,7 @@ usage.
 - [Templates](#templates)
 - [Platforms](#platforms)
 - [Models](#models)
+- [MCP Tools](#mcp-tools)
 - [MCP Server](#mcp-server)
 
 ## Install
@@ -28,7 +29,7 @@ import { createClient } from '@bedrockio/ai';
 const client = createClient({
   // Directory to templates
   templates: './test/templates',
-  // Platform: openai|gpt|anthopic|claude
+  // Platform: openai|gpt|anthropic|claude
   platform: 'openai',
   // Your API key
   apiKey: 'my-api-key',
@@ -43,7 +44,7 @@ const response = await client.prompt({
   // Default is "text".
   output: 'json',
 
-  // Aa yada schema (or any JSON schema) may be passed
+  // A yada schema (or any JSON schema) may be passed
   // here to define structured output.
   schema: yd.object({
     name: yd.string(),
@@ -114,11 +115,14 @@ for await (const event of stream) {
 
 Event types:
 
-- `start` - Response has been initiated. This event also contains an `id` field.
-  that can be passsed back in as `prevResponseId` (OpenAI/Grok only).
-- `stop` - Response has finished. Contains the `id` field and usage data.
+- `start` - Response has been initiated.
+- `stop` - Response has finished. Contains the final `messages` array and usage data.
 - `delta`- Main text delta event when a new token is output.
 - `done` - Text has stopped.
+- `content_block_start` / `content_block_stop` - Anthropic-shaped passthrough
+  for non-text content blocks (`tool_use`, `mcp_tool_use`, etc). Emitted by
+  Anthropic for any non-text block, and by OpenAI for MCP tool calls so a UI
+  can show a loading state while the call is in flight.
 - `extract:delta` - Used with `extractMessages` (see below).
 - `extract:done` - Used with `extractMessages` (see below).
 
@@ -143,9 +147,9 @@ approaches:
 
 2. Use function calls, ie "tools". This approach seems more appropriate as
    function calls stream separately to text output and can easily be
-   multiplexed, however at the time of this writing there seem to me issues with
-   ensuring tht the LLM actually uses the correct tools and results have been
-   flaky. Depending on the approach this may also increase token usage.
+   multiplexed, however at the time of this writing there seem to be issues
+   with ensuring that the LLM actually uses the correct tools and results have
+   been flaky. Depending on the approach this may also increase token usage.
 
 For the reasons above currently the most reliable approach to streaming
 structured data is using `extractMessage` to stream the partial JSON response.
@@ -185,6 +189,39 @@ Available models can be listed with:
 ```js
 const models = await client.models();
 ```
+
+## MCP Tools
+
+A remote [MCP](https://modelcontextprotocol.io/) server can be exposed to the
+model as a tool. The model will then be able to discover and call any tools
+the server advertises via `tools/list`.
+
+```js
+await client.prompt({
+  input: 'Find me a book about birds.',
+  tools: [
+    {
+      type: 'mcp',
+      name: 'my-app',
+      url: 'https://my-app.com/mcp',
+      authorization_token: jwtForCurrentUser,
+    },
+  ],
+});
+```
+
+The shape mirrors Anthropic's MCP connector. For each `mcp` tool, an
+`mcp_toolset` entry is added to the request automatically (so the model can
+invoke the server's tools) unless the caller has already provided one.
+
+### authorization_token
+
+Anthropic's MCP connector does not forward the user's browser cookies — every
+JSON-RPC request comes from Anthropic's infrastructure. To tell the MCP
+server *who* the model is acting on behalf of, pass `authorization_token`;
+it is sent as `Authorization: Bearer <token>` on every request. Typically
+this is a short-lived JWT minted server-side with the user's id (~15 min,
+HS256). The MCP server verifies it and scopes its handlers to that user.
 
 ## MCP Server
 

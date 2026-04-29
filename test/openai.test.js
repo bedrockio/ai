@@ -5,7 +5,6 @@ import { getLastOptions, setModels, setResponse } from 'openai';
 import { describe, expect, it, vi } from 'vitest';
 
 import { OpenAiClient } from '../src/openai';
-import caloriesFollowUp from './fixtures/openai/calories/follow-up.json';
 import caloriesObject from './fixtures/openai/calories/object.json';
 import caloriesStream from './fixtures/openai/calories/stream.json';
 import caloriesStructured from './fixtures/openai/calories/structured.json';
@@ -249,7 +248,6 @@ describe('openai', () => {
       expect(events).toEqual([
         {
           type: 'start',
-          id: 'resp_026cc6e6c9d2114900696b21b5f824819297c5d19b6a6d097f',
         },
         {
           type: 'delta',
@@ -257,7 +255,6 @@ describe('openai', () => {
         },
         {
           type: 'stop',
-          id: 'resp_026cc6e6c9d2114900696b21b5f824819297c5d19b6a6d097f',
           messages: [
             {
               role: 'user',
@@ -290,7 +287,6 @@ describe('openai', () => {
 
       expect(events).toEqual([
         {
-          id: 'resp_0117717bc1b9c9890068e01576f9f8819db4cf03cdefda9185',
           type: 'start',
         },
         { type: 'delta', delta: '#' },
@@ -324,7 +320,6 @@ describe('openai', () => {
         { type: 'delta', delta: ' Item' },
         { type: 'delta', delta: ' two' },
         {
-          id: 'resp_0117717bc1b9c9890068e01576f9f8819db4cf03cdefda9185',
           type: 'stop',
           messages: [
             {
@@ -578,7 +573,6 @@ describe('openai', () => {
       expect(events).toEqual([
         {
           type: 'start',
-          id: 'resp_0cf79827971074d700696b82a1524c819194c7afdd74d303f2',
         },
         { type: 'delta', delta: 'Sure' },
         { type: 'delta', delta: '—' },
@@ -590,16 +584,7 @@ describe('openai', () => {
         { type: 'delta', delta: ' you' },
         { type: 'delta', delta: '.' },
         {
-          type: 'function_call',
-          name: 'apples',
-          arguments: {},
-          call_id: 'call_Ryxw1wAQxxrTE1Lt4ojpL1t7',
-          id: 'fc_0cf79827971074d700696b82a6b534819180ddfad6d059bbe0',
-          status: 'completed',
-        },
-        {
           type: 'stop',
-          id: 'resp_0cf79827971074d700696b82a1524c819194c7afdd74d303f2',
           messages: [
             {
               role: 'user',
@@ -607,7 +592,19 @@ describe('openai', () => {
             },
             {
               role: 'assistant',
-              content: "Sure—I'll pull that information for you.",
+              content: [
+                {
+                  type: 'text',
+                  text: "Sure—I'll pull that information for you.",
+                },
+                {
+                  type: 'tool_use',
+                  id: 'fc_0cf79827971074d700696b82a6b534819180ddfad6d059bbe0',
+                  call_id: 'call_Ryxw1wAQxxrTE1Lt4ojpL1t7',
+                  name: 'apples',
+                  input: {},
+                },
+              ],
             },
           ],
           usage: {
@@ -690,6 +687,96 @@ describe('openai', () => {
   });
 
   describe('MCP', () => {
+    it('should emit content_block_start/stop for MCP tool calls during streaming', async () => {
+      setResponse([
+        { type: 'response.created', response: { id: 'r1' } },
+        {
+          type: 'response.output_item.added',
+          output_index: 0,
+          item: {
+            id: 'mcp_1',
+            type: 'mcp_call',
+            name: 'search_drugs',
+            server_label: 'test',
+            arguments: '',
+            output: null,
+          },
+        },
+        {
+          type: 'response.output_item.done',
+          output_index: 0,
+          item: {
+            id: 'mcp_1',
+            type: 'mcp_call',
+            name: 'search_drugs',
+            server_label: 'test',
+            arguments: '{"name":"ibuprofen"}',
+            output: '{"data":[]}',
+          },
+        },
+        {
+          type: 'response.completed',
+          response: {
+            id: 'r1',
+            output: [],
+            usage: { input_tokens: 5, output_tokens: 10 },
+          },
+        },
+      ]);
+
+      const stream = await client.stream({
+        input: 'Find ibuprofen.',
+      });
+
+      const events = [];
+      for await (const event of stream) {
+        events.push(event);
+      }
+
+      expect(events).toEqual([
+        { type: 'start' },
+        {
+          type: 'content_block_start',
+          index: 0,
+          content_block: {
+            type: 'mcp_tool_use',
+            id: 'mcp_1',
+            name: 'search_drugs',
+            server_label: 'test',
+            input: {},
+            output: null,
+          },
+        },
+        {
+          type: 'content_block_stop',
+          index: 0,
+        },
+        {
+          type: 'stop',
+          messages: [
+            {
+              role: 'user',
+              content: 'Find ibuprofen.',
+            },
+            {
+              role: 'assistant',
+              content: [
+                {
+                  type: 'mcp_tool_use',
+                  id: 'mcp_1',
+                  name: 'search_drugs',
+                  server_label: 'test',
+                  input: { name: 'ibuprofen' },
+                  output: '{"data":[]}',
+                },
+              ],
+            },
+          ],
+          usage: { input_tokens: 5, output_tokens: 10 },
+        },
+      ]);
+    });
+
     it('should handle call to MCP server', async () => {
       setResponse(medicationsMcp);
       const { result } = await client.prompt({
@@ -731,6 +818,37 @@ describe('openai', () => {
         ],
       });
     });
+
+    it('should expose mcp_call output as mcp_tool_use blocks on the assistant message', async () => {
+      setResponse(medicationsMcp);
+      const { messages } = await client.prompt({
+        input: 'I have lower back pain and insomnia.',
+        tools: [
+          {
+            type: 'mcp',
+            server_label: 'test',
+            server_url: 'https://api.drugs.com/mcp',
+            require_approval: 'never',
+          },
+        ],
+      });
+
+      const assistant = messages[messages.length - 1];
+      expect(assistant.role).toBe('assistant');
+      expect(Array.isArray(assistant.content)).toBe(true);
+
+      const mcpBlocks = assistant.content.filter((b) => {
+        return b.type === 'mcp_tool_use';
+      });
+      expect(mcpBlocks.length).toBe(2);
+      expect(mcpBlocks[0]).toMatchObject({
+        type: 'mcp_tool_use',
+        name: 'search_drugs',
+        server_label: 'test',
+      });
+      expect(typeof mcpBlocks[0].id).toBe('string');
+      expect(typeof mcpBlocks[0].input).toBe('object');
+    });
   });
 
   describe('other', () => {
@@ -748,19 +866,6 @@ describe('openai', () => {
         'Total dinner calorie ballpark: about 490–1,370 kcal',
       );
       expect(messages.length).toBe(2);
-    });
-
-    it('should pass through the previous response ID', async () => {
-      setResponse(caloriesText, 'default');
-      setResponse(caloriesFollowUp, 'prev-id');
-
-      const { result, prevResponseId } = await client.prompt({
-        input: 'Hello',
-        prevResponseId: 'prev-id',
-      });
-
-      expect(result).toBe('I am a new response in the thread!');
-      expect(prevResponseId).toBe('resp_next');
     });
 
     it('should get the template source', async () => {
@@ -799,18 +904,6 @@ describe('openai', () => {
           content: expect.stringContaining('Total dinner calorie ballpark:'),
         },
       ]);
-    });
-
-    it('should store the previous response id', async () => {
-      setResponse(caloriesText);
-
-      const { prevResponseId } = await client.prompt({
-        input: 'Hello',
-      });
-
-      expect(prevResponseId).toBe(
-        'resp_0594e6c81a245f130068ca4d5691648192a0b15b41dfc1b0b7',
-      );
     });
 
     it('should not choke on long template as input', async () => {
