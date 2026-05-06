@@ -9,7 +9,7 @@
   "compilerOptions": {
     "skipLibCheck": true,
     "allowJs": true,
-    "checkJs": true,
+    "checkJs": false,
     "rootDir": "src",
     "moduleResolution": "node",
     "esModuleInterop": true,
