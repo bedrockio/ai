@@ -36,7 +36,7 @@ export default class BaseClient {
   async prompt(options) {
     options = this.normalizeOptions(options);
 
-    const { output, stream, schema, instructions } = options;
+    const { output, stream, schema, prompt, instructions } = options;
 
     const response = await this.runPrompt(options);
 
@@ -60,6 +60,7 @@ export default class BaseClient {
 
     return {
       result,
+      prompt,
       response,
       instructions,
       ...this.normalizeResponse(response, options),
@@ -248,7 +249,7 @@ export default class BaseClient {
   normalizeInputs(options) {
     options = this.normalizeTemplateOptions(options);
 
-    let { instructions, output = 'text' } = options;
+    let { prompt, instructions, output = 'text' } = options;
 
     if (output === 'json') {
       instructions = [instructions, 'Output only valid JSON.'].join('\n\n');
@@ -257,6 +258,7 @@ export default class BaseClient {
     const messages = this.normalizeMessages(options);
 
     return {
+      prompt,
       messages,
       instructions,
     };
@@ -269,7 +271,7 @@ export default class BaseClient {
       return options;
     }
 
-    const { sections } = this.renderer.run({
+    const { sections, body: prompt } = this.renderer.run({
       params,
       template,
     });
@@ -310,6 +312,7 @@ export default class BaseClient {
       ...options,
       instructions,
       messages,
+      prompt,
     };
   }
 

@@ -883,6 +883,32 @@ describe('openai', () => {
         output_tokens: 1455,
       });
     });
+
+    it('should return full prompt for storage', async () => {
+      setResponse(caloriesText);
+      const { prompt } = await client.prompt({
+        template: 'mixed-roles',
+        params: {
+          fatigue: 'often',
+          headaches: 'often',
+          musclePain: 'often',
+        },
+      });
+      expect(prompt).toBe(
+        `
+=== SYSTEM ===
+
+You are a helpful assistant.
+Your job is to provide a diagnosis for a patient pased on their symptoms.
+
+=== USER ===
+
+- Fatigue: often
+- Headaches: often
+- Muscle Pain: often
+`.trim(),
+      );
+    });
   });
 
   describe('messages', () => {
