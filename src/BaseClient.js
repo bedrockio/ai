@@ -452,6 +452,7 @@ export default class BaseClient {
 /**
  * @typedef {Object} PromptOptions
  * @property {string} input - Basic input to be comes user message.
+ * @property {string} prompt
  * @property {string} instructions
  * @property {PromptMessage[]} messages - Full message input.
  * @property {string} [model] - The model to use.
