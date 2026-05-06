@@ -255,6 +255,8 @@ describe('openai', () => {
         },
         {
           type: 'stop',
+          prompt: 'How many calories are in a medium apple?',
+          instructions: 'How many calories are in a medium apple?',
           messages: [
             {
               role: 'user',
@@ -321,6 +323,10 @@ describe('openai', () => {
         { type: 'delta', delta: ' two' },
         {
           type: 'stop',
+          prompt:
+            'Please generate some markdown code for me. Just a few lines.',
+          instructions:
+            'Please generate some markdown code for me. Just a few lines.',
           messages: [
             {
               role: 'user',
@@ -542,6 +548,22 @@ describe('openai', () => {
         },
       ]);
     });
+
+    it('should include prompt in stop event', async () => {
+      setResponse(caloriesStream);
+      const stream = await client.stream({
+        input: 'How many calories are in a medium apple?',
+      });
+
+      let prompt;
+
+      for await (const event of stream) {
+        if (event.type === 'stop') {
+          prompt = event.prompt;
+        }
+      }
+      expect(prompt).toBe('How many calories are in a medium apple?');
+    });
   });
 
   describe('tools', () => {
@@ -585,6 +607,8 @@ describe('openai', () => {
         { type: 'delta', delta: '.' },
         {
           type: 'stop',
+          prompt: 'How many calories are in a medium apple?',
+          instructions: 'How many calories are in a medium apple?',
           messages: [
             {
               role: 'user',
@@ -753,6 +777,8 @@ describe('openai', () => {
         },
         {
           type: 'stop',
+          prompt: 'Find ibuprofen.',
+          instructions: 'Find ibuprofen.',
           messages: [
             {
               role: 'user',

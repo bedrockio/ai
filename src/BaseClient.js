@@ -170,6 +170,35 @@ export default class BaseClient {
     }
   }
 
+  getResultParams(options) {
+    let { input, prompt, instructions } = options;
+
+    prompt ||= this.getFallbackPrompt(options);
+    instructions ||= input;
+
+    return {
+      prompt,
+      instructions,
+    };
+  }
+
+  getFallbackPrompt(options) {
+    const { input, instructions } = options;
+    if (input && instructions) {
+      return `
+=== SYSTEM ===
+
+${instructions}
+
+=== USER ===
+
+${input}
+      `.trim();
+    } else {
+      return instructions || input;
+    }
+  }
+
   isEmptyContent(str) {
     str = str.trim();
     return !str || str === '.';
@@ -232,6 +261,7 @@ export default class BaseClient {
     void blocks;
     throw new Error('Method not implemented.');
   }
+
   // Private
 
   /**

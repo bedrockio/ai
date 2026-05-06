@@ -1,3 +1,7 @@
+## 0.12.2
+
+- Ensure `prompt` is passed through in all cases.
+
 ## 0.12.0
 
 - Export `prompt` to allow storage of all messages.

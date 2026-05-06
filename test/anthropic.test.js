@@ -321,6 +321,15 @@ describe('anthropic', () => {
         },
         {
           type: 'stop',
+          prompt: `
+=== SYSTEM ===
+
+You are a nice chatbot!
+
+=== USER ===
+
+Please generate some markdown code for me. Just a few lines.
+`.trim(),
           instructions: 'You are a nice chatbot!',
           messages: [
             {
@@ -371,7 +380,7 @@ describe('anthropic', () => {
       setResponse(toolsStream);
       const stream = await client.stream({
         input: 'How many calories are in a medium apple?',
-        system: 'Call the tool if you talk about apples.',
+        instructions: 'Call the tool if you talk about apples.',
         tools: [
           {
             type: 'function',
@@ -447,6 +456,17 @@ describe('anthropic', () => {
         },
         {
           type: 'stop',
+
+          prompt: `
+=== SYSTEM ===
+
+Call the tool if you talk about apples.
+
+=== USER ===
+
+How many calories are in a medium apple?
+          `.trim(),
+          instructions: 'Call the tool if you talk about apples.',
           messages: [
             {
               role: 'user',

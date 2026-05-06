@@ -154,7 +154,7 @@ export class AnthropicClient extends BaseClient {
       const blocks = Array.from(options.blocks.values());
       return {
         type: 'stop',
-        instructions: options.instructions,
+        ...this.getResultParams(options),
         messages: [
           ...this.getFilteredMessages(options),
           {
