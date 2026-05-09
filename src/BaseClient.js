@@ -182,6 +182,29 @@ export default class BaseClient {
     };
   }
 
+  // Message-level fields like `timestamp` are useful for the consumer
+  // (chat UIs, logs) but are rejected by the upstream SDKs as "extra
+  // inputs". Strip back to the canonical role/content shape just before
+  // hitting the wire — output messages still carry the extras through
+  // because `getFilteredMessages` spreads the originals.
+  getApiMessages(messages) {
+    return messages.map((message) => {
+      const { role, content } = message;
+      return {
+        role,
+        content,
+      };
+    });
+  }
+
+  getMessageTimestamp(options) {
+    if (options.timestamps) {
+      return {
+        timestamp: new Date(),
+      };
+    }
+  }
+
   getFallbackPrompt(options) {
     const { input, instructions } = options;
     if (input && instructions) {
@@ -268,11 +291,14 @@ ${input}
    * @returns {Object}
    */
   normalizeOptions(options) {
-    return {
+    const merged = {
       ...this.options,
       ...options,
-      ...this.normalizeInputs(options),
-      ...this.normalizeSchema(options),
+    };
+    return {
+      ...merged,
+      ...this.normalizeInputs(merged),
+      ...this.normalizeSchema(merged),
     };
   }
 
@@ -359,6 +385,7 @@ ${input}
         {
           role: 'user',
           content: input,
+          ...this.getMessageTimestamp(options),
         },
       ];
     } else if (!input && !messages.length) {

@@ -80,6 +80,7 @@ export class GoogleClient extends BaseClient {
         {
           role: 'assistant',
           content: response.text,
+          ...this.getMessageTimestamp(options),
         },
       ],
       usage: this.normalizeUsage(response),

@@ -52,7 +52,7 @@ export class OpenAiClient extends BaseClient {
       tools,
       verbosity,
       temperature,
-      messages: input,
+      messages,
       instructions = '',
       tool_choice = 'auto',
       stream = false,
@@ -61,7 +61,7 @@ export class OpenAiClient extends BaseClient {
     const params = {
       model,
       tools,
-      input,
+      input: this.getApiMessages(messages),
       stream,
       tool_choice,
       temperature,
@@ -175,6 +175,7 @@ export class OpenAiClient extends BaseClient {
         {
           role: 'assistant',
           content: this.compactContentBlocks(blocks),
+          ...this.getMessageTimestamp(options),
         },
       ],
       usage: this.normalizeUsage(response.usage),
@@ -302,6 +303,7 @@ export class OpenAiClient extends BaseClient {
           {
             role: 'assistant',
             content: this.compactContentBlocks(blocks),
+            ...this.getMessageTimestamp(options),
           },
         ],
         usage: this.normalizeUsage(event.response.usage),

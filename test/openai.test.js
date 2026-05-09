@@ -1284,4 +1284,55 @@ Your job is to provide a diagnosis for a patient pased on their symptoms.
       ],
     });
   });
+
+  describe('timestamps', () => {
+    it('should add a timestamp to a new user message and the assistant reply', async () => {
+      setResponse(caloriesText);
+      const tsClient = new OpenAiClient({
+        templates: path.join(__dirname, './templates'),
+        timestamps: true,
+      });
+      const { messages } = await tsClient.prompt({
+        input: 'Hello',
+      });
+      expect(messages).toHaveLength(2);
+      expect(messages[0].timestamp).toBeInstanceOf(Date);
+      expect(messages[1]).toMatchObject({ role: 'assistant' });
+      expect(messages[1].timestamp).toBeInstanceOf(Date);
+    });
+
+    it('should preserve incoming timestamps and add one to the assistant reply', async () => {
+      setResponse(caloriesText);
+      const past = new Date('2024-01-01T00:00:00.000Z');
+      const { messages } = await client.prompt({
+        timestamps: true,
+        messages: [
+          {
+            role: 'user',
+            content: 'Hello',
+            timestamp: past,
+          },
+        ],
+      });
+      expect(messages[0].timestamp).toBe(past);
+      expect(messages[1].timestamp).toBeInstanceOf(Date);
+    });
+
+    it('should strip timestamps and other extras from the input sent to the API', async () => {
+      setResponse(caloriesText);
+      await client.prompt({
+        timestamps: true,
+        messages: [
+          {
+            role: 'user',
+            content: 'Hello',
+            timestamp: new Date('2024-01-01T00:00:00.000Z'),
+            id: 'msg_abc',
+          },
+        ],
+      });
+      const sent = getLastOptions().input;
+      expect(Object.keys(sent[0]).sort()).toEqual(['content', 'role']);
+    });
+  });
 });

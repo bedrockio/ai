@@ -1,3 +1,7 @@
+## 0.13.0
+
+- Added `timestamps` and ensure they are stripped on sending to LLMs.
+
 ## 0.12.2
 
 - Ensure `prompt` is passed through in all cases.

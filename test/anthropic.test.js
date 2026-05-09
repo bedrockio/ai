@@ -1182,6 +1182,111 @@ How many calories are in a medium apple?
     });
   });
 
+  describe('timestamps', () => {
+    it('should not add timestamps when option is not set', async () => {
+      setResponse(caloriesText);
+      const { messages } = await client.prompt({
+        input: 'Hello',
+      });
+      for (const message of messages) {
+        expect(message).not.toHaveProperty('timestamp');
+      }
+    });
+
+    it('should add a timestamp to a new user message and the assistant reply', async () => {
+      setResponse(caloriesText);
+      const client = new AnthropicClient({
+        templates: path.join(__dirname, './templates'),
+      });
+      const { messages } = await client.prompt({
+        input: 'Hello',
+        timestamps: true,
+      });
+      expect(messages).toHaveLength(2);
+      expect(messages[0]).toMatchObject({ role: 'user', content: 'Hello' });
+      expect(messages[0].timestamp).toBeInstanceOf(Date);
+      expect(messages[1]).toMatchObject({ role: 'assistant' });
+      expect(messages[1].timestamp).toBeInstanceOf(Date);
+    });
+
+    it('should preserve incoming timestamps and add one to the assistant reply', async () => {
+      setResponse(caloriesText);
+      const past = new Date('2024-01-01T00:00:00.000Z');
+      const { messages } = await client.prompt({
+        timestamps: true,
+        messages: [
+          {
+            role: 'user',
+            content: 'Hello',
+            timestamp: past,
+          },
+        ],
+      });
+      expect(messages).toHaveLength(2);
+      expect(messages[0].timestamp).toBe(past);
+      expect(messages[1]).toMatchObject({ role: 'assistant' });
+      expect(messages[1].timestamp).toBeInstanceOf(Date);
+    });
+
+    it('should strip timestamps from messages sent to the API', async () => {
+      setResponse(caloriesText);
+      await client.prompt({
+        timestamps: true,
+        messages: [
+          {
+            role: 'user',
+            content: 'Hello',
+            timestamp: new Date('2024-01-01T00:00:00.000Z'),
+          },
+        ],
+      });
+      const sent = getLastOptions().messages;
+      for (const message of sent) {
+        expect(message).not.toHaveProperty('timestamp');
+        expect(Object.keys(message).sort()).toEqual(['content', 'role']);
+      }
+    });
+
+    it('should strip non-timestamp extras from messages sent to the API', async () => {
+      setResponse(caloriesText);
+      await client.prompt({
+        messages: [
+          {
+            role: 'user',
+            content: 'Hello',
+            // Any consumer-only field (not just `timestamp`) would otherwise
+            // trip Anthropic's "No extra inputs permitted" validator.
+            id: 'msg_abc',
+            metadata: { foo: 'bar' },
+          },
+        ],
+      });
+      const sent = getLastOptions().messages;
+      expect(Object.keys(sent[0]).sort()).toEqual(['content', 'role']);
+    });
+
+    it('should add a timestamp to the assistant reply during streaming', async () => {
+      setResponse(markdownStream);
+      const client = new AnthropicClient({
+        templates: path.join(__dirname, './templates'),
+      });
+      const stream = await client.stream({
+        input: 'Please generate some markdown code for me. Just a few lines.',
+        template: 'user',
+        timestamps: true,
+      });
+      let stopEvent;
+      for await (const event of stream) {
+        if (event.type === 'stop') {
+          stopEvent = event;
+        }
+      }
+      const [user, assistant] = stopEvent.messages;
+      expect(user.timestamp).toBeInstanceOf(Date);
+      expect(assistant.timestamp).toBeInstanceOf(Date);
+    });
+  });
+
   it('should work with only files and instructions', async () => {
     setResponse(caloriesObject);
     await client.prompt({

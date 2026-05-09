@@ -35,7 +35,7 @@ export class AnthropicClient extends BaseClient {
       model,
       stream,
       system,
-      messages,
+      messages: this.getApiMessages(messages),
       temperature,
       max_tokens: tokens,
       ...this.getToolOptions(options),
@@ -91,6 +91,7 @@ export class AnthropicClient extends BaseClient {
             return {
               role: 'assistant',
               content: item.text,
+              ...this.getMessageTimestamp(options),
             };
           }),
       ],
@@ -160,6 +161,7 @@ export class AnthropicClient extends BaseClient {
           {
             role: 'assistant',
             content: this.compactContentBlocks(blocks),
+            ...this.getMessageTimestamp(options),
           },
         ],
         usage: this.normalizeUsage(options.usage),
