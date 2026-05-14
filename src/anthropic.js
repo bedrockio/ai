@@ -2,13 +2,17 @@ import Anthropic from '@anthropic-ai/sdk';
 
 import BaseClient from './BaseClient.js';
 
-const DEFAULT_TOKENS = 4096;
+/* Note that max_tokens is a required field on all prompts. */
+const DEFAULT_MAX_TOKENS = 4096;
 
 export class AnthropicClient extends BaseClient {
   static DEFAULT_MODEL = 'claude-sonnet-4-5';
 
   constructor(options) {
-    super(options);
+    super({
+      max_tokens: DEFAULT_MAX_TOKENS,
+      ...options,
+    });
     this.client = new Anthropic(options);
   }
 
@@ -25,9 +29,9 @@ export class AnthropicClient extends BaseClient {
     const {
       model,
       messages,
+      max_tokens,
       temperature,
       stream = false,
-      tokens = DEFAULT_TOKENS,
       instructions: system = '',
     } = options;
 
@@ -35,9 +39,9 @@ export class AnthropicClient extends BaseClient {
       model,
       stream,
       system,
+      max_tokens,
       messages: this.getApiMessages(messages),
       temperature,
-      max_tokens: tokens,
       ...this.getToolOptions(options),
     };
 

@@ -859,6 +859,50 @@ How many calories are in a medium apple?
     });
   });
 
+  describe('max_tokens', () => {
+    it('should set a default max_tokens when none is passed', async () => {
+      setResponse(caloriesText);
+      await client.prompt({
+        input: 'Hello',
+      });
+      expect(getLastOptions().max_tokens).toBe(4096);
+    });
+
+    it('should pass max_tokens from constructor options', async () => {
+      setResponse(caloriesText);
+      const client = new AnthropicClient({
+        templates: path.join(__dirname, './templates'),
+        max_tokens: 1024,
+      });
+      await client.prompt({
+        input: 'Hello',
+      });
+      expect(getLastOptions().max_tokens).toBe(1024);
+    });
+
+    it('should pass max_tokens from prompt options', async () => {
+      setResponse(caloriesText);
+      await client.prompt({
+        input: 'Hello',
+        max_tokens: 2048,
+      });
+      expect(getLastOptions().max_tokens).toBe(2048);
+    });
+
+    it('should let prompt options override constructor options', async () => {
+      setResponse(caloriesText);
+      const client = new AnthropicClient({
+        templates: path.join(__dirname, './templates'),
+        max_tokens: 1024,
+      });
+      await client.prompt({
+        input: 'Hello',
+        max_tokens: 8192,
+      });
+      expect(getLastOptions().max_tokens).toBe(8192);
+    });
+  });
+
   describe('other', () => {
     it('should include usage', async () => {
       setResponse(caloriesText);

@@ -1,3 +1,7 @@
+## 0.13.1
+
+- Allow `max_tokens` in client options.
+
 ## 0.13.0
 
 - Added `timestamps` and ensure they are stripped on sending to LLMs.
