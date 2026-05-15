@@ -859,6 +859,129 @@ How many calories are in a medium apple?
     });
   });
 
+  describe('schema + tools', () => {
+    it('should force tool_choice to the schema tool when no other tools are passed', async () => {
+      setResponse(caloriesStructured);
+
+      await client.prompt({
+        input: 'Hello',
+        schema: yd
+          .object({
+            foods: yd.array(yd.object({ name: yd.string() })),
+          })
+          .toOpenAi(),
+      });
+
+      const options = getLastOptions();
+
+      expect(options.tool_choice).toEqual({ type: 'tool', name: 'schema' });
+    });
+
+    it('should leave tool_choice as auto when schema is combined with another custom tool', async () => {
+      setResponse(caloriesStructured);
+
+      await client.prompt({
+        input: 'Hello',
+        tools: [
+          {
+            name: 'apples',
+            description: 'Call when discussing apples.',
+            input_schema: { type: 'object', properties: {} },
+          },
+        ],
+        schema: yd
+          .object({
+            foods: yd.array(yd.object({ name: yd.string() })),
+          })
+          .toOpenAi(),
+      });
+
+      const options = getLastOptions();
+
+      expect(options.tool_choice).toEqual({ type: 'auto' });
+      expect(options.tools).toHaveLength(2);
+      expect(options.tools.map((t) => t.name)).toEqual(['apples', 'schema']);
+    });
+
+    it('should leave tool_choice as auto when schema is combined with an MCP tool', async () => {
+      setResponse(caloriesStructured);
+
+      await client.prompt({
+        input: 'Hello',
+        tools: [
+          {
+            type: 'mcp',
+            name: 'drugs',
+            url: 'https://api.drugs.com/mcp',
+          },
+        ],
+        schema: yd
+          .object({
+            foods: yd.array(yd.object({ name: yd.string() })),
+          })
+          .toOpenAi(),
+      });
+
+      const options = getLastOptions();
+
+      expect(options.tool_choice).toEqual({ type: 'auto' });
+      expect(options.tools).toEqual([
+        {
+          name: 'schema',
+          description:
+            'Call this tool with your final answer to return structured output matching the schema.',
+          input_schema: expect.any(Object),
+        },
+        {
+          type: 'mcp_toolset',
+          mcp_server_name: 'drugs',
+        },
+      ]);
+    });
+
+    it('should pick the schema tool_use block when other tool_use blocks are present in the response', async () => {
+      setResponse({
+        id: 'msg_test',
+        type: 'message',
+        role: 'assistant',
+        content: [
+          {
+            type: 'tool_use',
+            id: 'toolu_other',
+            name: 'apples',
+            input: { color: 'red' },
+          },
+          {
+            type: 'tool_use',
+            id: 'toolu_schema',
+            name: 'schema',
+            input: { foods: [{ name: 'banana' }] },
+          },
+        ],
+        stop_reason: 'tool_use',
+        usage: { input_tokens: 10, output_tokens: 10 },
+      });
+
+      const { result } = await client.prompt({
+        input: 'Hello',
+        tools: [
+          {
+            name: 'apples',
+            description: 'Call when discussing apples.',
+            input_schema: { type: 'object', properties: {} },
+          },
+        ],
+        schema: yd
+          .object({
+            foods: yd.array(yd.object({ name: yd.string() })),
+          })
+          .toOpenAi(),
+      });
+
+      expect(result).toEqual({ foods: [{ name: 'banana' }] });
+    });
+  });
+
   describe('max_tokens', () => {
     it('should set a default max_tokens when none is passed', async () => {
       setResponse(caloriesText);

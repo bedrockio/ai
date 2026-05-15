@@ -1,3 +1,7 @@
+## 0.13.2
+
+- Don't force schema tool use if other tools are passed.
+
 ## 0.13.1
 
 - Allow `max_tokens` in client options.

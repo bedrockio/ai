@@ -69,8 +69,11 @@ export class AnthropicClient extends BaseClient {
   }
 
   getStructuredResponse(response) {
+    // Look up the schema tool specifically — when schema is combined with
+    // other tools (e.g. MCP) the response can contain multiple tool_use
+    // blocks; only the schema one carries the structured result.
     const toolBlock = response.content.find((block) => {
-      return block.type === 'tool_use';
+      return block.type === 'tool_use' && block.name === 'schema';
     });
     return toolBlock?.input || null;
   }
@@ -184,15 +187,22 @@ export class AnthropicClient extends BaseClient {
     });
 
     if (schema) {
+      // Capture whether the caller passed other tools BEFORE the schema tool
+      // is pushed, so the comparison reflects user-supplied tools only.
+      const hasOtherTools = tools.length > 0;
       tools.push({
         name: 'schema',
-        description: 'Follow the schema for JSON output.',
+        description:
+          'Call this tool with your final answer to return structured output matching the schema.',
         input_schema: schema,
       });
-      toolChoice = {
-        type: 'tool',
-        name: 'schema',
-      };
+      // Only force the schema tool when it is the only tool in scope. When
+      // other tools are present (e.g. MCP) leave it to 'auto' so the model
+      // can call those first and then finalize with the schema tool — a
+      // forced tool_choice would block multi-step agent flows.
+      toolChoice = hasOtherTools
+        ? { type: 'auto' }
+        : { type: 'tool', name: 'schema' };
     } else {
       // The default.
       toolChoice = {
