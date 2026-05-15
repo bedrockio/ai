@@ -1,9 +1,5 @@
 const LATEST_PROTOCOL_VERSION = '2025-11-25';
-const SUPPORTED_PROTOCOL_VERSIONS = [
-  '2025-11-25',
-  '2025-06-18',
-  '2025-03-26',
-];
+const SUPPORTED_PROTOCOL_VERSIONS = ['2025-11-25', '2025-06-18', '2025-03-26'];
 // Per spec: when a non-initialize HTTP request omits the
 // MCP-Protocol-Version header, assume this version.
 const ASSUMED_PROTOCOL_VERSION = '2025-03-26';
@@ -168,7 +164,9 @@ export default class McpServer {
     const tool = this.getTool(name);
     try {
       await this.validateArgs(tool, args);
+      this.options.onToolCalled?.(name, args);
       const result = await tool.handler(args, ctx);
+      this.options.onToolFinished?.(name, result);
       return {
         result: {
           content: [
@@ -181,6 +179,7 @@ export default class McpServer {
         },
       };
     } catch (err) {
+      this.options.onToolError?.(name, err);
       return {
         result: {
           content: [

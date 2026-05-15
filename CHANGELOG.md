@@ -2,6 +2,7 @@
 
 - Don't force schema tool use if other tools are passed.
 - Allow structured output on streaming `stop` event.
+- Callbacks for MCP tool use.
 
 ## 0.13.1
 
