@@ -398,6 +398,37 @@ describe('openai', () => {
       ]);
     });
 
+    it('should expose the parsed schema output as result on the stream stop event', async () => {
+      setResponse(userStream);
+      const stream = await client.stream({
+        input: 'Hello!',
+        template: 'user',
+        schema: yd
+          .object({
+            text: yd.string(),
+            next: yd.string().allow('input', 'boolean', 'done'),
+            user: yd.object({
+              firstName: yd.string(),
+              lastName: yd.string(),
+            }),
+          })
+          .toOpenAi(),
+      });
+
+      let stopEvent;
+      for await (const event of stream) {
+        if (event.type === 'stop') {
+          stopEvent = event;
+        }
+      }
+
+      expect(stopEvent.result).toEqual({
+        text: 'Hello! Nice to meet you. What is your full name? Please share your first name and last name.',
+        next: 'boolean',
+        user: { firstName: '', lastName: '' },
+      });
+    });
+
     it('should retain message history', async () => {
       setResponse(caloriesStream);
       const stream = await client.stream({

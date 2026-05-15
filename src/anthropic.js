@@ -78,6 +78,13 @@ export class AnthropicClient extends BaseClient {
     return toolBlock?.input || null;
   }
 
+  extractStreamResult(blocks) {
+    const schemaBlock = blocks.find((block) => {
+      return block.type === 'tool_use' && block.name === 'schema';
+    });
+    return schemaBlock?.input;
+  }
+
   normalizeContentBlock(block) {
     return block;
   }
@@ -163,6 +170,7 @@ export class AnthropicClient extends BaseClient {
       return {
         type: 'stop',
         ...this.getResultParams(options),
+        ...this.getStreamResult(blocks, options),
         messages: [
           ...this.getFilteredMessages(options),
           {

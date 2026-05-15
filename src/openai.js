@@ -112,6 +112,17 @@ export class OpenAiClient extends BaseClient {
     return JSON.parse(last.text);
   }
 
+  extractStreamResult(blocks) {
+    const textBlocks = blocks.filter((block) => {
+      return block.type === 'text';
+    });
+    const last = textBlocks[textBlocks.length - 1];
+    if (!last) {
+      return;
+    }
+    return JSON.parse(last.text);
+  }
+
   normalizeContentBlock(block) {
     const { type, text } = block;
 
@@ -298,6 +309,7 @@ export class OpenAiClient extends BaseClient {
       return {
         type: 'stop',
         ...this.getResultParams(options),
+        ...this.getStreamResult(blocks, options),
         messages: [
           ...this.getFilteredMessages(options),
           {

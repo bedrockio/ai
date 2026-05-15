@@ -1,6 +1,7 @@
 ## 0.13.2
 
 - Don't force schema tool use if other tools are passed.
+- Allow structured output on streaming `stop` event.
 
 ## 0.13.1
 

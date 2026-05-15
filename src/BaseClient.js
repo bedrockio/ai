@@ -252,6 +252,34 @@ ${input}
     throw new Error('Method not implemented.');
   }
 
+  // Streaming counterpart to getStructuredResponse: when a schema is in play
+  // the assistant's structured payload is buried in the accumulated content
+  // blocks. Subclasses implement extractStreamResult(blocks) to pull out the
+  // raw value (transport-specific — e.g. an Anthropic tool_use input vs an
+  // OpenAI JSON-formatted text block); this method handles the schema gate,
+  // the wrapped-array unwrap, and the `{ result }` envelope so the emitted
+  // `stop` event mirrors prompt()'s return shape.
+  getStreamResult(blocks, options) {
+    if (!options.schema) {
+      return {};
+    }
+    const raw = this.extractStreamResult(blocks);
+    if (raw == null) {
+      return {};
+    }
+    return {
+      result: options.hasWrappedSchema ? raw?.items : raw,
+    };
+  }
+
+  /**
+   * @returns {Object}
+   */
+  extractStreamResult(blocks) {
+    void blocks;
+    throw new Error('Method not implemented.');
+  }
+
   /**
    * @returns {Object}
    */
