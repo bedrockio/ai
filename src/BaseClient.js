@@ -5,11 +5,22 @@ import { TemplateRenderer } from '@bedrockio/templates';
 import { parseCode } from './utils/code.js';
 import { createMessageExtractor } from './utils/json.js';
 
+// The underlying SDKs (Anthropic, OpenAI) already retry 2x
+// before they surface a 529, so by the time we see one the
+// API has been hit a few times. Our layer is the safety net
+// for sustained outages. With 5/30s the delays are:
+// 1, 2, 4, 8, 16, 30 ≈ 1 min total wait - long enough to ride
+// out a real overload blip, short enough not to feel broken.
+const DEFAULT_MAX_RETRIES = 5;
+const DEFAULT_MAX_BACKOFF = 30_000;
+
 export default class BaseClient {
   constructor(options) {
     this.options = {
       // @ts-ignore
       model: this.constructor.DEFAULT_MODEL,
+      maxRetries: DEFAULT_MAX_RETRIES,
+      maxBackoff: DEFAULT_MAX_BACKOFF,
       ...options,
     };
     this.renderer = new TemplateRenderer({
@@ -38,7 +49,7 @@ export default class BaseClient {
 
     const { output, stream, schema, prompt, instructions } = options;
 
-    const response = await this.runPrompt(options);
+    const response = await this.runPromptSwitch(options);
 
     if (!stream) {
       this.debug('Response:', response, options);
@@ -65,6 +76,69 @@ export default class BaseClient {
       instructions,
       ...this.normalizeResponse(response, options),
     };
+  }
+
+  runPromptSwitch(options) {
+    if (this.canRunWithBackoff(options)) {
+      return this.runPromptWithBackoff(options);
+    } else {
+      return this.runPrompt(options);
+    }
+  }
+
+  async runPromptWithBackoff(options) {
+    try {
+      const { backoffDelay = 0 } = options;
+
+      await new Promise((resolve) => {
+        setTimeout(resolve, backoffDelay);
+      });
+
+      return await this.runPrompt(options);
+    } catch (error) {
+      options.onError?.(error);
+      if (error.status === 529) {
+        return this.runPromptSwitch({
+          ...options,
+          ...this.getNextBackoffProps(options),
+        });
+      } else {
+        throw error;
+      }
+    }
+  }
+
+  getNextBackoffProps(options) {
+    let { retries, backoffDelay, maxBackoff } = options;
+    if (backoffDelay) {
+      backoffDelay = Math.min(maxBackoff, backoffDelay * 2);
+    } else {
+      backoffDelay = 1000;
+    }
+
+    if (retries == null) {
+      retries = 0;
+    }
+    retries += 1;
+
+    return {
+      backoffDelay,
+      retries,
+    };
+  }
+
+  canRunWithBackoff(options) {
+    const { backoff, stream, retries = 0, maxRetries } = options;
+
+    if (!backoff || stream) {
+      return false;
+    }
+
+    if (retries >= maxRetries) {
+      return false;
+    }
+
+    return true;
   }
 
   /**

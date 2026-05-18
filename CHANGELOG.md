@@ -1,3 +1,7 @@
+## 0.14.0
+
+- Added basic expotential backoff with max retries.
+
 ## 0.13.2
 
 - Don't force schema tool use if other tools are passed.
