@@ -629,6 +629,7 @@ ${input}
  * @property {string} instructions
  * @property {PromptMessage[]} messages - Full message input.
  * @property {string} [model] - The model to use.
+ * @property {Function} [onError] - Error handler.
  * @property {boolean} stream - Stream response.
  * @property {Object} [schema] - A JSON schema compatible object that defines the output shape.
  * @property {"text" | "json"} [output] - The result output type.
