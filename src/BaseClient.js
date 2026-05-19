@@ -49,7 +49,12 @@ export default class BaseClient {
 
     const { output, stream, schema, prompt, instructions } = options;
 
-    const response = await this.runPromptSwitch(options);
+    let response;
+    try {
+      response = await this.runPromptSwitch(options);
+    } catch (error) {
+      throw this.getTransformedError(error, options);
+    }
 
     if (!stream) {
       this.debug('Response:', response, options);
@@ -191,10 +196,14 @@ export default class BaseClient {
         }
       }
     } catch (error) {
-      const { message, code } = error;
+      const { code, status, message } = this.getTransformedError(
+        error,
+        options,
+      );
       yield {
         type: 'error',
         code,
+        status,
         message,
       };
     }
@@ -597,6 +606,11 @@ ${input}
         return messageExtractor(event.delta);
       }
     };
+  }
+
+  getTransformedError(error, options) {
+    const { transformError } = options;
+    return transformError?.(error) || error;
   }
 
   debug(message, arg, options) {

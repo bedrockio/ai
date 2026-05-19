@@ -1,17 +1,13 @@
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import BaseClient from '../src/BaseClient.js';
 
 class TestClient extends BaseClient {
   runPrompt(options) {
     return this.mockRunPrompt(options);
+  }
+  runStream(options) {
+    return this.mockRunStream(options);
   }
 }
 
@@ -28,7 +24,7 @@ function backoffOptions(extras = {}) {
   };
 }
 
-describe('BaseClient backoff', () => {
+describe('backoff', () => {
   let client;
 
   beforeEach(() => {
@@ -51,15 +47,15 @@ describe('BaseClient backoff', () => {
     });
 
     it('should be false when streaming', () => {
-      expect(
-        client.canRunWithBackoff(backoffOptions({ stream: true })),
-      ).toBe(false);
+      expect(client.canRunWithBackoff(backoffOptions({ stream: true }))).toBe(
+        false,
+      );
     });
 
     it('should be false once retries hits maxRetries', () => {
-      expect(
-        client.canRunWithBackoff(backoffOptions({ retries: 10 })),
-      ).toBe(false);
+      expect(client.canRunWithBackoff(backoffOptions({ retries: 10 }))).toBe(
+        false,
+      );
     });
   });
 
@@ -228,9 +224,7 @@ describe('BaseClient backoff', () => {
         .mockRejectedValueOnce(error)
         .mockResolvedValueOnce('ok');
 
-      const promise = client.runPromptWithBackoff(
-        backoffOptions({ onError }),
-      );
+      const promise = client.runPromptWithBackoff(backoffOptions({ onError }));
       await vi.runAllTimersAsync();
       await promise;
 
@@ -243,14 +237,112 @@ describe('BaseClient backoff', () => {
       const onError = vi.fn();
       client.mockRunPrompt.mockRejectedValue(error);
 
-      const promise = client.runPromptWithBackoff(
-        backoffOptions({ onError }),
-      );
+      const promise = client.runPromptWithBackoff(backoffOptions({ onError }));
       const assertion = expect(promise).rejects.toThrow('Bad Request');
       await vi.runAllTimersAsync();
       await assertion;
       expect(onError).toHaveBeenCalledTimes(1);
       expect(onError).toHaveBeenCalledWith(error);
+    });
+  });
+});
+
+describe('transformError', () => {
+  let client;
+
+  beforeEach(() => {
+    client = new TestClient({});
+    client.mockRunPrompt = vi.fn();
+    client.mockRunStream = vi.fn();
+  });
+
+  describe('prompt()', () => {
+    it('should throw the transformed error when transformError returns one', async () => {
+      const original = new Error('Original');
+      const transformed = new Error('Transformed');
+      client.mockRunPrompt.mockRejectedValue(original);
+
+      const transformError = vi.fn().mockReturnValue(transformed);
+
+      await expect(
+        client.prompt({ input: 'hi', transformError }),
+      ).rejects.toThrow('Transformed');
+      expect(transformError).toHaveBeenCalledWith(original);
+    });
+
+    it('should fall back to the original error when transformError returns falsy', async () => {
+      const original = new Error('Original');
+      client.mockRunPrompt.mockRejectedValue(original);
+
+      const transformError = vi.fn().mockReturnValue(null);
+
+      await expect(
+        client.prompt({ input: 'hi', transformError }),
+      ).rejects.toThrow('Original');
+      expect(transformError).toHaveBeenCalledWith(original);
+    });
+
+    it('should rethrow the original error when no transformError is provided', async () => {
+      const original = new Error('Original');
+      client.mockRunPrompt.mockRejectedValue(original);
+
+      await expect(client.prompt({ input: 'hi' })).rejects.toThrow('Original');
+    });
+  });
+
+  describe('stream()', () => {
+    it('should yield an error event using the transformed error fields', async () => {
+      const original = Object.assign(new Error('Original'), {
+        code: 'orig_code',
+        status: 500,
+      });
+      const transformed = Object.assign(new Error('Transformed'), {
+        code: 'mapped_code',
+        status: 502,
+      });
+      client.mockRunStream.mockRejectedValue(original);
+
+      const transformError = vi.fn().mockReturnValue(transformed);
+
+      const events = [];
+      for await (const event of client.stream({
+        input: 'hi',
+        transformError,
+      })) {
+        events.push(event);
+      }
+
+      expect(transformError).toHaveBeenCalledWith(original);
+      expect(events).toEqual([
+        {
+          type: 'error',
+          code: 'mapped_code',
+          status: 502,
+          message: 'Transformed',
+        },
+      ]);
+    });
+
+    it('should yield an error event using the original error when no transformError is provided', async () => {
+      const original = Object.assign(new Error('Original'), {
+        code: 'orig_code',
+        status: 500,
+      });
+      client.mockRunStream.mockRejectedValue(original);
+
+      const events = [];
+      for await (const event of client.stream({ input: 'hi' })) {
+        events.push(event);
+      }
+
+      expect(events).toEqual([
+        {
+          type: 'error',
+          code: 'orig_code',
+          status: 500,
+          message: 'Original',
+        },
+      ]);
     });
   });
 });

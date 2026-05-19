@@ -1,3 +1,7 @@
+## 0.14.1
+
+- Added `transformError` option.
+
 ## 0.14.0
 
 - Added basic expotential backoff with max retries.
