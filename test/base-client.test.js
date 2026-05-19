@@ -215,35 +215,60 @@ describe('backoff', () => {
       expect(client.mockRunPrompt).toHaveBeenCalledTimes(3);
     });
 
-    it('should call onError on every failed attempt, including retries', async () => {
-      const error = overloadedError();
+    it('should not call onError from within the backoff loop', async () => {
       const onError = vi.fn();
-
       client.mockRunPrompt
-        .mockRejectedValueOnce(error)
-        .mockRejectedValueOnce(error)
+        .mockRejectedValueOnce(overloadedError())
         .mockResolvedValueOnce('ok');
 
       const promise = client.runPromptWithBackoff(backoffOptions({ onError }));
       await vi.runAllTimersAsync();
       await promise;
 
-      expect(onError).toHaveBeenCalledTimes(2);
-      expect(onError).toHaveBeenCalledWith(error);
+      expect(onError).not.toHaveBeenCalled();
     });
+  });
+});
 
-    it('should call onError and rethrow for non-529 errors', async () => {
-      const error = Object.assign(new Error('Bad Request'), { status: 400 });
-      const onError = vi.fn();
-      client.mockRunPrompt.mockRejectedValue(error);
+describe('onError', () => {
+  let client;
 
-      const promise = client.runPromptWithBackoff(backoffOptions({ onError }));
-      const assertion = expect(promise).rejects.toThrow('Bad Request');
-      await vi.runAllTimersAsync();
-      await assertion;
-      expect(onError).toHaveBeenCalledTimes(1);
-      expect(onError).toHaveBeenCalledWith(error);
-    });
+  beforeEach(() => {
+    vi.useFakeTimers();
+    client = new TestClient({});
+    client.mockRunPrompt = vi.fn();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('should call onError when prompt() fails', async () => {
+    const error = Object.assign(new Error('Bad Request'), { status: 400 });
+    const onError = vi.fn();
+    client.mockRunPrompt.mockRejectedValue(error);
+
+    await expect(client.prompt({ input: 'hi', onError })).rejects.toThrow(
+      'Bad Request',
+    );
+    expect(onError).toHaveBeenCalledTimes(1);
+    expect(onError).toHaveBeenCalledWith(error);
+  });
+
+  it('should call onError once after backoff exhausts retries', async () => {
+    const error = overloadedError();
+    const onError = vi.fn();
+    client.mockRunPrompt.mockRejectedValue(error);
+
+    const promise = client.prompt(
+      backoffOptions({ input: 'hi', maxRetries: 2, onError }),
+    );
+    const assertion = expect(promise).rejects.toThrow('Overloaded');
+    await vi.runAllTimersAsync();
+    await assertion;
+
+    expect(onError).toHaveBeenCalledTimes(1);
+    expect(onError).toHaveBeenCalledWith(error);
   });
 });
 

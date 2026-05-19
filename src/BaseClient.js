@@ -53,6 +53,7 @@ export default class BaseClient {
     try {
       response = await this.runPromptSwitch(options);
     } catch (error) {
+      options.onError?.(error);
       throw this.getTransformedError(error, options);
     }
 
@@ -101,7 +102,6 @@ export default class BaseClient {
 
       return await this.runPrompt(options);
     } catch (error) {
-      options.onError?.(error);
       if (error.status === 529) {
         return this.runPromptSwitch({
           ...options,

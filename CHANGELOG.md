@@ -1,3 +1,7 @@
+## 0.14.2
+
+- Fire `onError` handler in all error scenarios.
+
 ## 0.14.1
 
 - Added `transformError` option.
