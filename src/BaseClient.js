@@ -196,6 +196,9 @@ export default class BaseClient {
         }
       }
     } catch (error) {
+      if (error.error?.error.type === 'overloaded_error') {
+        error.status = 529;
+      }
       const { code, status, message } = this.getTransformedError(
         error,
         options,

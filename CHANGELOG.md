@@ -1,3 +1,7 @@
+## 0.14.3
+
+- Surface overloaded errors in stream.
+
 ## 0.14.2
 
 - Fire `onError` handler in all error scenarios.
