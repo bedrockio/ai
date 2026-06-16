@@ -3,6 +3,7 @@ import { GoogleClient } from './google.js';
 import { OpenAiClient } from './openai.js';
 import { XAiClient } from './xai.js';
 export { default as McpServer } from './McpServer.js';
+export { default as Toolset } from './Toolset.js';
 
 export function createClient(options = {}) {
   const { platform } = options;

@@ -1,3 +1,5 @@
+import Toolset from './Toolset.js';
+
 const LATEST_PROTOCOL_VERSION = '2025-11-25';
 const SUPPORTED_PROTOCOL_VERSIONS = ['2025-11-25', '2025-06-18', '2025-03-26'];
 // Per spec: when a non-initialize HTTP request omits the
@@ -14,6 +16,24 @@ export default class McpServer {
   constructor(options = {}) {
     this.validateOptions(options);
     this.options = options;
+    this.toolset = this.resolveToolset(options);
+  }
+
+  // Accepts either a pre-built Toolset or, for backwards compatibility, a bare
+  // `tools` array (plus lifecycle hooks) that is wrapped into one. Either way
+  // the server only ever talks to a Toolset from here on.
+  resolveToolset(options) {
+    const { toolset, tools, onToolCalled, onToolFinished, onToolError } =
+      options;
+    if (toolset) {
+      return toolset;
+    }
+    return new Toolset({
+      tools,
+      onToolCalled,
+      onToolFinished,
+      onToolError,
+    });
   }
 
   async handleRequest(ctx) {
@@ -141,13 +161,9 @@ export default class McpServer {
   }
 
   listTools() {
-    const { tools = [] } = this.options;
     return {
       result: {
-        tools: tools.map((tool) => {
-          const { handler, ...rest } = tool;
-          return rest;
-        }),
+        tools: this.toolset.getToolDefinitions(),
       },
     };
   }
@@ -161,44 +177,30 @@ export default class McpServer {
   }
 
   async callValidTool(name, args, ctx) {
-    const tool = this.getTool(name);
-    try {
-      await this.validateArgs(tool, args);
-      this.options.onToolCalled?.(name, args);
-      const result = await tool.handler(args, ctx);
-      this.options.onToolFinished?.(name, result);
+    const { result, error } = await this.toolset.call(name, args, ctx);
+    if (error) {
       return {
         result: {
           content: [
             {
               type: 'text',
-              text:
-                typeof result === 'string' ? result : JSON.stringify(result),
-            },
-          ],
-        },
-      };
-    } catch (err) {
-      this.options.onToolError?.(name, err);
-      return {
-        result: {
-          content: [
-            {
-              type: 'text',
-              text: err.message,
+              text: error.message,
             },
           ],
           isError: true,
         },
       };
     }
-  }
-
-  async validateArgs(tool, args) {
-    const { inputSchema } = tool;
-    if (inputSchema && typeof inputSchema.validate === 'function') {
-      await inputSchema.validate(args);
-    }
+    return {
+      result: {
+        content: [
+          {
+            type: 'text',
+            text: typeof result === 'string' ? result : JSON.stringify(result),
+          },
+        ],
+      },
+    };
   }
 
   invalidToolCall(name) {
@@ -235,15 +237,8 @@ export default class McpServer {
 
   // Tool helpers
 
-  getTool(name) {
-    const { tools = [] } = this.options;
-    return tools.find((tool) => {
-      return tool.name === name;
-    });
-  }
-
   hasTool(name) {
-    return !!this.getTool(name);
+    return this.toolset.hasTool(name);
   }
 
   // Session helpers
