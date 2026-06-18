@@ -263,7 +263,67 @@ export class AnthropicClient extends BaseClient {
     if (input.type === 'function') {
       input = this.normalizeOpenAiToolInput(input);
     }
+    // Local tools carry a `handler` (stripped — it never goes over the wire)
+    // and may declare their schema as `inputSchema` (e.g. a yada schema, which
+    // serializes via toJSON). Project these to the Anthropic custom-tool shape.
+    if (input.handler || input.inputSchema) {
+      const { handler, inputSchema, ...rest } = input;
+      return {
+        ...rest,
+        input_schema:
+          rest.input_schema || inputSchema?.toJSON?.() || inputSchema,
+      };
+    }
     return input;
+  }
+
+  getToolCalls(response) {
+    return (response?.content || [])
+      .filter((block) => {
+        return block.type === 'tool_use';
+      })
+      .map((block) => {
+        return {
+          id: block.id,
+          name: block.name,
+          input: block.input,
+        };
+      });
+  }
+
+  formatToolResult(call, result, error) {
+    const text = error
+      ? error.message
+      : typeof result === 'string'
+        ? result
+        : JSON.stringify(result);
+    return {
+      type: 'tool_result',
+      tool_use_id: call.id,
+      content: text,
+      ...(error && {
+        is_error: true,
+      }),
+    };
+  }
+
+  // Re-emits the assistant turn for the next request, keeping text blocks and
+  // only the tool_use blocks we are returning results for. Any other tool_use
+  // (e.g. a premature schema call) is dropped so every tool_use has a matching
+  // tool_result, as the API requires.
+  formatAssistantMessage(response, calls) {
+    const ids = new Set(
+      calls.map((call) => {
+        return call.id;
+      }),
+    );
+    const content = response.content.filter((block) => {
+      return block.type !== 'tool_use' || ids.has(block.id);
+    });
+    return {
+      role: 'assistant',
+      content,
+    };
   }
 
   // OpenAI uses the following input for custom tools

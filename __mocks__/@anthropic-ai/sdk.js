@@ -1,17 +1,18 @@
-let mock;
 let models;
-let lastOptions;
+let responses = [];
+let allOptions = [];
 
 export default function MockAnthropicClient() {
   return {
     messages: {
       create(options) {
         validateToolUseInput(options);
-        lastOptions = options;
+        allOptions.push(options);
+        const response = nextResponse();
         if (options.stream) {
-          return streamMock();
+          return streamMock(response);
         } else {
-          return mock;
+          return response;
         }
       },
     },
@@ -23,6 +24,12 @@ export default function MockAnthropicClient() {
       },
     },
   };
+}
+
+// Returns the next queued response, sticking on the last so a loop that runs
+// more rounds than were queued still terminates rather than hanging.
+function nextResponse() {
+  return responses.length > 1 ? responses.shift() : responses[0];
 }
 
 // Mirrors the 400 the real API returns when a tool_use or mcp_tool_use
@@ -48,8 +55,17 @@ function validateToolUseInput(options) {
   }
 }
 
+// Queues the responses returned on successive create() calls — a single
+// message object for a prompt, or an array of stream events for a stream.
+// Used to drive a multi-round tool loop.
+export function setResponses(list) {
+  responses = [...list];
+  allOptions = [];
+}
+
+// Shortcut to queue a single response.
 export function setResponse(data) {
-  mock = data;
+  setResponses([data]);
 }
 
 export function setModels(data) {
@@ -57,11 +73,15 @@ export function setModels(data) {
 }
 
 export function getLastOptions() {
-  return lastOptions;
+  return allOptions[allOptions.length - 1];
 }
 
-async function* streamMock() {
-  for await (let event of mock) {
+export function getAllOptions() {
+  return allOptions;
+}
+
+async function* streamMock(response) {
+  for await (let event of response) {
     yield event;
   }
 }

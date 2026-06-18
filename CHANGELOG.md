@@ -1,3 +1,7 @@
+## 0.15.0
+
+- Addition of Toolset and local tools.
+
 ## 0.14.3
 
 - Surface overloaded errors in stream.

@@ -588,6 +588,45 @@ How many calories are in a medium apple?
         }),
       ).resolves.toBeDefined();
     });
+
+    it('should default missing input on local tool_use blocks in incoming messages', async () => {
+      // Same as above, but for in-process tool_use blocks (the local loop
+      // persists these to the conversation, so a replay hits the same
+      // Mongoose-stripped-`{}` path).
+      setResponse(caloriesText);
+
+      await expect(
+        client.prompt({
+          input: 'Follow up.',
+          messages: [
+            {
+              role: 'user',
+              content: 'Find the patient.',
+            },
+            {
+              role: 'assistant',
+              content: [
+                {
+                  type: 'tool_use',
+                  id: 'toolu_01',
+                  name: 'find_patient',
+                },
+              ],
+            },
+            {
+              role: 'user',
+              content: [
+                {
+                  type: 'tool_result',
+                  tool_use_id: 'toolu_01',
+                  content: '[]',
+                },
+              ],
+            },
+          ],
+        }),
+      ).resolves.toBeDefined();
+    });
   });
 
   describe('models', () => {

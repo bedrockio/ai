@@ -2,6 +2,7 @@ import { existsSync } from 'node:fs';
 
 import { TemplateRenderer } from '@bedrockio/templates';
 
+import Toolset from './Toolset.js';
 import { parseCode } from './utils/code.js';
 import { createMessageExtractor } from './utils/json.js';
 
@@ -13,6 +14,10 @@ import { createMessageExtractor } from './utils/json.js';
 // out a real overload blip, short enough not to feel broken.
 const DEFAULT_MAX_RETRIES = 5;
 const DEFAULT_MAX_BACKOFF = 30_000;
+
+// Safety bound on the local tool loop so a model that keeps calling tools can
+// never spin forever. Each round is one extra round-trip after the first.
+const DEFAULT_MAX_TOOL_ROUNDS = 12;
 
 export default class BaseClient {
   constructor(options) {
@@ -51,7 +56,12 @@ export default class BaseClient {
 
     let response;
     try {
-      response = await this.runPromptSwitch(options);
+      // Runs the model and, when local tools are in play, drives the tool loop
+      // in-process so this single call returns only once the model has produced
+      // its final (non-tool) response — mirroring how a remote MCP server
+      // resolves tools server-side within one call. `options` is reassigned to
+      // carry the full message exchange for the response below.
+      ({ response, options } = await this.runToolLoop(options));
     } catch (error) {
       options.onError?.(error);
       throw this.getTransformedError(error, options);
@@ -146,6 +156,105 @@ export default class BaseClient {
     return true;
   }
 
+  // Drives the local tool loop. Runs the prompt; while the model keeps calling
+  // tools that have a local handler, executes them, feeds the results back, and
+  // runs again. Tools without a local handler end the loop: the schema tool is
+  // left for the caller to extract and remote MCP tools are resolved by the
+  // provider. Returns the final response along with the options carrying the
+  // full message exchange. With no local tools this is a single-shot call,
+  // behaving exactly as a bare runPromptSwitch.
+  async runToolLoop(options) {
+    const toolset = this.getLocalToolset(options);
+
+    let response = await this.runPromptSwitch(options);
+
+    if (!toolset) {
+      return { response, options };
+    }
+
+    const { maxToolRounds = DEFAULT_MAX_TOOL_ROUNDS } = options;
+
+    for (let round = 0; round < maxToolRounds; round++) {
+      const calls = this.getLocalToolCalls(response, toolset);
+
+      if (!calls.length) {
+        break;
+      }
+
+      const toolResults = await this.runToolCalls(
+        calls,
+        toolset,
+        options.context,
+      );
+      options = this.appendToolExchange(options, response, calls, toolResults);
+
+      response = await this.runPromptSwitch(options);
+    }
+
+    return {
+      response,
+      options,
+    };
+  }
+
+  // A tool is "local" purely by virtue of having a handler. An explicit
+  // `toolset` is preferred (its lifecycle hooks are retained); otherwise any
+  // handler-bearing tools are gathered into an ad-hoc toolset for execution.
+  getLocalToolset(options) {
+    if (options.toolset) {
+      return options.toolset;
+    }
+    const tools = (options.tools || []).filter((tool) => {
+      return typeof tool.handler === 'function';
+    });
+    if (!tools.length) {
+      return null;
+    }
+    return new Toolset({
+      tools,
+    });
+  }
+
+  // The tool_use blocks in a response that map to a local handler — i.e. the
+  // ones the loop is responsible for executing (skips the schema tool and any
+  // remote MCP tools).
+  getLocalToolCalls(response, toolset) {
+    return this.getToolCalls(response).filter((call) => {
+      return toolset.hasTool(call.name);
+    });
+  }
+
+  // Executes each call against the toolset, returning a tool_result block per
+  // call (errors are folded into the result, not thrown — see Toolset.call).
+  async runToolCalls(calls, toolset, context) {
+    const results = [];
+    for (let call of calls) {
+      const { result, error } = await toolset.call(
+        call.name,
+        call.input,
+        context,
+      );
+      results.push(this.formatToolResult(call, result, error));
+    }
+    return results;
+  }
+
+  // Appends the assistant tool-use turn plus the user tool-result turn to the
+  // message history for the next round. Shared by the prompt and stream loops.
+  appendToolExchange(options, response, calls, toolResults) {
+    return {
+      ...options,
+      messages: [
+        ...options.messages,
+        this.formatAssistantMessage(response, calls),
+        {
+          role: 'user',
+          content: toolResults,
+        },
+      ],
+    };
+  }
+
   /**
    * Streams the prompt response.
    *
@@ -156,44 +265,109 @@ export default class BaseClient {
     options = this.normalizeOptions(options);
 
     const extractor = this.getMessageExtractor(options);
+    const toolset = this.getLocalToolset(options);
+    const maxToolRounds = options.maxToolRounds ?? DEFAULT_MAX_TOOL_ROUNDS;
 
     try {
-      const stream = await this.runStream(options);
+      // Streaming counterpart of runToolLoop: each round streams a turn, and
+      // while the model keeps calling local tools the turn's stop event is
+      // swallowed, the tools are run, the exchange is folded into the messages,
+      // and the next turn is streamed. The consumer sees one continuous stream
+      // — a single 'start', deltas flowing across rounds, and one final 'stop'
+      // carrying the full exchange. With no local tools it is a single pass,
+      // behaving exactly as before.
+      let started = false;
 
-      // @ts-ignore
-      for await (let event of stream) {
-        this.debug('Event:', event, options);
+      for (let round = 0; ; round++) {
+        // Fresh block accumulator per turn (normalizeStreamEvent fills it).
+        options.blocks = new Map();
 
-        event = this.normalizeStreamEvent(event, options);
+        const stream = await this.runStream(options);
 
-        if (event) {
-          yield event;
-        }
+        let stopEvent;
 
-        const extractedMessages = extractor?.(event) || [];
+        // @ts-ignore
+        for await (let event of stream) {
+          this.debug('Event:', event, options);
 
-        for (let message of extractedMessages) {
-          const { key, delta, text, done } = message;
+          event = this.normalizeStreamEvent(event, options);
 
-          let extractEvent;
-          if (done) {
-            extractEvent = {
-              type: 'extract:done',
-              text,
-              key,
-            };
-          } else {
-            extractEvent = {
-              type: 'extract:delta',
-              delta,
-              key,
-            };
+          if (!event) {
+            continue;
           }
 
-          this.debug('Extract:', extractEvent, options);
+          // Hold the turn's stop — it is only surfaced once the loop ends.
+          if (event.type === 'stop') {
+            stopEvent = event;
+            break;
+          }
 
-          yield extractEvent;
+          // Emit a single 'start' so multiple turns read as one stream.
+          if (event.type === 'start') {
+            if (started) {
+              continue;
+            }
+            started = true;
+          }
+
+          yield event;
+
+          const extractedMessages = extractor?.(event) || [];
+
+          for (let message of extractedMessages) {
+            const { key, delta, text, done } = message;
+
+            let extractEvent;
+            if (done) {
+              extractEvent = {
+                type: 'extract:done',
+                text,
+                key,
+              };
+            } else {
+              extractEvent = {
+                type: 'extract:delta',
+                delta,
+                key,
+              };
+            }
+
+            this.debug('Extract:', extractEvent, options);
+
+            yield extractEvent;
+          }
         }
+
+        const blocks = Array.from(options.blocks.values());
+        const response = {
+          content: blocks,
+        };
+        const calls = toolset
+          ? this.getLocalToolCalls(response, toolset)
+          : [];
+
+        // Terminal: no local tool calls (or none possible), or the safety
+        // bound was reached — surface the held stop and finish.
+        if (!calls.length || round >= maxToolRounds) {
+          if (stopEvent) {
+            yield stopEvent;
+          }
+          return;
+        }
+
+        // Otherwise run the tools, fold the exchange in, and stream the next
+        // turn.
+        const toolResults = await this.runToolCalls(
+          calls,
+          toolset,
+          options.context,
+        );
+        options = this.appendToolExchange(
+          options,
+          response,
+          calls,
+          toolResults,
+        );
       }
     } catch (error) {
       if (error.error?.error.type === 'overloaded_error') {
@@ -399,6 +573,37 @@ ${input}
     throw new Error('Method not implemented.');
   }
 
+  // Tool-loop hooks. Implemented per platform because the response and message
+  // shapes differ (Anthropic content blocks vs OpenAI tool_calls, etc.). Only
+  // invoked when a local toolset is present.
+
+  /**
+   * @returns {Array}
+   */
+  getToolCalls(response) {
+    void response;
+    throw new Error('Method not implemented.');
+  }
+
+  /**
+   * @returns {Object}
+   */
+  formatToolResult(call, result, error) {
+    void call;
+    void result;
+    void error;
+    throw new Error('Method not implemented.');
+  }
+
+  /**
+   * @returns {Object}
+   */
+  formatAssistantMessage(response, calls) {
+    void response;
+    void calls;
+    throw new Error('Method not implemented.');
+  }
+
   // Private
 
   /**
@@ -413,6 +618,23 @@ ${input}
       ...merged,
       ...this.normalizeInputs(merged),
       ...this.normalizeSchema(merged),
+      ...this.normalizeTools(merged),
+    };
+  }
+
+  // Folds a `toolset` option into the `tools` array so a single channel feeds
+  // both the wire payload (handlers are stripped downstream) and the local
+  // loop. When no toolset is given, `tools` is left untouched.
+  normalizeTools(options) {
+    const { toolset, tools } = options;
+    if (!toolset) {
+      return;
+    }
+    return {
+      tools: [
+        ...(tools || []),
+        ...toolset.tools,
+      ],
     };
   }
 
@@ -534,7 +756,9 @@ ${input}
 
       if (Array.isArray(content)) {
         content = content.map((block) => {
-          if (block.type === 'mcp_tool_use' && !block.input) {
+          const isToolUse =
+            block.type === 'mcp_tool_use' || block.type === 'tool_use';
+          if (isToolUse && !block.input) {
             return {
               ...block,
               input: {},
@@ -638,11 +862,18 @@ ${input}
  * @property {"text" | "json"} [output] - The result output type.
  * @property {Object} [params] - Params to be interpolated into the template.
  *                               May also be passed as additional props to options.
+ * @property {Array} [tools] - Tool definitions. A tool carrying a `handler` is run
+ *                             locally by the tool loop; others (e.g. an MCP server
+ *                             reference) are passed through to the provider.
+ * @property {Object} [toolset] - A Toolset whose tools are run locally; folded into `tools`.
+ * @property {*} [context] - Passed as the second argument to local tool handlers.
+ * @property {number} [maxToolRounds] - Safety bound on local tool-execution rounds.
  */
 
 /**
  * @typedef {Object} StreamOptions
  * @property {string} [extractMessages] - Key in JSON response to extract a message stream from.
+ * @property {Map} [blocks] - Internal: per-turn content-block accumulator used by the stream loop.
  */
 
 /**
