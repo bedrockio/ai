@@ -1,6 +1,7 @@
 ## 0.15.0
 
 - Addition of Toolset and local tools.
+- Broke out MCP server into Toolset + MCP layer.
 
 ## 0.14.3
 
