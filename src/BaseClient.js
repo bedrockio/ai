@@ -239,8 +239,14 @@ export default class BaseClient {
     return results;
   }
 
-  // Appends the assistant tool-use turn plus the user tool-result turn to the
-  // message history for the next round. Shared by the prompt and stream loops.
+  // Appends the assistant tool-use turn and the tool-result turn for the next
+  // round (shared by the prompt and stream loops).
+  //
+  // Tool results ride in a `role: 'user'` message, and providers diverge on
+  // this: Anthropic and Gemini have no dedicated `tool` role — they put all
+  // non-model input (text, images, tool results) on the user side and carry the
+  // "kind" on the block `type` — whereas OpenAI and xAI use a `role: 'tool'`.
+  // In the Anthropic model, discriminate tool results by block `type`, not role.
   appendToolExchange(options, response, calls, toolResults) {
     return {
       ...options,
