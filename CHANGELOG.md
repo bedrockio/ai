@@ -1,3 +1,7 @@
+## 0.15.1
+
+- Remove Anthropic thinking blocks.
+
 ## 0.15.0
 
 - Addition of Toolset and local tools.

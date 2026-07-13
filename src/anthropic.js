@@ -167,6 +167,14 @@ export class AnthropicClient extends BaseClient {
       options.usage = event.usage;
     } else if (type === 'message_stop') {
       const blocks = Array.from(options.blocks.values());
+      // Thinking blocks are turn-scoped: thinking deltas are not accumulated
+      // here, and the API rejects a replayed thinking block with no content on
+      // the next turn (models with thinking on by default, e.g. Sonnet 5).
+      // They carry nothing a later turn needs, so keep them out of the
+      // persisted message.
+      const messageBlocks = blocks.filter((block) => {
+        return block.type !== 'thinking' && block.type !== 'redacted_thinking';
+      });
       return {
         type: 'stop',
         ...this.getResultParams(options),
@@ -175,7 +183,7 @@ export class AnthropicClient extends BaseClient {
           ...this.getFilteredMessages(options),
           {
             role: 'assistant',
-            content: this.compactContentBlocks(blocks),
+            content: this.compactContentBlocks(messageBlocks),
             ...this.getMessageTimestamp(options),
           },
         ],

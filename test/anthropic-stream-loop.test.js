@@ -93,6 +93,72 @@ function toolTurn(call) {
   ];
 }
 
+// Stream events for one assistant turn that thinks before emitting text, as
+// models with thinking on by default (e.g. Sonnet 5) do.
+function thinkingTextTurn(text) {
+  return [
+    {
+      type: 'message_start',
+      message: {},
+    },
+    {
+      type: 'content_block_start',
+      index: 0,
+      content_block: {
+        type: 'thinking',
+        thinking: '',
+      },
+    },
+    {
+      type: 'content_block_delta',
+      index: 0,
+      delta: {
+        type: 'thinking_delta',
+        thinking: 'hmm',
+      },
+    },
+    {
+      type: 'content_block_delta',
+      index: 0,
+      delta: {
+        type: 'signature_delta',
+        signature: 'sig',
+      },
+    },
+    {
+      type: 'content_block_stop',
+      index: 0,
+    },
+    {
+      type: 'content_block_start',
+      index: 1,
+      content_block: {
+        type: 'text',
+        text: '',
+      },
+    },
+    {
+      type: 'content_block_delta',
+      index: 1,
+      delta: {
+        type: 'text_delta',
+        text,
+      },
+    },
+    {
+      type: 'content_block_stop',
+      index: 1,
+    },
+    {
+      type: 'message_delta',
+      usage: USAGE,
+    },
+    {
+      type: 'message_stop',
+    },
+  ];
+}
+
 async function collect(stream) {
   const events = [];
   for await (let event of stream) {
@@ -278,6 +344,43 @@ describe('streaming tool loop', () => {
         tool_use_id: 't1',
         content: 'boom',
         is_error: true,
+      },
+    ]);
+  });
+
+  it('should keep thinking blocks out of the persisted message', async () => {
+    setResponses([thinkingTextTurn('all done')]);
+
+    const events = await collect(
+      client.stream({
+        input: 'hi',
+      }),
+    );
+
+    expect(
+      events
+        .filter((e) => {
+          return e.type === 'delta';
+        })
+        .map((e) => {
+          return e.delta;
+        })
+        .join(''),
+    ).toBe('all done');
+
+    // The assistant message carries only the text — a replayed thinking block
+    // (whose deltas are never accumulated) would be rejected on the next turn.
+    const stop = events.find((e) => {
+      return e.type === 'stop';
+    });
+    expect(stop.messages).toEqual([
+      {
+        role: 'user',
+        content: 'hi',
+      },
+      {
+        role: 'assistant',
+        content: 'all done',
       },
     ]);
   });
