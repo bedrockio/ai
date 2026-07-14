@@ -93,6 +93,75 @@ function toolTurn(call) {
   ];
 }
 
+// Stream events for one assistant turn that thinks before calling a tool —
+// the shape Sonnet-5-class models produce with adaptive thinking on. The
+// thinking block must be accumulated in full: it is replayed alongside the
+// tool results on the next round, and the API rejects an empty one.
+function thinkingToolTurn(call) {
+  return [
+    {
+      type: 'message_start',
+      message: {},
+    },
+    {
+      type: 'content_block_start',
+      index: 0,
+      content_block: {
+        type: 'thinking',
+        thinking: '',
+      },
+    },
+    {
+      type: 'content_block_delta',
+      index: 0,
+      delta: {
+        type: 'thinking_delta',
+        thinking: 'let me look that up',
+      },
+    },
+    {
+      type: 'content_block_delta',
+      index: 0,
+      delta: {
+        type: 'signature_delta',
+        signature: 'sig123',
+      },
+    },
+    {
+      type: 'content_block_stop',
+      index: 0,
+    },
+    {
+      type: 'content_block_start',
+      index: 1,
+      content_block: {
+        type: 'tool_use',
+        id: call.id,
+        name: call.name,
+      },
+    },
+    {
+      type: 'content_block_delta',
+      index: 1,
+      delta: {
+        type: 'input_json_delta',
+        partial_json: JSON.stringify(call.input),
+      },
+    },
+    {
+      type: 'content_block_stop',
+      index: 1,
+    },
+    {
+      type: 'message_delta',
+      usage: USAGE,
+    },
+    {
+      type: 'message_stop',
+    },
+  ];
+}
+
 // Stream events for one assistant turn that thinks before emitting text, as
 // models with thinking on by default (e.g. Sonnet 5) do.
 function thinkingTextTurn(text) {
@@ -346,6 +415,133 @@ describe('streaming tool loop', () => {
         is_error: true,
       },
     ]);
+  });
+
+  it('should replay a complete thinking block with the tool results', async () => {
+    const handler = vi.fn().mockReturnValue('42');
+    setResponses([
+      thinkingToolTurn({
+        id: 't1',
+        name: 'lookup',
+        input: {
+          q: 'x',
+        },
+      }),
+      textTurn('the answer is 42'),
+    ]);
+
+    const events = await collect(
+      client.stream({
+        input: 'hi',
+        tools: [localTool('lookup', handler)],
+      }),
+    );
+
+    expect(handler).toHaveBeenCalledTimes(1);
+
+    // The second request replays the assistant's tool-use turn. The thinking
+    // block must arrive complete — accumulated content and signature — or the
+    // API rejects the request.
+    const requests = getAllOptions();
+    expect(requests).toHaveLength(2);
+    const replayed = requests[1].messages.find((m) => {
+      return m.role === 'assistant';
+    });
+    expect(replayed.content).toEqual([
+      {
+        type: 'thinking',
+        thinking: 'let me look that up',
+        signature: 'sig123',
+      },
+      {
+        type: 'tool_use',
+        id: 't1',
+        name: 'lookup',
+        input: {
+          q: 'x',
+        },
+      },
+    ]);
+
+    // The persisted tool-use turn keeps its thinking block — it is complete
+    // (content + signature), so replaying it later is valid. Only the final
+    // assistant message strips thinking (see the persisted-message test).
+    const stop = events.find((e) => {
+      return e.type === 'stop';
+    });
+    const persisted = stop.messages.find((m) => {
+      return (
+        Array.isArray(m.content) &&
+        m.content.some((block) => {
+          return block.type === 'tool_use';
+        })
+      );
+    });
+    expect(persisted.content[0]).toEqual({
+      type: 'thinking',
+      thinking: 'let me look that up',
+      signature: 'sig123',
+    });
+    expect(stop.messages.at(-1)).toEqual({
+      role: 'assistant',
+      content: 'the answer is 42',
+    });
+  });
+
+  it('should drop empty thinking blocks from replayed saved messages', async () => {
+    setResponses([textTurn('healed')]);
+
+    // A conversation persisted before thinking deltas were accumulated —
+    // the assistant message carries a malformed empty thinking block.
+    const events = await collect(
+      client.stream({
+        messages: [
+          {
+            role: 'user',
+            content: 'hi',
+          },
+          {
+            role: 'assistant',
+            content: [
+              {
+                type: 'thinking',
+                thinking: '',
+              },
+              {
+                type: 'text',
+                text: 'old reply',
+              },
+            ],
+          },
+          {
+            role: 'user',
+            content: 'and again?',
+          },
+        ],
+      }),
+    );
+
+    const [request] = getAllOptions();
+    const assistant = request.messages.find((m) => {
+      return m.role === 'assistant';
+    });
+    expect(assistant.content).toEqual([
+      {
+        type: 'text',
+        text: 'old reply',
+      },
+    ]);
+
+    expect(
+      events
+        .filter((e) => {
+          return e.type === 'delta';
+        })
+        .map((e) => {
+          return e.delta;
+        })
+        .join(''),
+    ).toBe('healed');
   });
 
   it('should keep thinking blocks out of the persisted message', async () => {

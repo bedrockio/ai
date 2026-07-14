@@ -85,6 +85,34 @@ export class AnthropicClient extends BaseClient {
     return schemaBlock?.input;
   }
 
+  // Guards against malformed thinking blocks reaching the wire: messages
+  // persisted before thinking deltas were accumulated (see
+  // normalizeStreamEvent) carry empty thinking blocks, which the API rejects
+  // on replay with a 400. Complete blocks pass through untouched — the API
+  // wants those back during tool use.
+  getApiMessages(messages) {
+    return super
+      .getApiMessages(messages)
+      .map((message) => {
+        const { content } = message;
+        if (!Array.isArray(content)) {
+          return message;
+        }
+        return {
+          ...message,
+          content: content.filter((block) => {
+            if (block.type === 'thinking') {
+              return !!block.thinking;
+            }
+            return true;
+          }),
+        };
+      })
+      .filter((message) => {
+        return typeof message.content === 'string' || message.content.length;
+      });
+  }
+
   normalizeContentBlock(block) {
     return block;
   }
@@ -144,6 +172,16 @@ export class AnthropicClient extends BaseClient {
       } else if (event.delta.type === 'input_json_delta') {
         block.partial ||= '';
         block.partial += event.delta.partial_json;
+      } else if (event.delta.type === 'thinking_delta') {
+        // Thinking blocks must be accumulated in full: when the model thinks
+        // before a tool call, the API requires the complete thinking block
+        // (content and signature) to be replayed alongside the tool results,
+        // and rejects an empty one.
+        block.thinking ||= '';
+        block.thinking += event.delta.thinking;
+      } else if (event.delta.type === 'signature_delta') {
+        block.signature ||= '';
+        block.signature += event.delta.signature;
       }
     } else if (type === 'content_block_stop') {
       const block = options.blocks.get(event.index);

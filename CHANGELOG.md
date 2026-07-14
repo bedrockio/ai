@@ -1,3 +1,7 @@
+## 0.15.2
+
+- Remove malformed Anthropic thinking blocks in tool use.
+
 ## 0.15.1
 
 - Remove Anthropic thinking blocks.
