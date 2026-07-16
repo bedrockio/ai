@@ -162,6 +162,68 @@ function thinkingToolTurn(call) {
   ];
 }
 
+// Stream events for one assistant turn that thinks before calling a tool on a
+// model whose thinking display is "omitted" (the default on Sonnet 5 and Opus
+// 4.7+): no thinking deltas arrive at all, only the signature. The resulting
+// block has empty text but a valid signature and must still be replayed with
+// the tool results.
+function omittedThinkingToolTurn(call) {
+  return [
+    {
+      type: 'message_start',
+      message: {},
+    },
+    {
+      type: 'content_block_start',
+      index: 0,
+      content_block: {
+        type: 'thinking',
+        thinking: '',
+      },
+    },
+    {
+      type: 'content_block_delta',
+      index: 0,
+      delta: {
+        type: 'signature_delta',
+        signature: 'sig456',
+      },
+    },
+    {
+      type: 'content_block_stop',
+      index: 0,
+    },
+    {
+      type: 'content_block_start',
+      index: 1,
+      content_block: {
+        type: 'tool_use',
+        id: call.id,
+        name: call.name,
+      },
+    },
+    {
+      type: 'content_block_delta',
+      index: 1,
+      delta: {
+        type: 'input_json_delta',
+        partial_json: JSON.stringify(call.input),
+      },
+    },
+    {
+      type: 'content_block_stop',
+      index: 1,
+    },
+    {
+      type: 'message_delta',
+      usage: USAGE,
+    },
+    {
+      type: 'message_stop',
+    },
+  ];
+}
+
 // Stream events for one assistant turn that thinks before emitting text, as
 // models with thinking on by default (e.g. Sonnet 5) do.
 function thinkingTextTurn(text) {
@@ -488,11 +550,59 @@ describe('streaming tool loop', () => {
     });
   });
 
+  it('should replay a signed thinking block with empty text (display omitted)', async () => {
+    const handler = vi.fn().mockReturnValue('42');
+    setResponses([
+      omittedThinkingToolTurn({
+        id: 't1',
+        name: 'lookup',
+        input: {
+          q: 'x',
+        },
+      }),
+      textTurn('the answer is 42'),
+    ]);
+
+    await collect(
+      client.stream({
+        input: 'hi',
+        tools: [localTool('lookup', handler)],
+      }),
+    );
+
+    expect(handler).toHaveBeenCalledTimes(1);
+
+    // With display "omitted" the block has no text, only a signature. It is
+    // valid — the API decrypts the signature to reconstruct the reasoning —
+    // and dropping it from the tool-use replay is a 400.
+    const requests = getAllOptions();
+    expect(requests).toHaveLength(2);
+    const replayed = requests[1].messages.find((m) => {
+      return m.role === 'assistant';
+    });
+    expect(replayed.content).toEqual([
+      {
+        type: 'thinking',
+        thinking: '',
+        signature: 'sig456',
+      },
+      {
+        type: 'tool_use',
+        id: 't1',
+        name: 'lookup',
+        input: {
+          q: 'x',
+        },
+      },
+    ]);
+  });
+
   it('should drop empty thinking blocks from replayed saved messages', async () => {
     setResponses([textTurn('healed')]);
 
-    // A conversation persisted before thinking deltas were accumulated —
-    // the assistant message carries a malformed empty thinking block.
+    // A conversation persisted before thinking deltas were accumulated — the
+    // assistant message carries a malformed thinking block with no content
+    // and no signature, which the API rejects on replay.
     const events = await collect(
       client.stream({
         messages: [
@@ -564,8 +674,11 @@ describe('streaming tool loop', () => {
         .join(''),
     ).toBe('all done');
 
-    // The assistant message carries only the text — a replayed thinking block
-    // (whose deltas are never accumulated) would be rejected on the next turn.
+    // The assistant message carries only the text. The final turn's thinking
+    // is dropped from the persisted history: the API allows prior turns to
+    // omit thinking blocks, this message was never part of a request prefix
+    // (so no cache entry depends on it), and on Opus 4.5+ / Sonnet 4.6+ a
+    // replayed thinking block would be kept in context and billed.
     const stop = events.find((e) => {
       return e.type === 'stop';
     });

@@ -1,3 +1,8 @@
+## 0.15.3
+
+- Keep signed Anthropic thinking blocks with empty text (thinking display "omitted", the default on Sonnet 5 and Opus 4.7+) — only blocks with neither content nor signature are dropped.
+- Surface `cache_read_input_tokens` and `cache_creation_input_tokens` in normalized Anthropic usage when reported.
+
 ## 0.15.2
 
 - Remove malformed Anthropic thinking blocks in tool use.

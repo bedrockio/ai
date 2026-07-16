@@ -345,6 +345,8 @@ Please generate some markdown code for me. Just a few lines.
           usage: {
             input_tokens: 20,
             output_tokens: 76,
+            cache_read_input_tokens: 0,
+            cache_creation_input_tokens: 0,
           },
         },
       ]);
@@ -491,6 +493,8 @@ How many calories are in a medium apple?
           usage: {
             input_tokens: 600,
             output_tokens: 138,
+            cache_read_input_tokens: 0,
+            cache_creation_input_tokens: 0,
           },
         },
       ]);
@@ -1146,6 +1150,8 @@ How many calories are in a medium apple?
       expect(usage).toEqual({
         input_tokens: 59,
         output_tokens: 369,
+        cache_read_input_tokens: 0,
+        cache_creation_input_tokens: 0,
       });
     });
 

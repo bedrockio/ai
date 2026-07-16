@@ -87,9 +87,12 @@ export class AnthropicClient extends BaseClient {
 
   // Guards against malformed thinking blocks reaching the wire: messages
   // persisted before thinking deltas were accumulated (see
-  // normalizeStreamEvent) carry empty thinking blocks, which the API rejects
-  // on replay with a 400. Complete blocks pass through untouched — the API
-  // wants those back during tool use.
+  // normalizeStreamEvent) carry thinking blocks with no content AND no
+  // signature, which the API rejects on replay with a 400. Only that shape is
+  // dropped. A signed block with empty text is valid — it is the default
+  // output on models whose thinking display is "omitted" (Sonnet 5, Opus
+  // 4.7+), and the API requires it back unchanged during tool use, decrypting
+  // the signature to reconstruct the reasoning.
   getApiMessages(messages) {
     return super
       .getApiMessages(messages)
@@ -102,7 +105,7 @@ export class AnthropicClient extends BaseClient {
           ...message,
           content: content.filter((block) => {
             if (block.type === 'thinking') {
-              return !!block.thinking;
+              return !!(block.thinking || block.signature);
             }
             return true;
           }),
@@ -143,9 +146,20 @@ export class AnthropicClient extends BaseClient {
 
   normalizeUsage(usage) {
     if (usage) {
+      const { cache_read_input_tokens, cache_creation_input_tokens } = usage;
       return {
         input_tokens: usage.input_tokens,
         output_tokens: usage.output_tokens,
+        // The cache fields make cache hits observable (a zero read count on
+        // repeated requests means a silent invalidator). They are only
+        // included when the API reported them, so payloads without caching
+        // are unchanged.
+        ...(cache_read_input_tokens != null && {
+          cache_read_input_tokens,
+        }),
+        ...(cache_creation_input_tokens != null && {
+          cache_creation_input_tokens,
+        }),
       };
     }
   }
@@ -205,11 +219,17 @@ export class AnthropicClient extends BaseClient {
       options.usage = event.usage;
     } else if (type === 'message_stop') {
       const blocks = Array.from(options.blocks.values());
-      // Thinking blocks are turn-scoped: thinking deltas are not accumulated
-      // here, and the API rejects a replayed thinking block with no content on
-      // the next turn (models with thinking on by default, e.g. Sonnet 5).
-      // They carry nothing a later turn needs, so keep them out of the
-      // persisted message.
+      // The final turn's thinking blocks are kept out of the persisted
+      // message. The API only requires thinking blocks back when a tool-use
+      // turn is replayed — the tool loop handles that with the raw blocks
+      // (see appendToolExchange) — and explicitly allows prior turns to omit
+      // them. Dropping them here is also cache-safe and cheaper: this message
+      // was never part of a request prefix, so no cache entry is invalidated,
+      // and on Opus 4.5+ / Sonnet 4.6+ a replayed thinking block is kept in
+      // context and billed as input on every later turn. Intermediate
+      // tool-use turns keep theirs — those bytes were already sent (and
+      // cached) during the loop, so stripping them would invalidate the
+      // conversation cache.
       const messageBlocks = blocks.filter((block) => {
         return block.type !== 'thinking' && block.type !== 'redacted_thinking';
       });
