@@ -874,6 +874,10 @@ ${input}
  * @property {Object} [toolset] - A Toolset whose tools are run locally; folded into `tools`.
  * @property {*} [context] - Passed as the second argument to local tool handlers.
  * @property {number} [maxToolRounds] - Safety bound on local tool-execution rounds.
+ * @property {Object} [cache_control] - Anthropic only: passed through as the top-level
+ *                                      request param, e.g. { type: 'ephemeral' }. The API
+ *                                      places a cache breakpoint on the last cacheable
+ *                                      block of each request.
  */
 
 /**

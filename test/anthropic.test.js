@@ -1141,6 +1141,47 @@ How many calories are in a medium apple?
     });
   });
 
+  describe('cache_control', () => {
+    it('should not send cache_control by default', async () => {
+      setResponse(caloriesText);
+      await client.prompt({
+        input: 'Hello',
+      });
+      expect('cache_control' in getLastOptions()).toBe(false);
+    });
+
+    it('should pass top-level cache_control from prompt options', async () => {
+      setResponse(caloriesText);
+      await client.prompt({
+        input: 'Hello',
+        cache_control: {
+          type: 'ephemeral',
+        },
+      });
+      expect(getLastOptions().cache_control).toEqual({
+        type: 'ephemeral',
+      });
+    });
+
+    it('should pass top-level cache_control from constructor options', async () => {
+      setResponse(caloriesText);
+      const client = new AnthropicClient({
+        templates: path.join(__dirname, './templates'),
+        cache_control: {
+          type: 'ephemeral',
+          ttl: '1h',
+        },
+      });
+      await client.prompt({
+        input: 'Hello',
+      });
+      expect(getLastOptions().cache_control).toEqual({
+        type: 'ephemeral',
+        ttl: '1h',
+      });
+    });
+  });
+
   describe('other', () => {
     it('should include usage', async () => {
       setResponse(caloriesText);

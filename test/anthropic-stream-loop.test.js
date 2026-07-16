@@ -694,6 +694,41 @@ describe('streaming tool loop', () => {
     ]);
   });
 
+  it('should forward cache_control on every tool-loop round', async () => {
+    const handler = vi.fn().mockReturnValue('42');
+    setResponses([
+      toolTurn({
+        id: 't1',
+        name: 'lookup',
+        input: {
+          q: 'x',
+        },
+      }),
+      textTurn('done'),
+    ]);
+
+    await collect(
+      client.stream({
+        input: 'hi',
+        tools: [localTool('lookup', handler)],
+        cache_control: {
+          type: 'ephemeral',
+        },
+      }),
+    );
+
+    // Each round is a separate request, and the auto-placed breakpoint must
+    // advance past the appended tool exchange — so every round carries the
+    // top-level cache_control.
+    const requests = getAllOptions();
+    expect(requests).toHaveLength(2);
+    for (let request of requests) {
+      expect(request.cache_control).toEqual({
+        type: 'ephemeral',
+      });
+    }
+  });
+
   it('should stream a single pass when no local tools are present', async () => {
     setResponses([textTurn('just text')]);
 

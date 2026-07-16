@@ -2,6 +2,7 @@
 
 - Keep signed Anthropic thinking blocks with empty text (thinking display "omitted", the default on Sonnet 5 and Opus 4.7+) — only blocks with neither content nor signature are dropped.
 - Surface `cache_read_input_tokens` and `cache_creation_input_tokens` in normalized Anthropic usage when reported.
+- Pass the top-level `cache_control` option through to the Anthropic API (client or prompt options) to enable automatic prompt caching.
 
 ## 0.15.2
 

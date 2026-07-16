@@ -31,6 +31,7 @@ export class AnthropicClient extends BaseClient {
       messages,
       max_tokens,
       temperature,
+      cache_control,
       stream = false,
       instructions: system = '',
     } = options;
@@ -42,6 +43,13 @@ export class AnthropicClient extends BaseClient {
       max_tokens,
       messages: this.getApiMessages(messages),
       temperature,
+      // Top-level cache_control: the API places a cache breakpoint on the
+      // last cacheable block of the request and moves it forward as the
+      // conversation grows. Placement is directed entirely by the caller —
+      // pass e.g. { type: 'ephemeral' } to opt in.
+      ...(cache_control && {
+        cache_control,
+      }),
       ...this.getToolOptions(options),
     };
 
